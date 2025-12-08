@@ -7,16 +7,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { Send, Loader2 } from "lucide-react"
+import { Send, Loader2, AlertCircle } from "lucide-react"
+import { answerQuestion, getElderId } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
 
 interface AskQuestionFormProps {
-  onSubmit: (question: string) => Promise<string>
+  onSuccess?: () => void
 }
 
-export function AskQuestionForm({ onSubmit }: AskQuestionFormProps) {
+export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
   const [question, setQuestion] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [answer, setAnswer] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,12 +28,32 @@ export function AskQuestionForm({ onSubmit }: AskQuestionFormProps) {
 
     setIsLoading(true)
     setAnswer(null)
+    setError(null)
 
     try {
-      const response = await onSubmit(question.trim())
-      setAnswer(response)
-    } catch {
-      setAnswer("Sorry, I couldn't find an answer. Please try again.")
+      const elderId = getElderId()
+      const result = await answerQuestion(elderId, question.trim())
+      setAnswer(result.answer)
+      
+      // Show success message
+      toast({
+        title: "Answer found!",
+        description: "I found an answer based on your memories.",
+      })
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess()
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Sorry, I couldn't find an answer. Please try again."
+      setError(errorMessage)
+      setAnswer(null)
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -63,6 +87,14 @@ export function AskQuestionForm({ onSubmit }: AskQuestionFormProps) {
             Ask about anything you've saved - names, places, events, or reminders.
           </p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-center gap-2 p-4 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+            <p className="text-base">{error}</p>
+          </div>
+        )}
 
         {/* Submit Button */}
         <Button

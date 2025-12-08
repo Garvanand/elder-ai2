@@ -7,24 +7,74 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save } from "lucide-react"
+import { Save, Loader2, AlertCircle } from "lucide-react"
+import { createMemory, getElderId } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
+import type { MemoryType } from "@/src/types"
 
-type MemoryType = "object" | "event" | "reminder" | "other"
+type ComponentMemoryType = "object" | "event" | "reminder" | "other"
 
-interface MemoryFormProps {
-  onSubmit: (data: { text: string; type?: MemoryType }) => void
+/**
+ * Maps component memory types to database memory types
+ */
+function mapMemoryType(type: ComponentMemoryType | undefined): MemoryType {
+  const mapping: Record<ComponentMemoryType, MemoryType> = {
+    object: "other",
+    event: "event",
+    reminder: "routine",
+    other: "other",
+  }
+  return type ? mapping[type] : "other"
 }
 
-export function MemoryForm({ onSubmit }: MemoryFormProps) {
-  const [text, setText] = useState("")
-  const [type, setType] = useState<MemoryType | undefined>(undefined)
+interface MemoryFormProps {
+  onSuccess?: () => void
+}
 
-  const handleSubmit = (e: React.FormEvent) => {
+export function MemoryForm({ onSuccess }: MemoryFormProps) {
+  const [text, setText] = useState("")
+  const [type, setType] = useState<ComponentMemoryType | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (text.trim()) {
-      onSubmit({ text: text.trim(), type })
+    if (!text.trim() || isLoading) return
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const elderId = getElderId()
+      const dbType = mapMemoryType(type)
+      
+      await createMemory(elderId, dbType, text.trim())
+      
+      // Clear form on success
       setText("")
       setType(undefined)
+      
+      // Show success message
+      toast({
+        title: "Memory saved!",
+        description: "Your memory has been successfully saved.",
+      })
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess()
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to save memory. Please try again."
+      setError(errorMessage)
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -75,16 +125,33 @@ export function MemoryForm({ onSubmit }: MemoryFormProps) {
         </Select>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
+          <AlertCircle className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+          <p className="text-base">{error}</p>
+        </div>
+      )}
+
       {/* Submit Button */}
       <Button
         type="submit"
         size="lg"
         className="w-full h-16 text-xl md:text-2xl font-semibold gap-3"
-        disabled={!text.trim()}
-        aria-label="Save this memory"
+        disabled={!text.trim() || isLoading}
+        aria-label={isLoading ? "Saving memory..." : "Save this memory"}
       >
-        <Save className="h-6 w-6" aria-hidden="true" />
-        Save Memory
+        {isLoading ? (
+          <>
+            <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Save className="h-6 w-6" aria-hidden="true" />
+            Save Memory
+          </>
+        )}
       </Button>
     </form>
   )

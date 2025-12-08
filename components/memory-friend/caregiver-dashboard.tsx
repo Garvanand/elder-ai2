@@ -10,8 +10,8 @@ import { Clock, Calendar, MessageSquare, Filter, Search } from "lucide-react"
 import type { Memory, Question } from "./types"
 
 interface CaregiverDashboardProps {
-  memories: Memory[]
-  questions: Question[]
+  memories?: Memory[]
+  questions?: Question[]
 }
 
 function formatDate(date: Date): string {
@@ -43,7 +43,7 @@ const memoryTypeColors: Record<Memory["type"], string> = {
   other: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
 }
 
-export function CaregiverDashboard({ memories, questions }: CaregiverDashboardProps) {
+export function CaregiverDashboard({ memories = [], questions = [] }: CaregiverDashboardProps) {
   const [typeFilter, setTypeFilter] = useState<Memory["type"] | "all">("all")
   const [tagFilter, setTagFilter] = useState("")
 
