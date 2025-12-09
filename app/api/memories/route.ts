@@ -14,6 +14,7 @@ interface CreateMemoryRequest {
   elderId: string;
   type: MemoryType;
   text: string;
+  imageUrl?: string | null;
 }
 
 /**
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { elderId, type, text } = body;
+    const { elderId, type, text, imageUrl } = body;
 
     // Insert memory into database
     const { data, error } = await buildMemoryQuery()
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
         raw_text: text,
         structured_json: null,
         tags: [],
+        image_url: imageUrl ?? null,
       })
       .select()
       .single();
@@ -93,6 +95,8 @@ export async function GET(request: NextRequest) {
     const elderId = searchParams.get('elderId');
     const type = searchParams.get('type');
     const tag = searchParams.get('tag');
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : 50;
 
     // Validate required query param
     if (!elderId) {
@@ -102,11 +106,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (isNaN(limit) || limit < 1 || limit > 200) {
+      return NextResponse.json(
+        { error: 'limit must be a number between 1 and 200' },
+        { status: 400 }
+      );
+    }
+
     // Build query
     let query = buildMemoryQuery()
       .select('*')
       .eq('elder_id', elderId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     // Apply optional filters
     if (type) {

@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save, Loader2, AlertCircle } from "lucide-react"
-import { createMemory, getElderId } from "@/lib/api"
+import { Save, Loader2, AlertCircle, Mic, Square, Upload } from "lucide-react"
+import { createMemory, getElderId, uploadMemoryImage } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import type { MemoryType } from "@/src/types"
 
@@ -36,7 +36,67 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
   const [type, setType] = useState<ComponentMemoryType | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isListening, setIsListening] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
   const { toast } = useToast()
+
+  // Initialize SpeechRecognition if available
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) return
+    const recognition: SpeechRecognition = new SpeechRecognition()
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.lang = "en-US"
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript
+      setText((prev) => (prev ? `${prev} ${transcript}` : transcript))
+    }
+    recognition.onerror = () => {
+      setIsListening(false)
+      toast({
+        title: "Voice input error",
+        description: "Sorry, I couldn't understand that. Please try again.",
+        variant: "destructive",
+      })
+    }
+    recognition.onend = () => setIsListening(false)
+    recognitionRef.current = recognition
+  }, [toast])
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast({
+        title: "Voice input not supported",
+        description: "Your browser does not support speech recognition.",
+        variant: "destructive",
+      })
+      return
+    }
+    if (isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    } else {
+      try {
+        recognitionRef.current.start()
+        setIsListening(true)
+      } catch {
+        setIsListening(false)
+      }
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0]
+    if (selected) {
+      setFile(selected)
+    } else {
+      setFile(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,12 +108,18 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
     try {
       const elderId = getElderId()
       const dbType = mapMemoryType(type)
+      let imageUrl: string | null = null
+
+      if (file) {
+        imageUrl = await uploadMemoryImage(file, elderId)
+      }
       
-      await createMemory(elderId, dbType, text.trim())
+      await createMemory(elderId, dbType, text.trim(), imageUrl)
       
       // Clear form on success
       setText("")
       setType(undefined)
+      setFile(null)
       
       // Show success message
       toast({
@@ -94,9 +160,46 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
           aria-describedby="memory-hint"
           required
         />
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant={isListening ? "secondary" : "outline"}
+            size="sm"
+            onClick={toggleListening}
+            aria-pressed={isListening}
+            className="gap-2"
+          >
+            {isListening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            <span className="text-sm">{isListening ? "Listening..." : "🎤 Voice input"}</span>
+          </Button>
+          {isListening && <span className="text-sm text-muted-foreground">Speak now...</span>}
+        </div>
         <p id="memory-hint" className="text-base text-muted-foreground">
           Write anything you want to remember - a name, a place, an event, or a reminder.
         </p>
+      </div>
+
+      {/* Image upload */}
+      <div className="space-y-3">
+        <Label htmlFor="memory-image" className="text-lg md:text-xl font-medium text-foreground">
+          Add an image <span className="text-muted-foreground font-normal">(optional)</span>
+        </Label>
+        <div className="flex items-center gap-3">
+          <input
+            id="memory-image"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="text-sm"
+          />
+          {file && (
+            <span className="text-sm text-muted-foreground flex items-center gap-1">
+              <Upload className="h-4 w-4" />
+              {file.name}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">Images help caregivers see the memory context.</p>
       </div>
 
       {/* Optional Type Dropdown */}

@@ -43,6 +43,7 @@ export type Database = {
           created_at: string
           elder_id: string
           id: string
+          image_url: string | null
           raw_text: string
           structured_json: Json | null
           tags: string[] | null
@@ -53,6 +54,7 @@ export type Database = {
           created_at?: string
           elder_id: string
           id?: string
+          image_url?: string | null
           raw_text: string
           structured_json?: Json | null
           tags?: string[] | null
@@ -63,6 +65,7 @@ export type Database = {
           created_at?: string
           elder_id?: string
           id?: string
+          image_url?: string | null
           raw_text?: string
           structured_json?: Json | null
           tags?: string[] | null

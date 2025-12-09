@@ -2,12 +2,12 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { Send, Loader2, AlertCircle } from "lucide-react"
+import { Send, Loader2, AlertCircle, Volume2 } from "lucide-react"
 import { answerQuestion, getElderId } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -21,6 +21,38 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
   const [answer, setAnswer] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+  const speechSupported = useMemo(
+    () => typeof window !== "undefined" && typeof window.speechSynthesis !== "undefined",
+    []
+  )
+
+  // Read answer aloud when it changes
+  useEffect(() => {
+    if (!speechSupported || !answer) return
+    const utterance = new SpeechSynthesisUtterance(answer)
+    utterance.rate = 0.85
+    utterance.pitch = 1
+    utterance.volume = 1
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+  }, [answer, speechSupported])
+
+  const speakAnswer = () => {
+    if (!speechSupported || !answer) {
+      toast({
+        title: "Audio not available",
+        description: "Your browser does not support text-to-speech.",
+        variant: "destructive",
+      })
+      return
+    }
+    const utterance = new SpeechSynthesisUtterance(answer)
+    utterance.rate = 0.85
+    utterance.pitch = 1
+    utterance.volume = 1
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,14 +166,27 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
           <CardContent className="p-8">
             <h2 className="text-lg font-semibold text-muted-foreground mb-3">Answer</h2>
             <p className="text-xl md:text-2xl text-foreground leading-relaxed">{answer}</p>
-            <Button
-              onClick={handleNewQuestion}
-              variant="outline"
-              size="lg"
-              className="mt-6 h-12 text-lg bg-transparent"
-            >
-              Ask another question
-            </Button>
+            <div className="flex flex-wrap gap-3 mt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="h-12 text-lg bg-transparent gap-2"
+                onClick={speakAnswer}
+                aria-label="Read answer aloud"
+              >
+                <Volume2 className="h-5 w-5" />
+                🔊 Read aloud
+              </Button>
+              <Button
+                onClick={handleNewQuestion}
+                variant="outline"
+                size="lg"
+                className="h-12 text-lg bg-transparent"
+              >
+                Ask another question
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

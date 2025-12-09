@@ -19,6 +19,7 @@ export interface Memory {
   elder_id: string;
   type: MemoryType;
   raw_text: string;
+  image_url?: string | null;
   structured_json: Record<string, unknown>;
   tags: string[];
   created_at: string;

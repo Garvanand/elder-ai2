@@ -4,8 +4,9 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, HelpCircle, Clock, Loader2 } from "lucide-react"
-import { getMemories, getQuestions, getElderId } from "@/lib/api"
-import type { Memory as DBMemory, Question as DBQuestion } from "@/src/types"
+import { getMemories, getQuestions, getElderId, getDailySummary } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
+import type { Memory as DBMemory, Question as DBQuestion, DailySummary } from "@/src/types"
 
 interface ElderHomeProps {
   userName: string
@@ -32,7 +33,18 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
   const [questions, setQuestions] = useState<DBQuestion[]>([])
   const [isLoadingMemories, setIsLoadingMemories] = useState(true)
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true)
+  const [isLoadingSummary, setIsLoadingSummary] = useState(true)
+  const [todaySummary, setTodaySummary] = useState<DailySummary | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  const todayLocalDate = () => {
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, "0")
+    const dd = String(now.getDate()).padStart(2, "0")
+    return `${yyyy}-${mm}-${dd}`
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,23 +52,31 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
       
       try {
         // Fetch memories and questions in parallel
-        const [memoriesData, questionsData] = await Promise.all([
+        const [memoriesData, questionsData, summaryData] = await Promise.all([
           getMemories(elderId).catch(() => []),
           getQuestions(elderId, 5).catch(() => []),
+          getDailySummary(elderId, todayLocalDate()).catch(() => null),
         ])
         
         setMemories(memoriesData.slice(0, 5))
         setQuestions(questionsData)
+        setTodaySummary(summaryData)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data")
+        toast({
+          title: "Error",
+          description: err instanceof Error ? err.message : "Failed to load data",
+          variant: "destructive",
+        })
       } finally {
         setIsLoadingMemories(false)
         setIsLoadingQuestions(false)
+        setIsLoadingSummary(false)
       }
     }
 
     fetchData()
-  }, [])
+  }, [toast])
 
   const lastFiveMemories = memories.slice(0, 5)
   const lastFiveQuestions = questions.slice(0, 5)
@@ -67,6 +87,35 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
       <h1 className="text-4xl md:text-5xl font-bold text-foreground text-center mb-12">
         Hello, <span className="text-primary">{userName}</span>!
       </h1>
+
+      {/* Today's Summary */}
+      <section className="w-full max-w-2xl mb-10" aria-labelledby="todays-summary-heading">
+        <h2 id="todays-summary-heading" className="text-2xl md:text-3xl font-semibold text-foreground mb-4">
+          Today’s Summary
+        </h2>
+        {isLoadingSummary ? (
+          <Card className="border-2">
+            <CardContent className="p-6 flex items-center gap-3 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+              <span>Loading today’s summary...</span>
+            </CardContent>
+          </Card>
+        ) : todaySummary ? (
+          <Card className="border-2">
+            <CardContent className="p-6">
+              <p className="text-lg md:text-xl text-foreground leading-relaxed whitespace-pre-wrap">
+                {todaySummary.summary_text}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border border-dashed">
+            <CardContent className="p-6 text-muted-foreground">
+              No summary generated yet for today.
+            </CardContent>
+          </Card>
+        )}
+      </section>
 
       {/* Primary Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-6 w-full max-w-2xl mb-16">
@@ -109,8 +158,15 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
           <div className="flex flex-col gap-4">
             {lastFiveMemories.map((m) => (
               <Card key={m.id} className="border-2">
-                <CardContent className="p-6">
-                  <p className="text-lg md:text-xl font-medium text-foreground mb-2">{m.raw_text}</p>
+                <CardContent className="p-6 space-y-3">
+                  {m.image_url && (
+                    <img
+                      src={m.image_url}
+                      alt="Memory"
+                      className="w-full max-h-64 object-cover rounded-md border"
+                    />
+                  )}
+                  <p className="text-lg md:text-xl font-medium text-foreground">{m.raw_text}</p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-4 w-4" aria-hidden="true" />
                     <time dateTime={m.created_at}>{formatTimeAgo(m.created_at)}</time>
