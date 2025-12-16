@@ -113,7 +113,7 @@ export default function HomePage() {
     )
   }
 
-  // If not signed in, show login page
+  // If not signed in, show marketing hero with sign-in
   return (
     <div className="min-h-screen bg-gradient-warm">
       <header className="p-6">
@@ -137,8 +137,8 @@ export default function HomePage() {
             <span className="text-primary">Memory Companion</span>
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            A gentle, easy-to-use app that helps you record memories, 
-            ask questions, and stay connected with loved ones.
+            A gentle, easy-to-use app that helps you record memories, ask questions, and stay connected with loved
+            ones.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth">
@@ -149,100 +149,12 @@ export default function HomePage() {
             </Link>
             <Link href="/auth">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                I'm a Caregiver
+                I&apos;m a Caregiver
               </Button>
             </Link>
           </div>
         </div>
       </main>
-    </div>
-  )
-}
-
-  // Caregiver Dashboard View
-  if (currentView === "caregiver") {
-    return (
-      <div>
-        <header className="border-b bg-background sticky top-0 z-10">
-          <div className="flex items-center gap-4 px-6 py-4">
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={() => setCurrentView("home")}
-              className="gap-2"
-              aria-label="Back to home"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              Back
-            </Button>
-            <h1 className="text-xl font-semibold">Caregiver Dashboard</h1>
-          </div>
-        </header>
-        <CaregiverDashboard />
-      </div>
-    )
-  }
-
-  // Add Memory View
-  if (currentView === "add-memory") {
-    return (
-      <div className="min-h-screen bg-background px-6 py-8">
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={() => setCurrentView("home")}
-          className="mb-8 gap-2 text-lg"
-          aria-label="Back to home"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          Back
-        </Button>
-        <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">Add a Memory</h1>
-        <MemoryForm onSuccess={handleMemorySuccess} />
-      </div>
-    )
-  }
-
-  // Ask Question View
-  if (currentView === "ask-question") {
-    return (
-      <div className="min-h-screen bg-background px-6 py-8">
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={() => setCurrentView("home")}
-          className="mb-8 gap-2 text-lg"
-          aria-label="Back to home"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          Back
-        </Button>
-        <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">Ask a Question</h1>
-        <AskQuestionForm onSuccess={handleQuestionSuccess} />
-      </div>
-    )
-  }
-
-  // Home View
-  return (
-    <div>
-      <header className="absolute top-4 right-4">
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={() => setCurrentView("caregiver")}
-          className="gap-2"
-          aria-label="Open caregiver dashboard"
-        >
-          <Users className="h-5 w-5" />
-          Caregiver View
-        </Button>
-      </header>
-      <ElderHome
-        userName="Margaret"
-        onAddMemory={() => setCurrentView("add-memory")}
-        onAskQuestion={() => setCurrentView("ask-question")}
-      />
     </div>
   )
 }

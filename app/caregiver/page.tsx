@@ -152,6 +152,34 @@ export default function CaregiverPage() {
         </Button>
       </header>
 
+      {/* At-a-glance stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <Card className="border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Memories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold">{memories.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Questions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold">{questions.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Daily summaries</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold">{summaries.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12 text-muted-foreground gap-3">
           <Loader2 className="h-5 w-5 animate-spin" />
