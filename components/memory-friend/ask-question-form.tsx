@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Send, Loader2, AlertCircle, Volume2 } from "lucide-react"
-import { answerQuestion, getElderId } from "@/lib/api"
+import { answerQuestion, getElderContext } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 
 interface AskQuestionFormProps {
@@ -63,8 +63,11 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
     setError(null)
 
     try {
-      const elderId = getElderId()
-      const result = await answerQuestion(elderId, question.trim())
+      const context = await getElderContext()
+      if (!context.elderId) {
+        throw new Error("No elder selected. Please sign in again or ask a caregiver to link you.")
+      }
+      const result = await answerQuestion(context.elderId, question.trim())
       setAnswer(result.answer)
       
       // Show success message

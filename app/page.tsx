@@ -79,7 +79,7 @@ export default function HomePage() {
                 <p className="text-muted-foreground">
                   Record memories, ask questions, and view your daily summaries.
                 </p>
-                <Link href="/elder?elderId=default-elder-id">
+                <Link href="/elder">
                   <Button size="lg" className="w-full gap-2">
                     Go to Elder View
                     <ArrowRight className="h-5 w-5" />
@@ -99,7 +99,7 @@ export default function HomePage() {
                 <p className="text-muted-foreground">
                   View memories, questions, and generate daily summaries.
                 </p>
-                <Link href="/caregiver?elderId=default-elder-id">
+                <Link href="/caregiver">
                   <Button size="lg" variant="secondary" className="w-full gap-2">
                     Go to Caregiver View
                     <ArrowRight className="h-5 w-5" />

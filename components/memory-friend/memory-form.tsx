@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Save, Loader2, AlertCircle, Mic, Square, Upload } from "lucide-react"
-import { createMemory, getElderId, uploadMemoryImage } from "@/lib/api"
+import { createMemory, getElderContext, uploadMemoryImage } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import type { MemoryType } from "@/src/types"
 
@@ -106,15 +106,18 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
     setError(null)
 
     try {
-      const elderId = getElderId()
+      const context = await getElderContext()
+      if (!context.elderId) {
+        throw new Error("No elder selected. Please sign in again or ask a caregiver to link you.")
+      }
       const dbType = mapMemoryType(type)
       let imageUrl: string | null = null
 
       if (file) {
-        imageUrl = await uploadMemoryImage(file, elderId)
+        imageUrl = await uploadMemoryImage(file, context.elderId)
       }
       
-      await createMemory(elderId, dbType, text.trim(), imageUrl)
+      await createMemory(context.elderId, dbType, text.trim(), imageUrl)
       
       // Clear form on success
       setText("")

@@ -7,7 +7,6 @@ import { Loader2, ArrowLeft } from "lucide-react"
 import { ElderHome } from "@/components/memory-friend/elder-home"
 import { MemoryForm } from "@/components/memory-friend/memory-form"
 import { AskQuestionForm } from "@/components/memory-friend/ask-question-form"
-import { getElderId } from "@/lib/api"
 import Link from "next/link"
 
 type View = "home" | "add-memory" | "ask-question"
@@ -81,7 +80,7 @@ export default function ElderPage() {
     <div>
       {showDevBanner && (
         <div className="p-3 bg-yellow-100 dark:bg-yellow-900 border-b border-yellow-300 dark:border-yellow-700 text-sm text-yellow-800 dark:text-yellow-200 text-center">
-          ⚠️ DEV MODE: Auth bypassed - Elder ID: {getElderId()}
+          ⚠️ DEV MODE: Auth bypassed - Elder view
         </div>
       )}
       <ElderHome

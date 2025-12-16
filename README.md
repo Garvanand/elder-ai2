@@ -204,6 +204,9 @@ The app is configured for deployment on Vercel:
 - API Routes: Next.js App Router
 - Environment variables: Set in Vercel dashboard
 
+> **Security note:** Never commit real secrets (Supabase keys, Gemini API keys, etc.) to the repository.  
+> Keep them only in `.env` / environment configuration for your local machine and hosting provider.
+
 ## 📝 License
 
 Private project - All rights reserved
