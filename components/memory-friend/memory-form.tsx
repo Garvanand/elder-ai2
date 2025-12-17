@@ -31,6 +31,10 @@ interface MemoryFormProps {
   onSuccess?: () => void
 }
 
+const MAX_TEXT_LENGTH = 5000
+const MAX_IMAGE_SIZE_MB = 5
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
+
 export function MemoryForm({ onSuccess }: MemoryFormProps) {
   const [text, setText] = useState("")
   const [type, setType] = useState<ComponentMemoryType | undefined>(undefined)
@@ -38,6 +42,7 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [isListening, setIsListening] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const { toast } = useToast()
 
@@ -92,7 +97,28 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0]
     if (selected) {
+      // Validate file size
+      if (selected.size > MAX_IMAGE_SIZE_BYTES) {
+        toast({
+          title: "File too large",
+          description: `Please choose an image smaller than ${MAX_IMAGE_SIZE_MB}MB.`,
+          variant: "destructive",
+        })
+        e.target.value = ""
+        return
+      }
+      // Validate file type
+      if (!selected.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please choose an image file.",
+          variant: "destructive",
+        })
+        e.target.value = ""
+        return
+      }
       setFile(selected)
+      setError(null)
     } else {
       setFile(null)
     }
@@ -100,10 +126,24 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!text.trim() || isLoading) return
+    
+    // Client-side validation
+    const trimmedText = text.trim()
+    if (!trimmedText) {
+      setError("Please enter some text for your memory.")
+      return
+    }
+    
+    if (trimmedText.length > MAX_TEXT_LENGTH) {
+      setError(`Memory text is too long. Please keep it under ${MAX_TEXT_LENGTH} characters.`)
+      return
+    }
+    
+    if (isLoading) return
 
     setIsLoading(true)
     setError(null)
+    setUploadProgress(null)
 
     try {
       const context = await getElderContext()
@@ -114,19 +154,30 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
       let imageUrl: string | null = null
 
       if (file) {
-        imageUrl = await uploadMemoryImage(file, context.elderId)
+        setUploadProgress(0)
+        try {
+          imageUrl = await uploadMemoryImage(file, context.elderId)
+          setUploadProgress(100)
+        } catch (uploadErr) {
+          throw new Error(
+            uploadErr instanceof Error
+              ? `Image upload failed: ${uploadErr.message}`
+              : "Failed to upload image. Please try again."
+          )
+        }
       }
       
-      await createMemory(context.elderId, dbType, text.trim(), imageUrl)
+      await createMemory(context.elderId, dbType, trimmedText, imageUrl)
       
       // Clear form on success
       setText("")
       setType(undefined)
       setFile(null)
+      setUploadProgress(null)
       
-      // Show success message
+      // Show success message with animation
       toast({
-        title: "Memory saved!",
+        title: "Memory saved! ✨",
         description: "Your memory has been successfully saved.",
       })
       
@@ -137,6 +188,7 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to save memory. Please try again."
       setError(errorMessage)
+      setUploadProgress(null)
       toast({
         title: "Error",
         description: errorMessage,
@@ -157,12 +209,22 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
         <Textarea
           id="memory-text"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value)
+            setError(null)
+          }}
           placeholder="Type your memory here..."
           className="min-h-[160px] text-lg md:text-xl p-4 resize-none"
           aria-describedby="memory-hint"
+          maxLength={MAX_TEXT_LENGTH}
           required
         />
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>{text.length} / {MAX_TEXT_LENGTH} characters</span>
+          {text.length > MAX_TEXT_LENGTH * 0.9 && (
+            <span className="text-amber-600">Getting close to limit</span>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -196,13 +258,30 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
             className="text-sm"
           />
           {file && (
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
-              <Upload className="h-4 w-4" />
-              {file.name}
-            </span>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Upload className="h-4 w-4" />
+                {file.name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              </span>
+              {uploadProgress !== null && uploadProgress < 100 && (
+                <div className="flex-1 max-w-xs">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">Images help caregivers see the memory context.</p>
+        <p className="text-sm text-muted-foreground">
+          Images help caregivers see the memory context. Max size: {MAX_IMAGE_SIZE_MB}MB
+        </p>
       </div>
 
       {/* Optional Type Dropdown */}

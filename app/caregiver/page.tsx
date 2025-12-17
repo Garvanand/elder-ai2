@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Loader2, RefreshCw } from "lucide-react"
+import { Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
 import {
   getElderContext,
   getMemories,
@@ -41,7 +41,20 @@ export default function CaregiverPage() {
   const [linking, setLinking] = useState(false)
   const [userName, setUserName] = useState<string | null>(null)
   const [role, setRole] = useState<"elder" | "caregiver" | null>(null)
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set())
   const { toast } = useToast()
+  
+  const toggleSummary = (summaryId: string) => {
+    setExpandedSummaries((prev) => {
+      const next = new Set(prev)
+      if (next.has(summaryId)) {
+        next.delete(summaryId)
+      } else {
+        next.add(summaryId)
+      }
+      return next
+    })
+  }
 
   // Check auth (skip in dev mode)
   useEffect(() => {
@@ -341,14 +354,40 @@ export default function CaregiverPage() {
                     </p>
                   </div>
                 ) : (
-                  summaries.map((s) => (
-                    <div key={s.id} className="border-b pb-3 last:border-b-0 last:pb-0">
-                      <p className="text-sm text-muted-foreground mb-1">{formatDate(s.date)}</p>
-                      <p className="text-foreground text-sm">
-                        {s.summary_text.length > 120 ? `${s.summary_text.slice(0, 120)}...` : s.summary_text}
-                      </p>
-                    </div>
-                  ))
+                  summaries.map((s) => {
+                    const isExpanded = expandedSummaries.has(s.id)
+                    const shouldTruncate = s.summary_text.length > 120
+                    return (
+                      <div key={s.id} className="border-b pb-3 last:border-b-0 last:pb-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium text-muted-foreground">{formatDate(s.date)}</p>
+                          {shouldTruncate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleSummary(s.id)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="h-3 w-3 mr-1" />
+                                  Show less
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-3 w-3 mr-1" />
+                                  Show more
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-foreground text-sm leading-relaxed">
+                          {isExpanded || !shouldTruncate ? s.summary_text : `${s.summary_text.slice(0, 120)}...`}
+                        </p>
+                      </div>
+                    )
+                  })
                 )}
               </CardContent>
             </Card>

@@ -13,6 +13,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/db';
 
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -25,6 +28,22 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: 'file is required' }, { status: 400 });
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: `File size exceeds ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB limit` },
+        { status: 400 }
+      );
+    }
+
+    // Validate file type
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Please upload an image (JPEG, PNG, GIF, or WebP).' },
+        { status: 400 }
+      );
     }
 
     const fileExt = file.type.split('/')[1] || 'jpg';

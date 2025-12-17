@@ -11,6 +11,8 @@ import { Send, Loader2, AlertCircle, Volume2 } from "lucide-react"
 import { answerQuestion, getElderContext } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 
+const MAX_QUESTION_LENGTH = 500
+
 interface AskQuestionFormProps {
   onSuccess?: () => void
 }
@@ -56,7 +58,20 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!question.trim() || isLoading) return
+    
+    // Client-side validation
+    const trimmedQuestion = question.trim()
+    if (!trimmedQuestion) {
+      setError("Please enter a question.")
+      return
+    }
+    
+    if (trimmedQuestion.length > MAX_QUESTION_LENGTH) {
+      setError(`Question is too long. Please keep it under ${MAX_QUESTION_LENGTH} characters.`)
+      return
+    }
+    
+    if (isLoading) return
 
     setIsLoading(true)
     setAnswer(null)
@@ -67,12 +82,12 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
       if (!context.elderId) {
         throw new Error("No elder selected. Please sign in again or ask a caregiver to link you.")
       }
-      const result = await answerQuestion(context.elderId, question.trim())
+      const result = await answerQuestion(context.elderId, trimmedQuestion)
       setAnswer(result.answer)
       
       // Show success message
       toast({
-        title: "Answer found!",
+        title: "Answer found! ✨",
         description: "I found an answer based on your memories.",
       })
       
@@ -111,13 +126,20 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
             id="question-input"
             type="text"
             value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            onChange={(e) => {
+              setQuestion(e.target.value)
+              setError(null)
+            }}
             placeholder="Type your question here..."
             className="h-16 text-lg md:text-xl px-4"
             disabled={isLoading}
             aria-describedby="question-hint"
+            maxLength={MAX_QUESTION_LENGTH}
             required
           />
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>{question.length} / {MAX_QUESTION_LENGTH} characters</span>
+          </div>
           <p id="question-hint" className="text-base text-muted-foreground">
             Ask about anything you've saved - names, places, events, or reminders.
           </p>
@@ -165,7 +187,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
 
       {/* Answer Display */}
       {answer && !isLoading && (
-        <Card className="border-2 border-primary">
+        <Card className="border-2 border-primary animate-in fade-in slide-in-from-bottom-4 duration-500">
           <CardContent className="p-8">
             <h2 className="text-lg font-semibold text-muted-foreground mb-3">Answer</h2>
             <p className="text-xl md:text-2xl text-foreground leading-relaxed">{answer}</p>
