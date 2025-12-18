@@ -71,29 +71,30 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero */}
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        <div className="text-center mb-16 animate-fade-in">
-          <h1 className="text-5xl md:text-6xl font-display font-bold text-foreground mb-6 leading-tight">
-            Your Caring<br />
-            <span className="text-primary">Memory Companion</span>
+      {/* Hero - simplified for elderly users */}
+      <main className="max-w-4xl mx-auto px-6 py-12">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6 leading-tight">
+            Remember what matters,<br />
+            one simple tap at a time.
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            A gentle, easy-to-use app that helps you record memories, 
-            ask questions, and stay connected with loved ones.
+          <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+            Save important people, places, and routines. Ask gentle questions when something slips your mind.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col gap-3 items-center">
             <Link to="/auth">
               <Button variant="elder" size="elderLg" className="w-full sm:w-auto">
-                Get Started
+                I&apos;m a memory user
                 <ArrowRight className="w-6 h-6 ml-2" />
               </Button>
             </Link>
-            <Link to="/auth">
-              <Button variant="elderOutline" size="elderLg" className="w-full sm:w-auto">
-                I'm a Caregiver
-              </Button>
-            </Link>
+            <button
+              type="button"
+              onClick={() => navigate('/auth')}
+              className="text-lg text-primary underline-offset-4 hover:underline"
+            >
+              I&apos;m a caregiver
+            </button>
           </div>
         </div>
 
