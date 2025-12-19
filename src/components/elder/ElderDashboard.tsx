@@ -309,22 +309,6 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <header className="flex items-center justify-between mb-8 animate-fade-in">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-button">
-              <Brain className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold">Memory Friend</h1>
-              <p className="text-lg text-muted-foreground">Hello, {profile?.full_name || 'Friend'}!</p>
-            </div>
-          </div>
-          <Button variant="ghost" onClick={handleSignOut} className="text-muted-foreground">
-            <LogOut className="w-6 h-6" />
-          </Button>
-        </header>
-
         {/* Daily Checklist */}
         <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <h2 className="text-2xl font-display font-semibold mb-4 flex items-center gap-2">

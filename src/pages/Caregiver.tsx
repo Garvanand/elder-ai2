@@ -148,30 +148,15 @@ export default function CaregiverPage() {
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl" />
+    return (
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl" />
 
-      <div className="max-w-6xl mx-auto px-4 py-8 relative z-10">
-        <header className="mb-12 animate-fade-in text-center md:text-left">
-          <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 transform hover:rotate-12 transition-transform duration-500">
-              <Brain className="w-9 h-9 text-white" />
-            </div>
-            <div>
-              <h1 className="text-5xl font-display font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-600 to-accent">
-                Caregiver Portal
-              </h1>
-              <p className="text-muted-foreground text-xl font-medium mt-1">
-                Bridging generations through shared memories
-              </p>
-            </div>
-          </div>
-        </header>
+        <div className="max-w-6xl mx-auto px-4 py-8 relative z-10">
+          <section className="relative overflow-hidden mb-12 p-1 animate-slide-up">
 
-        <section className="relative overflow-hidden mb-12 p-1 animate-slide-up">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 rounded-[2rem] blur-2xl" />
           <div className="relative memory-card bg-white/70 backdrop-blur-xl border-white/20 shadow-xl rounded-[2rem] p-8 md:p-12">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">

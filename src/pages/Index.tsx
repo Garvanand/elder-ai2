@@ -44,47 +44,17 @@ const Index = () => {
     },
   ];
 
-  return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] selection:bg-primary/20">
-      {/* Background Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-500/5 rounded-full blur-[120px]" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 px-6 py-6 border-b border-black/5 bg-white/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Memory Friend</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-              <a href="#how-it-works" className="hover:text-primary transition-colors">How it works</a>
-              <a href="#features" className="hover:text-primary transition-colors">Features</a>
-              <a href="#security" className="hover:text-primary transition-colors">Security</a>
-            </nav>
-            {!loading && user && profile ? (
-              <Button onClick={() => navigate(`/${profile.role}`)} className="rounded-full px-6 shadow-xl shadow-primary/20">
-                Go to Dashboard
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/auth" className="hidden sm:block text-sm font-semibold px-4">Sign In</Link>
-                <Link to="/auth">
-                  <Button className="rounded-full px-6 shadow-xl shadow-primary/20">Get Started</Button>
-                </Link>
-              </div>
-            )}
-          </div>
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] selection:bg-primary/20">
+        {/* Background Orbs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-500/5 rounded-full blur-[120px]" />
         </div>
-      </header>
 
-      <main className="relative z-10">
-        {/* Hero Section */}
+        <main className="relative z-10">
+          {/* Hero Section */}
+
         <section className="pt-24 pb-32 px-6 overflow-hidden">
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
             <motion.div 
