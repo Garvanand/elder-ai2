@@ -90,7 +90,7 @@ async function extractStructuredMemoryWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
 
     const prompt = `Analyze the following memory text and extract structured information. The memory type is: ${type}
 
@@ -112,7 +112,12 @@ Return ONLY a valid JSON object with this exact structure:
 The tags should be relevant keywords that help categorize this memory. Include the memory type "${type}" as a tag.
 Return only the JSON, no additional text.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        thinking_level: 'low'
+      } as any
+    });
     const response = result.response;
     const responseText = response.text().trim();
 
@@ -211,7 +216,7 @@ async function answerQuestionWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
 
     // Format memories for context
     const memoryContext = memories
@@ -237,7 +242,12 @@ After your answer, list the memory numbers (1, 2, 3, etc.) that you used, separa
 ANSWER: [your answer here]
 MEMORIES: [comma-separated memory numbers]`;
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        thinking_level: 'low'
+      } as any
+    });
     const response = result.response;
     const responseText = response.text().trim();
 
@@ -316,7 +326,7 @@ async function generateDailySummaryWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
 
     // Format memories for context
     const memoryList = memories
@@ -338,7 +348,12 @@ Instructions:
 
 Return only the summary text, no additional formatting or labels.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        thinking_level: 'low'
+      } as any
+    });
     const response = result.response;
     return response.text().trim();
   } catch (error) {
