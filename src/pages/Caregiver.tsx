@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import CaregiverDashboard from '@/components/caregiver/CaregiverDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import type { Memory, Question } from '@/types';
-import { Loader2, Brain, User, Calendar } from 'lucide-react';
+import { Loader2, Brain, User, Calendar, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -146,54 +146,73 @@ export default function CaregiverPage() {
       <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl" />
 
       <div className="max-w-6xl mx-auto px-4 py-8 relative z-10">
-        <header className="mb-12 animate-fade-in">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-hero flex items-center justify-center shadow-soft">
-              <Brain className="w-7 h-7 text-primary-foreground" />
+        <header className="mb-12 animate-fade-in text-center md:text-left">
+          <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 transform hover:rotate-12 transition-transform duration-500">
+              <Brain className="w-9 h-9 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-display font-bold tracking-tight">Caregiver Portal</h1>
-              <p className="text-muted-foreground text-lg italic">"Nurturing memories, one step at a time."</p>
+              <h1 className="text-5xl font-display font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-600 to-accent">
+                Caregiver Portal
+              </h1>
+              <p className="text-muted-foreground text-xl font-medium mt-1">
+                Bridging generations through shared memories
+              </p>
             </div>
           </div>
         </header>
 
-        <section className="memory-card mb-12 animate-slide-up bg-white/50 backdrop-blur-sm border-primary/10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <User className="w-6 h-6 text-primary" />
-                Connect with an Elder
-              </h2>
-              <p className="text-muted-foreground max-w-md">
-                Enter your loved one's email address to start managing their memories and wellbeing.
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <div className="relative flex-1 sm:min-w-[300px]">
-                <Input
-                  type="email"
-                  placeholder="elder@example.com"
-                  value={linkEmail}
-                  onChange={(e) => setLinkEmail(e.target.value)}
-                  className="pl-4 h-12 rounded-xl border-primary/20 focus:ring-primary/30"
-                />
+        <section className="relative overflow-hidden mb-12 p-1 animate-slide-up">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 rounded-[2rem] blur-2xl" />
+          <div className="relative memory-card bg-white/70 backdrop-blur-xl border-white/20 shadow-xl rounded-[2rem] p-8 md:p-12">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+              <div className="space-y-4 lg:max-w-md">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+                  <User className="w-3 h-3" />
+                  Family Connection
+                </div>
+                <h2 className="text-3xl font-display font-bold leading-tight">
+                  Connect with your loved one
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  Enter the email address of the elder you're caring for. Once linked, you'll gain access to their memory timeline and daily activity summaries.
+                </p>
               </div>
-              <Button 
-                onClick={handleLinkElder} 
-                disabled={linking} 
-                className="h-12 px-8 rounded-xl shadow-button bg-primary hover:bg-primary/90 transition-all"
-              >
-                {linking ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Linking…
-                  </>
-                ) : 'Connect Now'}
-              </Button>
+              
+              <div className="flex flex-col gap-4 w-full lg:max-w-sm">
+                <div className="space-y-2">
+                  <div className="relative group">
+                    <Input
+                      type="email"
+                      placeholder="elder@example.com"
+                      value={linkEmail}
+                      onChange={(e) => setLinkEmail(e.target.value)}
+                      className="pl-4 h-14 rounded-2xl border-primary/10 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all text-lg"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleLinkElder} 
+                    disabled={linking} 
+                    className="w-full h-14 rounded-2xl shadow-lg shadow-primary/25 bg-primary hover:bg-primary/90 text-lg font-bold transition-all hover:scale-[1.02] active:scale-95"
+                  >
+                    {linking ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Linking Account...
+                      </>
+                    ) : (
+                      <>
+                        Connect Now
+                        <PlusCircle className="w-5 h-5 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-center text-muted-foreground font-medium uppercase tracking-widest">
+                  Secure encrypted connection
+                </p>
+              </div>
             </div>
-          </div>
           
           {error && (
             <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm animate-fade-in">
@@ -201,18 +220,20 @@ export default function CaregiverPage() {
             </div>
           )}
           
-          {!elderId && !loading && !error && (
-            <div className="mt-6 p-8 text-center border-2 border-dashed border-muted rounded-2xl">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-muted-foreground" />
+            {!elderId && !loading && !error && (
+              <div className="mt-6 p-8 text-center border-2 border-dashed border-muted rounded-2xl">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-muted-foreground">Waiting for connection</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Once linked, you'll be able to see their daily activities and memories.
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-muted-foreground">Waiting for connection</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Once linked, you'll be able to see their daily activities and memories.
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </section>
+
 
         {elderId && (
           <div className="animate-fade-in delay-200">
