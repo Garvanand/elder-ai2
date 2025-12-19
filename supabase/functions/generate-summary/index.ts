@@ -81,7 +81,7 @@ Write a brief, encouraging summary (2-3 sentences) highlighting what was shared 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-1.5-flash-latest',
+        model: 'google/gemini-2.0-flash',
         messages: [
           { role: 'system', content: 'You are a caring assistant creating daily summaries for elderly users. Keep summaries warm, brief, and encouraging.' },
           { role: 'user', content: prompt }

@@ -127,7 +127,7 @@ Guidelines:
 
 Answer:`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {}
@@ -160,7 +160,7 @@ export async function extractMemoryIntelligence(rawText: string): Promise<{
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `Analyze this memory text from an elderly person:
 "${rawText}"
@@ -229,7 +229,7 @@ export async function generateWeeklyRecap(elderId: string): Promise<string> {
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const memoryFeed = memories.map(m => m.raw_text).join('\n');
     const prompt = `Create a "Weekly Life Recap" for an elderly person based on these memories:
