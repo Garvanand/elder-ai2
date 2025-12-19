@@ -170,10 +170,8 @@ export default function AuthPage() {
                         </button>
                       </div>
                     </div>
-
-                  </div>
-                </>
-              )}
+                  </>
+                )}
 
               <div className="space-y-2">
                 <label className="text-lg font-medium">Email</label>
