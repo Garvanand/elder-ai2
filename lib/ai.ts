@@ -90,7 +90,7 @@ async function extractStructuredMemoryWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
     const prompt = `Analyze the following memory text and extract structured information. The memory type is: ${type}
 
@@ -216,7 +216,7 @@ async function answerQuestionWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
     // Format memories for context
     const memoryContext = memories
@@ -326,7 +326,7 @@ async function generateDailySummaryWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
     // Format memories for context
     const memoryList = memories

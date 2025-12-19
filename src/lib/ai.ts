@@ -127,9 +127,14 @@ Guidelines:
 
 Answer:`;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
-  const result = await model.generateContent(prompt);
-  const answer = result.response.text().trim();
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        thinking_level: 'MINIMAL'
+      } as any
+    });
+    const answer = result.response.text().trim();
 
   // Simple relevance filtering
   const matchedMemories = matchMemoriesByKeyword(question, memories).slice(0, 3);
@@ -157,7 +162,7 @@ export async function extractMemoryIntelligence(rawText: string): Promise<{
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
     const prompt = `Analyze this memory text from an elderly person:
 "${rawText}"
@@ -228,7 +233,7 @@ export async function generateWeeklyRecap(elderId: string): Promise<string> {
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
     const memoryFeed = memories.map(m => m.raw_text).join('\n');
     const prompt = `Create a "Weekly Life Recap" for an elderly person based on these memories:
