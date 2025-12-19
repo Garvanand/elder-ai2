@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo } from 'lucide-react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSpeech } from '@/hooks/useSpeech';
 import { supabase } from '@/integrations/supabase/client';
 import { extractMemoryIntelligence, answerQuestion, generateWeeklyRecap } from '@/lib/ai';
 import type { Question, Routine, Reminder } from '@/types';
@@ -18,6 +19,7 @@ interface ElderDashboardProps {
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
+  const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
   const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines'>('home');
   const [memoryText, setMemoryText] = useState('');
   const [questionText, setQuestionText] = useState('');
@@ -168,18 +170,30 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {loading ? (
-                <div className="flex flex-col items-center py-12 space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xl text-muted-foreground italic">Thinking about your wonderful stories...</p>
-                </div>
-              ) : (
-                <div className="p-8 bg-white/50 rounded-3xl border border-white shadow-inner animate-slide-up">
-                  <p className="text-2xl leading-relaxed text-foreground font-medium">
-                    {recap}
-                  </p>
-                </div>
-              )}
+                {loading ? (
+                  <div className="flex flex-col items-center py-12 space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xl text-muted-foreground italic">Thinking about your wonderful stories...</p>
+                  </div>
+                ) : (
+                  <div className="relative p-8 bg-white/50 rounded-3xl border border-white shadow-inner animate-slide-up">
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      {supported.tts && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full w-12 h-12"
+                          onClick={() => isSpeaking ? stopSpeaking() : speak(recap)}
+                        >
+                          {isSpeaking ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-2xl leading-relaxed text-foreground font-medium">
+                      {recap}
+                    </p>
+                  </div>
+                )}
               
               {!loading && (
                 <Button
@@ -223,13 +237,26 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                 an important event, or anything else.
               </p>
               
-              <Textarea
-                elder
-                placeholder="Type your memory here..."
-                value={memoryText}
-                onChange={(e) => setMemoryText(e.target.value)}
-                rows={6}
-              />
+                <div className="relative">
+                  <Textarea
+                    elder
+                    placeholder="Type your memory here..."
+                    value={memoryText}
+                    onChange={(e) => setMemoryText(e.target.value)}
+                    rows={6}
+                    className="pr-16"
+                  />
+                  {supported.stt && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`absolute right-4 bottom-4 rounded-full w-12 h-12 ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-primary/10 text-primary'}`}
+                      onClick={() => startListening((text) => setMemoryText(prev => prev ? `${prev} ${text}` : text))}
+                    >
+                      {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                    </Button>
+                  )}
+                </div>
               
               <Button
                 variant="elderSuccess"
@@ -275,30 +302,55 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                 Ask me anything about your memories. I'll help you remember!
               </p>
               
-              <Textarea
-                elder
-                placeholder="What would you like to know?"
-                value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
-                rows={4}
-              />
-              
-              <Button
-                variant="elder"
-                size="elderLg"
-                onClick={handleAskQuestion}
-                disabled={loading || !questionText.trim()}
-                className="w-full"
-              >
-                {loading ? 'Thinking...' : 'Get Answer'}
-              </Button>
-              
-              {answer && (
-                <div className="mt-6 p-6 bg-secondary rounded-2xl animate-slide-up">
-                  <h3 className="text-xl font-semibold mb-3 text-secondary-foreground">Answer:</h3>
-                  <p className="text-xl leading-relaxed text-secondary-foreground">{answer}</p>
+                <div className="relative">
+                  <Textarea
+                    elder
+                    placeholder="What would you like to know?"
+                    value={questionText}
+                    onChange={(e) => setQuestionText(e.target.value)}
+                    rows={4}
+                    className="pr-16"
+                  />
+                  {supported.stt && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`absolute right-4 bottom-4 rounded-full w-12 h-12 ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-primary/10 text-primary'}`}
+                      onClick={() => startListening((text) => setQuestionText(prev => prev ? `${prev} ${text}` : text))}
+                    >
+                      {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                    </Button>
+                  )}
                 </div>
-              )}
+                
+                <Button
+                  variant="elder"
+                  size="elderLg"
+                  onClick={handleAskQuestion}
+                  disabled={loading || !questionText.trim()}
+                  className="w-full"
+                >
+                  {loading ? 'Thinking...' : 'Get Answer'}
+                </Button>
+                
+                {answer && (
+                  <div className="mt-6 p-6 bg-secondary rounded-2xl animate-slide-up relative group">
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      {supported.tts && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full w-10 h-10 bg-white/50 hover:bg-white"
+                          onClick={() => isSpeaking ? stopSpeaking() : speak(answer)}
+                        >
+                          {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        </Button>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3 text-secondary-foreground">Answer:</h3>
+                    <p className="text-xl leading-relaxed text-secondary-foreground pr-12">{answer}</p>
+                  </div>
+                )}
             </CardContent>
           </Card>
         </div>
