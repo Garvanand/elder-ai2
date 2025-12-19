@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import CaregiverDashboard from '@/components/caregiver/CaregiverDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import type { Memory, Question } from '@/types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Brain, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -140,39 +140,88 @@ export default function CaregiverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <section className="border rounded-lg p-6">
-          <h1 className="text-2xl font-display font-bold mb-2">Caregiver Dashboard</h1>
-          <p className="text-muted-foreground mb-4">
-            Link to an elder to view their memories and questions.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
-            <Input
-              type="email"
-              placeholder="elder@example.com"
-              value={linkEmail}
-              onChange={(e) => setLinkEmail(e.target.value)}
-              className="sm:max-w-xs"
-            />
-            <Button onClick={handleLinkElder} disabled={linking} className="w-full sm:w-auto">
-              {linking ? 'Linking…' : 'Link Elder'}
-            </Button>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl" />
+
+      <div className="max-w-6xl mx-auto px-4 py-8 relative z-10">
+        <header className="mb-12 animate-fade-in">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-hero flex items-center justify-center shadow-soft">
+              <Brain className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-display font-bold tracking-tight">Caregiver Portal</h1>
+              <p className="text-muted-foreground text-lg italic">"Nurturing memories, one step at a time."</p>
+            </div>
           </div>
-          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        </header>
+
+        <section className="memory-card mb-12 animate-slide-up bg-white/50 backdrop-blur-sm border-primary/10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <User className="w-6 h-6 text-primary" />
+                Connect with an Elder
+              </h2>
+              <p className="text-muted-foreground max-w-md">
+                Enter your loved one's email address to start managing their memories and wellbeing.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="relative flex-1 sm:min-w-[300px]">
+                <Input
+                  type="email"
+                  placeholder="elder@example.com"
+                  value={linkEmail}
+                  onChange={(e) => setLinkEmail(e.target.value)}
+                  className="pl-4 h-12 rounded-xl border-primary/20 focus:ring-primary/30"
+                />
+              </div>
+              <Button 
+                onClick={handleLinkElder} 
+                disabled={linking} 
+                className="h-12 px-8 rounded-xl shadow-button bg-primary hover:bg-primary/90 transition-all"
+              >
+                {linking ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Linking…
+                  </>
+                ) : 'Connect Now'}
+              </Button>
+            </div>
+          </div>
+          
+          {error && (
+            <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm animate-fade-in">
+              {error}
+            </div>
+          )}
+          
           {!elderId && !loading && !error && (
-            <p className="mt-3 text-sm text-muted-foreground">
-              No elder linked yet. Once linked, you&apos;ll see their activity below.
-            </p>
+            <div className="mt-6 p-8 text-center border-2 border-dashed border-muted rounded-2xl">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold text-muted-foreground">Waiting for connection</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Once linked, you'll be able to see their daily activities and memories.
+              </p>
+            </div>
           )}
         </section>
 
         {elderId && (
-          <CaregiverDashboard
-            memories={memories}
-            questions={questions}
-            onRefresh={fetchData}
-          />
+          <div className="animate-fade-in delay-200">
+            <CaregiverDashboard
+              memories={memories}
+              questions={questions}
+              onRefresh={fetchData}
+            />
+          </div>
         )}
       </div>
     </div>
