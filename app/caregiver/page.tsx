@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Loader2, RefreshCw, ChevronDown, ChevronUp, Download } from "lucide-react"
+import { Loader2, RefreshCw, ChevronDown, ChevronUp, Download, Users, History, MessageSquare, PieChart, Brain } from "lucide-react"
 import {
   getElderContext,
   getMemories,
@@ -15,8 +15,11 @@ import {
 } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import { AppHeader } from "@/components/memory-friend/app-header"
+import { MemoryTimeline } from "@/components/memory-friend/memory-timeline"
+import { CaregiverInsights } from "@/components/memory-friend/caregiver-insights"
 import { supabase } from "../../src/integrations/supabase/client"
 import type { Memory, Question, DailySummary } from "@/src/types"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true"
 
@@ -69,7 +72,6 @@ export default function CaregiverPage() {
     URL.revokeObjectURL(url)
   }
 
-  // Check auth (skip in dev mode)
   useEffect(() => {
     if (DEV_BYPASS_AUTH) {
       setAuthLoading(false)
@@ -88,19 +90,14 @@ export default function CaregiverPage() {
       const context = await getElderContext()
       if (!context.elderId) {
         setIsLoading(false)
-        toast({
-          title: "No elder selected",
-          description: "Link this caregiver account to an elder to view their data.",
-          variant: "destructive",
-        })
         return
       }
       setElderId(context.elderId)
 
       const [memData, qData, sData] = await Promise.all([
-        getMemories(context.elderId, { limit: 20 }).catch(() => []),
-        getQuestions(context.elderId, 10).catch(() => []),
-        getRecentSummaries(context.elderId, 7).catch(() => []),
+        getMemories(context.elderId, { limit: 50 }).catch(() => []),
+        getQuestions(context.elderId, 20).catch(() => []),
+        getRecentSummaries(context.elderId, 14).catch(() => []),
       ])
       setMemories(memData)
       setQuestions(qData)
@@ -118,7 +115,6 @@ export default function CaregiverPage() {
 
   useEffect(() => {
     loadData()
-    // Fetch user context for header
     getElderContext().then((ctx) => {
       setUserName(ctx.userName || null)
       setRole(ctx.role)
@@ -135,7 +131,7 @@ export default function CaregiverPage() {
         title: "Summary generated",
         description: "Today’s summary has been created.",
       })
-      const refreshed = await getRecentSummaries(elderId, 7)
+      const refreshed = await getRecentSummaries(elderId, 14)
       setSummaries(refreshed)
     } catch (err) {
       toast({
@@ -149,9 +145,7 @@ export default function CaregiverPage() {
   }
 
   const handleLinkElder = async () => {
-    if (!linkEmail.trim()) {
-      return
-    }
+    if (!linkEmail.trim()) return
     setLinking(true)
     try {
       await linkElderByEmail(linkEmail.trim())
@@ -172,33 +166,24 @@ export default function CaregiverPage() {
     }
   }
 
-  // Show loading during auth check
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     )
   }
 
-  // Show message if not authenticated (but allow in dev mode)
   if (!user && !DEV_BYPASS_AUTH) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full shadow-lg">
           <CardHeader>
-            <CardTitle>Not Signed In</CardTitle>
+            <CardTitle>Access Restricted</CardTitle>
+            <CardDescription>Please sign in to access the caregiver dashboard.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Please sign in to access the caregiver dashboard.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Note: In development, you can set NEXT_PUBLIC_DEV_BYPASS_AUTH=true to bypass auth.
-            </p>
+          <CardContent>
+            <Button className="w-full" onClick={() => window.location.href = '/auth'}>Go to Login</Button>
           </CardContent>
         </Card>
       </div>
@@ -206,220 +191,193 @@ export default function CaregiverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <AppHeader userName={userName || "Caregiver"} role={role || "caregiver"} />
-      <div className="px-4 py-8">
+      
+      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {DEV_BYPASS_AUTH && (
-          <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded-md text-sm text-yellow-800 dark:text-yellow-200">
-            ⚠️ DEV MODE: Auth bypassed
+          <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700 flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+            </span>
+            DEV MODE: Authentication bypassed
           </div>
         )}
-        <header className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Caregiver Dashboard</h1>
-          {elderId ? (
-            <p className="text-muted-foreground mt-1">Elder ID: {elderId}</p>
-          ) : (
-            <p className="text-muted-foreground mt-1">No elder linked yet</p>
-          )}
-        </div>
-        <Button onClick={handleGenerateToday} disabled={isGenerating} className="gap-2">
-          {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          Generate today’s summary
-        </Button>
-      </header>
 
-      {/* At-a-glance stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <Card className="border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Memories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{memories.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Questions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{questions.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Daily summaries</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{summaries.length}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {!elderId && (
-        <Card className="border mb-8">
-          <CardHeader>
-            <CardTitle>Link to an elder</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Enter the email address your elder used to sign up. You&apos;ll then be able to view their memories,
-              questions, and summaries.
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-display font-bold text-foreground tracking-tight">Caregiver Dashboard</h1>
+            <p className="text-muted-foreground text-lg mt-1">
+              Monitoring activity for <span className="text-foreground font-medium">{elderId ? `Elder ID: ${elderId.slice(0, 8)}...` : "no linked elder"}</span>
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Input
-                type="email"
-                placeholder="elder@example.com"
-                value={linkEmail}
-                onChange={(e) => setLinkEmail(e.target.value)}
-                className="sm:max-w-xs"
-              />
-              <Button onClick={handleLinkElder} disabled={linking} className="sm:w-auto w-full gap-2">
-                {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Link elder
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-muted-foreground gap-3">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading data...
+          </div>
+          <Button 
+            onClick={handleGenerateToday} 
+            disabled={isGenerating || !elderId} 
+            size="lg"
+            className="gap-2 shadow-button hover:shadow-button-hover transition-all"
+          >
+            {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <RefreshCw className="h-5 w-5" />}
+            Generate Intelligence Summary
+          </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Memories Timeline */}
-          <section className="space-y-3">
-            <Card className="border">
-              <CardHeader>
-                <CardTitle>Recent Memories</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {memories.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-2">No memories available yet.</p>
-                    <p className="text-sm text-muted-foreground">
-                      Memories will appear here once the elder starts adding them.
-                    </p>
+
+        {!elderId && (
+          <Card className="border-2 border-primary/20 bg-primary/5 mb-12 shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Link Your Elder
+              </CardTitle>
+              <CardDescription>Connect to your loved one's account to start receiving insights.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  type="email"
+                  placeholder="Enter elder's email address"
+                  value={linkEmail}
+                  onChange={(e) => setLinkEmail(e.target.value)}
+                  className="sm:max-w-md h-12 text-lg"
+                />
+                <Button onClick={handleLinkElder} disabled={linking} size="lg" className="sm:w-auto w-full">
+                  {linking && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Establish Link
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-lg font-medium">Synchronizing latest memory data...</p>
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {elderId && (
+              <>
+                <section>
+                  <div className="flex items-center gap-2 mb-4">
+                    <PieChart className="w-5 h-5 text-primary" />
+                    <h2 className="text-xl font-display font-semibold">Activity Overview</h2>
                   </div>
-                ) : (
-                  memories.map((m) => (
-                    <div key={m.id} className="border-b pb-3 last:border-b-0 last:pb-0">
-                      {m.image_url && (
-                        <img
-                          src={m.image_url}
-                          alt="Memory"
-                          className="w-full max-h-40 object-cover rounded mb-2 border"
-                        />
+                  <CaregiverInsights memories={memories} />
+                </section>
+
+                <Tabs defaultValue="timeline" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-8 h-12 bg-muted/50 p-1 rounded-xl">
+                    <TabsTrigger value="timeline" className="rounded-lg data-[state=active]:shadow-sm">
+                      <History className="w-4 h-4 mr-2" />
+                      Memory Timeline
+                    </TabsTrigger>
+                    <TabsTrigger value="questions" className="rounded-lg data-[state=active]:shadow-sm">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Q&A Interaction
+                    </TabsTrigger>
+                    <TabsTrigger value="summaries" className="rounded-lg data-[state=active]:shadow-sm">
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Daily Intelligence
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="timeline" className="focus-visible:ring-0">
+                    <MemoryTimeline memories={memories} />
+                  </TabsContent>
+
+                  <TabsContent value="questions" className="focus-visible:ring-0">
+                    <div className="grid gap-4">
+                      {questions.length === 0 ? (
+                        <Card className="border-dashed border-2 py-12 text-center">
+                          <p className="text-muted-foreground">No questions recorded yet.</p>
+                        </Card>
+                      ) : (
+                        questions.map((q) => (
+                          <Card key={q.id} className="border shadow-sm overflow-hidden group">
+                            <CardHeader className="bg-muted/30 pb-3">
+                              <div className="flex justify-between items-start">
+                                <CardTitle className="text-lg font-medium">{q.question_text}</CardTitle>
+                                <span className="text-xs text-muted-foreground font-mono">
+                                  {formatDate(q.created_at)}
+                                </span>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                              <div className="flex gap-3">
+                                <div className="mt-1">
+                                  <Brain className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-foreground leading-relaxed">
+                                    {q.answer_text || "Awaiting answer..."}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    Resolved at {formatTime(q.created_at)}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
                       )}
-                      <p className="text-foreground">{m.raw_text}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(m.created_at)} at {formatTime(m.created_at)}
-                      </p>
                     </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </section>
+                  </TabsContent>
 
-          {/* Right column */}
-          <section className="space-y-6">
-            <Card className="border">
-              <CardHeader>
-                <CardTitle>Recent Questions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {questions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-2">No questions asked yet.</p>
-                    <p className="text-sm text-muted-foreground">
-                      Questions and answers will appear here once the elder starts asking.
-                    </p>
-                  </div>
-                ) : (
-                  questions.map((q) => (
-                    <div key={q.id} className="border-b pb-3 last:border-b-0 last:pb-0">
-                      <p className="font-medium text-foreground">{q.question_text}</p>
-                      {q.answer_text && <p className="text-sm text-muted-foreground mt-1">{q.answer_text}</p>}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(q.created_at)} at {formatTime(q.created_at)}
-                      </p>
+                  <TabsContent value="summaries" className="focus-visible:ring-0">
+                    <div className="grid gap-6">
+                      {summaries.length === 0 ? (
+                        <Card className="border-dashed border-2 py-12 text-center">
+                          <p className="text-muted-foreground">No intelligence summaries generated.</p>
+                        </Card>
+                      ) : (
+                        summaries.map((s) => {
+                          const isExpanded = expandedSummaries.has(s.id)
+                          return (
+                            <Card key={s.id} className="border shadow-sm">
+                              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                <div>
+                                  <CardTitle className="text-xl font-display">{formatDate(s.date)}</CardTitle>
+                                  <CardDescription>Daily cognitive digest</CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDownloadSummary(s)}
+                                    className="h-9"
+                                  >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Export
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => toggleSummary(s.id)}
+                                    className="h-9"
+                                  >
+                                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <p className={`text-foreground leading-relaxed ${isExpanded ? "" : "line-clamp-3"}`}>
+                                  {s.summary_text}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          )
+                        })
+                      )}
                     </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border">
-              <CardHeader>
-                <CardTitle>Recent Summaries</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {summaries.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-2">No summaries generated yet.</p>
-                    <p className="text-sm text-muted-foreground">
-                      Generate a daily summary using the button above to see activity highlights.
-                    </p>
-                  </div>
-                ) : (
-                  summaries.map((s) => {
-                    const isExpanded = expandedSummaries.has(s.id)
-                    const shouldTruncate = s.summary_text.length > 120
-                    return (
-                      <div key={s.id} className="border-b pb-3 last:border-b-0 last:pb-0">
-                        <div className="flex items-center justify-between mb-1 gap-2">
-                          <p className="text-sm font-medium text-muted-foreground">{formatDate(s.date)}</p>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDownloadSummary(s)}
-                              className="h-6 px-2 text-xs"
-                            >
-                              <Download className="h-3 w-3 mr-1" />
-                              Download
-                            </Button>
-                            {shouldTruncate && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleSummary(s.id)}
-                                className="h-6 px-2 text-xs"
-                              >
-                                {isExpanded ? (
-                                  <>
-                                    <ChevronUp className="h-3 w-3 mr-1" />
-                                    Show less
-                                  </>
-                                ) : (
-                                  <>
-                                    <ChevronDown className="h-3 w-3 mr-1" />
-                                    Show more
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-foreground text-sm leading-relaxed">
-                          {isExpanded || !shouldTruncate ? s.summary_text : `${s.summary_text.slice(0, 120)}...`}
-                        </p>
-                      </div>
-                    )
-                  })
-                )}
-              </CardContent>
-            </Card>
-          </section>
-        </div>
-      )}
-      </div>
+                  </TabsContent>
+                </Tabs>
+              </>
+            )}
+          </div>
+        )}
+      </main>
     </div>
   )
 }
-
