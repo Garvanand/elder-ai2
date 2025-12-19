@@ -17,12 +17,7 @@ import CaregiverSignals from './CaregiverSignals';
 interface CaregiverDashboardProps {
   memories: Memory[];
   questions: Question[];
-  onRefresh: () => void;
-}
-
-interface CaregiverDashboardProps {
-  memories: Memory[];
-  questions: Question[];
+  signals: BehavioralSignal[];
   onRefresh: () => void;
 }
 

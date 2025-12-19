@@ -13,6 +13,7 @@ export default function CaregiverPage() {
   const navigate = useNavigate();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [signals, setSignals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [elderId, setElderId] = useState<string | null>(null);
   const [linkEmail, setLinkEmail] = useState('');
@@ -62,7 +63,7 @@ export default function CaregiverPage() {
       const currentElderId = links[0].elder_user_id as string;
       setElderId(currentElderId);
 
-      const [memoriesRes, questionsRes] = await Promise.all([
+      const [memoriesRes, questionsRes, signalsRes] = await Promise.all([
         supabase
           .from('memories')
           .select('*')
@@ -73,6 +74,11 @@ export default function CaregiverPage() {
           .select('*')
           .eq('elder_id', currentElderId)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('behavioral_signals')
+          .select('*')
+          .eq('elder_id', currentElderId)
+          .order('created_at', { ascending: false }),
       ]);
 
       if (memoriesRes.data) {
@@ -80,6 +86,9 @@ export default function CaregiverPage() {
       }
       if (questionsRes.data) {
         setQuestions(questionsRes.data as Question[]);
+      }
+      if (signalsRes.data) {
+        setSignals(signalsRes.data);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -240,6 +249,7 @@ export default function CaregiverPage() {
             <CaregiverDashboard
               memories={memories}
               questions={questions}
+              signals={signals}
               onRefresh={fetchData}
             />
           </div>

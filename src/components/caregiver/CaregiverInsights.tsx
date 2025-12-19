@@ -31,7 +31,23 @@ export default function CaregiverInsights({ memories }: CaregiverInsightsProps) 
     return Object.entries(types).map(([name, value]) => ({ name, value }));
   }, [memories]);
 
-  const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+    const toneData = useMemo(() => {
+      const tones: Record<string, number> = {};
+      memories.forEach(m => {
+        const tone = m.emotional_tone || 'neutral';
+        tones[tone] = (tones[tone] || 0) + 1;
+      });
+      return Object.entries(tones).map(([name, value]) => ({ name, value }));
+    }, [memories]);
+
+    const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+    const TONE_COLORS: Record<string, string> = {
+      happy: '#10b981',
+      nostalgic: '#8b5cf6',
+      neutral: '#64748b',
+      confused: '#f59e0b',
+      sad: '#3b82f6'
+    };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
@@ -112,6 +128,34 @@ export default function CaregiverInsights({ memories }: CaregiverInsightsProps) 
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                   {typeData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/50 backdrop-blur-sm border-primary/10 shadow-soft lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold">Emotional Tone Distribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={toneData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                />
+                <YAxis axisLine={false} tickLine={false} hide />
+                <Tooltip cursor={{ fill: 'transparent' }} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={60}>
+                  {toneData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={TONE_COLORS[entry.name] || '#CBD5E1'} />
                   ))}
                 </Bar>
               </BarChart>

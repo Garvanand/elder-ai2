@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,7 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractMemoryIntelligence, answerQuestion, generateWeeklyRecap } from '@/lib/ai';
-import type { Question } from '@/types';
+import type { Question, Routine, Reminder } from '@/types';
+import { format } from 'date-fns';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -17,12 +18,52 @@ interface ElderDashboardProps {
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
-  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap'>('home');
+  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines'>('home');
   const [memoryText, setMemoryText] = useState('');
   const [questionText, setQuestionText] = useState('');
   const [answer, setAnswer] = useState('');
   const [recap, setRecap] = useState('');
   const [loading, setLoading] = useState(false);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchReminders();
+    }
+  }, [user]);
+
+  const fetchReminders = async () => {
+    if (!user) return;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { data } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('elder_id', user.id)
+      .gte('due_at', today.toISOString())
+      .lt('due_at', tomorrow.toISOString())
+      .order('due_at', { ascending: true });
+    
+    if (data) setReminders(data as Reminder[]);
+  };
+
+  const handleCompleteReminder = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('reminders')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('id', id);
+      
+      if (error) throw error;
+      fetchReminders();
+      toast({ title: "Reminder completed!", description: "Great job!" });
+    } catch (error) {
+      toast({ title: "Error", description: "Could not update reminder.", variant: "destructive" });
+    }
+  };
 
   const handleAddMemory = async () => {
     if (!memoryText.trim() || !user) return;
@@ -284,41 +325,86 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
           </Button>
         </header>
 
+        {/* Daily Checklist */}
+        <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <h2 className="text-2xl font-display font-semibold mb-4 flex items-center gap-2">
+            <ListTodo className="w-6 h-6 text-primary" />
+            Today's Checklist
+          </h2>
+          <div className="space-y-3">
+            {reminders.length > 0 ? (
+              reminders.map((reminder) => (
+                <Card 
+                  key={reminder.id} 
+                  variant="memory" 
+                  className={`p-4 flex items-center justify-between transition-all ${reminder.status === 'completed' ? 'opacity-50 bg-slate-50' : ''}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${reminder.status === 'completed' ? 'bg-green-100' : 'bg-primary/10'}`}>
+                      {reminder.status === 'completed' ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <Clock className="w-6 h-6 text-primary" />}
+                    </div>
+                    <div>
+                      <p className={`text-xl font-medium ${reminder.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                        {reminder.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(reminder.due_at), 'h:mm a')}
+                      </p>
+                    </div>
+                  </div>
+                  {reminder.status === 'pending' && (
+                    <Button 
+                      variant="elderSuccess" 
+                      size="sm" 
+                      onClick={() => handleCompleteReminder(reminder.id)}
+                      className="rounded-xl px-6"
+                    >
+                      Done
+                    </Button>
+                  )}
+                </Card>
+              ))
+            ) : (
+              <Card className="p-8 text-center border-dashed bg-slate-50/50">
+                <CheckCircle2 className="w-10 h-10 text-green-500/30 mx-auto mb-2" />
+                <p className="text-muted-foreground italic text-lg">You've finished everything for now! Great job.</p>
+              </Card>
+            )}
+          </div>
+        </div>
+
         {/* Main Actions */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-4 mb-12">
           <Button
             variant="elder"
             size="elderLg"
             onClick={() => setView('addMemory')}
-            className="w-full justify-start gap-4 animate-slide-up"
-            style={{ animationDelay: '0.1s' }}
+            className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
           >
             <Plus className="w-8 h-8" />
             Add a Memory
           </Button>
           
-            <Button
-              variant="elderSecondary"
-              size="elderLg"
-              onClick={() => setView('askQuestion')}
-              className="w-full justify-start gap-4 animate-slide-up"
-              style={{ animationDelay: '0.2s' }}
-            >
-              <MessageCircleQuestion className="w-8 h-8" />
-              Ask a Question
-            </Button>
+          <Button
+            variant="elderSecondary"
+            size="elderLg"
+            onClick={() => setView('askQuestion')}
+            className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
+          >
+            <MessageCircleQuestion className="w-8 h-8" />
+            Ask a Question
+          </Button>
 
-            <Button
-              variant="elderOutline"
-              size="elderLg"
-              onClick={handleShowRecap}
-              className="w-full justify-start gap-4 animate-slide-up border-primary/20 bg-primary/5"
-              style={{ animationDelay: '0.3s' }}
-            >
-              <Brain className="w-8 h-8 text-primary" />
-              Your Life Recap
-            </Button>
-          </div>
+          <Button
+            variant="elderOutline"
+            size="elderLg"
+            onClick={handleShowRecap}
+            className="w-full justify-start gap-4 border-2 border-primary/20 bg-primary/5 shadow-lg hover:scale-[1.02] transition-transform"
+          >
+            <Brain className="w-8 h-8 text-primary" />
+            Your Life Recap
+          </Button>
+        </div>
 
           {/* Recent Questions */}
           {recentQuestions.length > 0 && (
