@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { extractMemoryMetadata, answerQuestion } from '@/lib/ai';
+import { extractMemoryIntelligence, answerQuestion, generateWeeklyRecap } from '@/lib/ai';
 import type { Question } from '@/types';
 
 interface ElderDashboardProps {
@@ -17,10 +17,11 @@ interface ElderDashboardProps {
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
-  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion'>('home');
+  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap'>('home');
   const [memoryText, setMemoryText] = useState('');
   const [questionText, setQuestionText] = useState('');
   const [answer, setAnswer] = useState('');
+  const [recap, setRecap] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleAddMemory = async () => {
@@ -29,7 +30,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     setLoading(true);
     try {
       // Extract metadata using AI
-      const metadata = await extractMemoryMetadata(memoryText);
+      const intel = await extractMemoryIntelligence(memoryText);
       
       // Save memory to database
       const { error } = await supabase
@@ -37,9 +38,11 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
         .insert({
           elder_id: user.id,
           raw_text: memoryText,
-          type: metadata.type as any,
-          tags: metadata.tags,
-          structured_json: metadata.structured,
+          type: intel.type as any,
+          tags: intel.tags,
+          structured_json: intel.structured,
+          emotional_tone: intel.emotional_tone,
+          confidence_score: intel.confidence_score,
         });
 
       if (error) throw error;
@@ -59,6 +62,20 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
         description: 'Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleShowRecap = async () => {
+    if (!user) return;
+    setLoading(true);
+    setView('recap');
+    try {
+      const text = await generateWeeklyRecap(user.id);
+      setRecap(text);
+    } catch (error) {
+      setRecap("You've shared some wonderful moments recently!");
     } finally {
       setLoading(false);
     }
@@ -89,6 +106,56 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const handleSignOut = async () => {
     await signOut();
   };
+
+  if (view === 'recap') {
+    return (
+      <div className="min-h-screen bg-background p-6 animate-fade-in">
+        <div className="max-w-2xl mx-auto">
+          <Button
+            variant="elderOutline"
+            onClick={() => setView('home')}
+            className="mb-6"
+          >
+            ← Go Back
+          </Button>
+          
+          <Card variant="elder" className="bg-primary/5 border-primary/20">
+            <CardHeader>
+              <CardTitle elder className="text-3xl flex items-center gap-3">
+                <Brain className="w-8 h-8 text-primary" />
+                Your Life Recap
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {loading ? (
+                <div className="flex flex-col items-center py-12 space-y-4">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xl text-muted-foreground italic">Thinking about your wonderful stories...</p>
+                </div>
+              ) : (
+                <div className="p-8 bg-white/50 rounded-3xl border border-white shadow-inner animate-slide-up">
+                  <p className="text-2xl leading-relaxed text-foreground font-medium">
+                    {recap}
+                  </p>
+                </div>
+              )}
+              
+              {!loading && (
+                <Button
+                  variant="elder"
+                  size="elderLg"
+                  onClick={() => setView('home')}
+                  className="w-full mt-4"
+                >
+                  That's lovely!
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'addMemory') {
     return (
@@ -230,21 +297,33 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
             Add a Memory
           </Button>
           
-          <Button
-            variant="elderSecondary"
-            size="elderLg"
-            onClick={() => setView('askQuestion')}
-            className="w-full justify-start gap-4 animate-slide-up"
-            style={{ animationDelay: '0.2s' }}
-          >
-            <MessageCircleQuestion className="w-8 h-8" />
-            Ask a Question
-          </Button>
-        </div>
+            <Button
+              variant="elderSecondary"
+              size="elderLg"
+              onClick={() => setView('askQuestion')}
+              className="w-full justify-start gap-4 animate-slide-up"
+              style={{ animationDelay: '0.2s' }}
+            >
+              <MessageCircleQuestion className="w-8 h-8" />
+              Ask a Question
+            </Button>
 
-        {/* Recent Questions */}
-        {recentQuestions.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <Button
+              variant="elderOutline"
+              size="elderLg"
+              onClick={handleShowRecap}
+              className="w-full justify-start gap-4 animate-slide-up border-primary/20 bg-primary/5"
+              style={{ animationDelay: '0.3s' }}
+            >
+              <Brain className="w-8 h-8 text-primary" />
+              Your Life Recap
+            </Button>
+          </div>
+
+          {/* Recent Questions */}
+          {recentQuestions.length > 0 && (
+            <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
+
             <h2 className="text-2xl font-display font-semibold mb-4 flex items-center gap-2">
               <History className="w-6 h-6 text-primary" />
               Recent Questions

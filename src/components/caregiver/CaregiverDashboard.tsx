@@ -1,16 +1,24 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Brain, LogOut, Calendar, Tag, Filter, MessageCircle, 
   Clock, User, Heart, Pill, Star, HelpCircle, 
-  TrendingUp, Search, PlusCircle, ArrowUpRight
+  TrendingUp, Search, PlusCircle, ArrowUpRight, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Memory, Question } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import type { Memory, Question, BehavioralSignal } from '@/types';
 import { format } from 'date-fns';
 import CaregiverInsights from './CaregiverInsights';
+import CaregiverSignals from './CaregiverSignals';
+
+interface CaregiverDashboardProps {
+  memories: Memory[];
+  questions: Question[];
+  onRefresh: () => void;
+}
 
 interface CaregiverDashboardProps {
   memories: Memory[];
@@ -40,10 +48,26 @@ const memoryTypeColors: Record<string, string> = {
 
 export default function CaregiverDashboard({ memories, questions, onRefresh }: CaregiverDashboardProps) {
   const { profile, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'memories' | 'questions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'memories' | 'questions'>('overview');
+  const [signals, setSignals] = useState<BehavioralSignal[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    fetchSignals();
+  }, [profile]);
+
+  const fetchSignals = async () => {
+    if (!profile?.elder_id) return;
+    const { data } = await supabase
+      .from('behavioral_signals')
+      .select('*')
+      .eq('elder_id', profile.elder_id)
+      .order('created_at', { ascending: false });
+    
+    if (data) setSignals(data as BehavioralSignal[]);
+  };
 
   // Get unique tags
   const allTags = useMemo(() => {
@@ -143,22 +167,34 @@ export default function CaregiverDashboard({ memories, questions, onRefresh }: C
       {/* Main Content Area */}
       <div className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/20 p-8 shadow-card">
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <Button
-            variant={activeTab === 'overview' ? 'default' : 'ghost'}
-            onClick={() => setActiveTab('overview')}
-            className={`rounded-xl h-12 px-6 ${activeTab === 'overview' ? 'shadow-button' : ''}`}
-          >
-            <Star className="w-4 h-4 mr-2" />
-            Overview
-          </Button>
-          <Button
-            variant={activeTab === 'memories' ? 'default' : 'ghost'}
-            onClick={() => setActiveTab('memories')}
-            className={`rounded-xl h-12 px-6 ${activeTab === 'memories' ? 'shadow-button' : ''}`}
-          >
-            <Brain className="w-4 h-4 mr-2" />
-            Memories
-          </Button>
+            <Button
+              variant={activeTab === 'overview' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('overview')}
+              className={`rounded-xl h-12 px-6 ${activeTab === 'overview' ? 'shadow-button' : ''}`}
+            >
+              <Star className="w-4 h-4 mr-2" />
+              Overview
+            </Button>
+            <Button
+              variant={activeTab === 'signals' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('signals')}
+              className={`rounded-xl h-12 px-6 ${activeTab === 'signals' ? 'shadow-button' : ''}`}
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Signals
+              {signals.length > 0 && (
+                <span className="ml-2 flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+              )}
+            </Button>
+            <Button
+              variant={activeTab === 'memories' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('memories')}
+              className={`rounded-xl h-12 px-6 ${activeTab === 'memories' ? 'shadow-button' : ''}`}
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Memories
+            </Button>
+
           <Button
             variant={activeTab === 'questions' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('questions')}
@@ -169,81 +205,74 @@ export default function CaregiverDashboard({ memories, questions, onRefresh }: C
           </Button>
         </div>
 
-        {activeTab === 'overview' && (
-          <div className="space-y-8 animate-slide-up">
-            <CaregiverInsights memories={memories} />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold flex items-center gap-2 text-primary">
-                    <Clock className="w-5 h-5" />
-                    Recent Activity
-                  </h3>
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('memories')} className="text-primary hover:text-primary/80">
-                    View all <ArrowUpRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </div>
-                <div className="space-y-4">
-                  {memories.slice(0, 4).map(memory => (
-                    <div key={memory.id} className="p-4 rounded-2xl bg-white/60 border border-primary/5 shadow-sm hover:shadow-md transition-all hover:translate-x-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`p-1.5 rounded-lg ${memoryTypeColors[memory.type]}`}>
-                          {memoryTypeIcons[memory.type]}
-                        </span>
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          {format(new Date(memory.created_at), 'MMM d, h:mm a')}
-                        </span>
+          {activeTab === 'overview' && (
+            <div className="space-y-8 animate-slide-up">
+              <CaregiverInsights memories={memories} />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <section className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold flex items-center gap-2 text-primary">
+                      <Clock className="w-5 h-5" />
+                      Recent Activity
+                    </h3>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('memories')} className="text-primary hover:text-primary/80">
+                      View all <ArrowUpRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {memories.slice(0, 4).map(memory => (
+                      <div key={memory.id} className="p-4 rounded-2xl bg-white/60 border border-primary/5 shadow-sm hover:shadow-md transition-all hover:translate-x-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`p-1.5 rounded-lg ${memoryTypeColors[memory.type]}`}>
+                            {memoryTypeIcons[memory.type]}
+                          </span>
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            {format(new Date(memory.created_at), 'MMM d, h:mm a')}
+                          </span>
+                        </div>
+                        <p className="text-sm line-clamp-2 font-medium">{memory.raw_text}</p>
                       </div>
-                      <p className="text-sm line-clamp-2 font-medium">{memory.raw_text}</p>
-                    </div>
-                  ))}
-                  {memories.length === 0 && (
-                    <div className="p-8 text-center bg-white/40 rounded-2xl border border-dashed border-primary/20">
-                      <p className="text-muted-foreground italic">No memories captured yet.</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-xl font-bold flex items-center gap-2 text-accent-foreground">
-                  <Tag className="w-5 h-5" />
-                  Popular Topics
-                </h3>
-                <div className="bg-white/40 backdrop-blur-sm p-6 rounded-2xl border border-primary/5">
-                  <div className="flex flex-wrap gap-2">
-                    {allTags.map(tag => (
-                      <span key={tag} className="px-4 py-2 rounded-xl bg-primary/5 text-primary text-sm font-semibold border border-primary/10 hover:bg-primary/10 transition-colors cursor-default">
-                        #{tag}
-                      </span>
                     ))}
-                    {allTags.length === 0 && (
-                      <div className="text-center w-full py-4">
-                        <p className="text-muted-foreground italic">No topics identified yet.</p>
-                        <p className="text-xs text-muted-foreground mt-1">Tags will appear as memories are added.</p>
+                    {memories.length === 0 && (
+                      <div className="p-8 text-center bg-white/40 rounded-2xl border border-dashed border-primary/20">
+                        <p className="text-muted-foreground italic">No memories captured yet.</p>
                       </div>
                     )}
                   </div>
-                </div>
+                </section>
 
-                <div className="mt-6">
-                  <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-lg overflow-hidden">
-                    <CardContent className="p-6 relative">
-                      <div className="relative z-10">
-                        <h4 className="font-bold text-lg mb-1">Quick Tip</h4>
-                        <p className="text-sm text-white/90 leading-relaxed">
-                          Try asking about childhood hobbies or favorite travels to uncover more detailed memories!
-                        </p>
-                      </div>
-                      <Brain className="absolute right-[-10px] bottom-[-10px] w-24 h-24 text-white/10" />
-                    </CardContent>
-                  </Card>
-                </div>
-              </section>
+                <section className="space-y-4">
+                  <h3 className="text-xl font-bold flex items-center gap-2 text-accent-foreground">
+                    <Tag className="w-5 h-5" />
+                    Popular Topics
+                  </h3>
+                  <div className="bg-white/40 backdrop-blur-sm p-6 rounded-2xl border border-primary/5">
+                    <div className="flex flex-wrap gap-2">
+                      {allTags.map(tag => (
+                        <span key={tag} className="px-4 py-2 rounded-xl bg-primary/5 text-primary text-sm font-semibold border border-primary/10 hover:bg-primary/10 transition-colors cursor-default">
+                          #{tag}
+                        </span>
+                      ))}
+                      {allTags.length === 0 && (
+                        <div className="text-center w-full py-4">
+                          <p className="text-muted-foreground italic">No topics identified yet.</p>
+                          <p className="text-xs text-muted-foreground mt-1">Tags will appear as memories are added.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {activeTab === 'signals' && (
+            <div className="animate-slide-up">
+              <CaregiverSignals signals={signals} onRefresh={fetchSignals} />
+            </div>
+          )}
+
 
         {activeTab === 'memories' && (
           <div className="animate-slide-up">

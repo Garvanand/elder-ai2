@@ -5,16 +5,14 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import type { Memory, AnswerResponse } from "@/types";
+import type { Memory, AnswerResponse, BehavioralSignal } from "@/types";
 
 
-// Get Gemini API key from environment (works in both Vite and Next.js)
+// Get Gemini API key from environment
 const getGeminiApiKey = (): string | null => {
   if (typeof window !== 'undefined') {
-    // Client-side: check import.meta.env (Vite)
     return (import.meta.env?.VITE_GEMINI_API_KEY as string) || null;
   }
-  // Server-side: check process.env
   return (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || null;
 };
 
@@ -39,24 +37,16 @@ export async function answerQuestion(
     throw new Error(memError.message || 'Failed to get answer');
   }
 
+  // Also track this as a potential behavioral signal (repeated questions)
+  await trackQuestionActivity(question, elderId);
+
   const apiKey = getGeminiApiKey();
   
   if (apiKey && memories && memories.length > 0) {
     try {
-      // Use Gemini API for intelligent answer
       return await answerQuestionWithGemini(question, memories as Memory[], apiKey);
     } catch (error: any) {
-      // Check if it's a quota/rate limit error
-      const isQuotaError = error?.message?.includes('quota') || 
-                          error?.message?.includes('429') ||
-                          error?.status === 429;
-      
-      if (isQuotaError) {
-        console.warn('Gemini API quota exceeded, using keyword matching fallback');
-      } else {
-        console.warn('Gemini API failed, falling back to keyword matching:', error);
-      }
-      // Fall through to keyword matching
+      console.warn('Gemini API failed, falling back to keyword matching:', error);
     }
   }
 
@@ -78,6 +68,34 @@ export async function answerQuestion(
 }
 
 /**
+ * Track question to detect "repeated question" behavioral signals
+ */
+async function trackQuestionActivity(question: string, elderId: string) {
+  const { data: recentQuestions } = await supabase
+    .from('questions')
+    .select('question_text')
+    .eq('elder_id', elderId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (recentQuestions && recentQuestions.length >= 3) {
+    const similarCount = recentQuestions.filter(q => 
+      q.question_text.toLowerCase().includes(question.toLowerCase().slice(0, 10))
+    ).length;
+
+    if (similarCount >= 2) {
+      await supabase.from('behavioral_signals').insert({
+        elder_id: elderId,
+        signal_type: 'repeated_question',
+        severity: 'low',
+        description: `Elder asked a similar question multiple times recently: "${question}"`,
+        metadata: { question }
+      });
+    }
+  }
+}
+
+/**
  * Answer question using Gemini API
  */
 async function answerQuestionWithGemini(
@@ -88,319 +106,142 @@ async function answerQuestionWithGemini(
   const { GoogleGenerativeAI } = await import('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(apiKey);
   
-  // Build context from memories
-  const memoryContext = memories.slice(0, 10).map((m, i) => 
-    `Memory ${i + 1}: ${m.raw_text}`
+  const memoryContext = memories.slice(0, 15).map((m, i) => 
+    `Memory ${i + 1}: ${m.raw_text} (Type: ${m.type})`
   ).join('\n\n');
 
-  const prompt = `You are a helpful memory assistant for an elderly person. Answer their question using their memories as context.
+  const prompt = `You are a warm, emotionally intelligent memory assistant for an elderly person. 
+Answer their question based ONLY on the provided memories.
 
 Question: "${question}"
 
-Relevant Memories:
+Memories Context:
 ${memoryContext}
 
-Instructions:
-- Answer in a warm, simple, and clear way
-- Use the memories to provide a helpful answer
-- If the memories don't directly answer the question, say so gently
-- Keep your answer to 2-3 sentences maximum
-- Be conversational and friendly
+Guidelines:
+- If the memories contain the answer, provide it warmly.
+- If not, say something like "I don't remember us talking about that yet, but I'd love to hear the story!"
+- Keep it to 1-2 short, simple sentences.
+- Focus on emotional connection.
+- Use names if available.
 
 Answer:`;
 
-  // Try multiple model names in order
-  const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
-  let lastError: any = null;
-  
-  for (const modelName of modelNames) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const answer = result.response.text().trim();
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const result = await model.generateContent(prompt);
+  const answer = result.response.text().trim();
 
-      // Find top 3 most relevant memories
-      const matchedMemories = memories.slice(0, 3);
+  // Simple relevance filtering
+  const matchedMemories = matchMemoriesByKeyword(question, memories).slice(0, 3);
 
-      return {
-        answer,
-        matchedMemories,
-      };
-    } catch (error: any) {
-      // If it's a 404 (model not found), try next model
-      if (error?.status === 404 || error?.message?.includes('404')) {
-        lastError = error;
-        continue;
-      }
-      // For other errors (quota, etc.), throw immediately
-      throw error;
-    }
-  }
-  
-  // If all models failed with 404, throw the last error
-  throw lastError || new Error('No available Gemini models');
+  return {
+    answer,
+    matchedMemories,
+  };
 }
 
 /**
- * Extract structured data from raw memory text
- * This can identify names, dates, relationships, etc.
+ * Extract structured intelligence from raw memory
  */
-export async function extractMemoryMetadata(rawText: string): Promise<{
+export async function extractMemoryIntelligence(rawText: string): Promise<{
   type: string;
   tags: string[];
+  emotional_tone: string;
+  confidence_score: number;
   structured: Record<string, unknown>;
 }> {
   const apiKey = getGeminiApiKey();
   
-  if (apiKey) {
-    try {
-      return await extractMemoryMetadataWithGemini(rawText, apiKey);
-    } catch (error: any) {
-      // Check if it's a quota/rate limit error
-      const isQuotaError = error?.message?.includes('quota') || 
-                          error?.message?.includes('429') ||
-                          error?.status === 429;
-      
-      if (isQuotaError) {
-        console.warn('Gemini API quota exceeded, using fallback extraction');
-      } else {
-        console.warn('Gemini API failed for metadata extraction, falling back:', error);
-      }
-      // Fall through to fallback
-    }
-  }
+  if (!apiKey) return extractMemoryIntelligenceNaive(rawText);
 
-  // Fallback to basic extraction
-  return extractMemoryMetadataNaive(rawText);
-}
+  try {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-/**
- * Extract metadata using Gemini API
- */
-async function extractMemoryMetadataWithGemini(
-  rawText: string,
-  apiKey: string
-): Promise<{
-  type: string;
-  tags: string[];
-  structured: Record<string, unknown>;
-}> {
-  const { GoogleGenerativeAI } = await import('@google/generative-ai');
-  const genAI = new GoogleGenerativeAI(apiKey);
-
-  const prompt = `Analyze this memory text and extract structured information:
-
+    const prompt = `Analyze this memory text from an elderly person:
 "${rawText}"
 
-Extract:
-1. Type: one of: story, person, event, medication, routine, preference, other
-2. Objects mentioned (keys, wallet, glasses, medications, etc.)
-3. Locations mentioned (places, addresses, rooms, etc.)
-4. People mentioned (names, relationships, etc.)
-5. Tags: relevant keywords (3-5 tags)
-
-Return ONLY valid JSON:
+Extract and return ONLY a JSON object:
 {
   "type": "story|person|event|medication|routine|preference|other",
-  "objects": ["object1", "object2"],
-  "locations": ["location1", "location2"],
-  "people": ["person1", "person2"],
-  "tags": ["tag1", "tag2", "tag3"]
+  "emotional_tone": "happy|nostalgic|confused|sad|neutral",
+  "confidence_score": 0.0 to 1.0 (how clear is the memory),
+  "tags": ["3-5 keywords"],
+  "structured": {
+    "people": [],
+    "locations": [],
+    "time": "if mentioned",
+    "key_details": []
+  }
+}`;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text().trim();
+    const jsonText = responseText.replace(/```json\n?|```/g, '').trim();
+    const parsed = JSON.parse(jsonText);
+
+    return {
+      type: parsed.type || 'other',
+      tags: parsed.tags || [],
+      emotional_tone: parsed.emotional_tone || 'neutral',
+      confidence_score: parsed.confidence_score || 0.8,
+      structured: parsed.structured || {},
+    };
+  } catch (error) {
+    console.error('Gemini intelligence extraction failed:', error);
+    return extractMemoryIntelligenceNaive(rawText);
+  }
 }
 
-Return only the JSON, no additional text.`;
-
-  // Try multiple model names in order
-  const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
-  let lastError: any = null;
-  
-  for (const modelName of modelNames) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text().trim();
-
-      // Parse JSON response (handle markdown code blocks if present)
-      let jsonText = responseText;
-      if (responseText.startsWith('```')) {
-        jsonText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      }
-
-      const parsed = JSON.parse(jsonText);
-
-      return {
-        type: parsed.type || 'other',
-        tags: parsed.tags || [],
-        structured: {
-          objects: parsed.objects || [],
-          locations: parsed.locations || [],
-          people: parsed.people || [],
-        },
-      };
-    } catch (error: any) {
-      // If it's a 404 (model not found), try next model
-      if (error?.status === 404 || error?.message?.includes('404')) {
-        lastError = error;
-        continue;
-      }
-      // For other errors (quota, etc.), throw immediately
-      throw error;
-    }
-  }
-  
-  // If all models failed with 404, throw the last error
-  throw lastError || new Error('No available Gemini models');
-}
-
-/**
- * Naive metadata extraction (fallback)
- */
-function extractMemoryMetadataNaive(rawText: string): {
-  type: string;
-  tags: string[];
-  structured: Record<string, unknown>;
-} {
-  const lowerText = rawText.toLowerCase();
-  const tags: string[] = [];
-  
-  // Check for common keywords
-  const keywords = {
-    medication: ['medication', 'medicine', 'pill', 'prescription', 'doctor'],
-    person: ['met', 'saw', 'visited', 'friend', 'family', 'grandson', 'granddaughter'],
-    event: ['birthday', 'wedding', 'anniversary', 'holiday', 'celebration'],
-    routine: ['morning', 'evening', 'breakfast', 'dinner', 'exercise', 'walk'],
-    preference: ['like', 'prefer', 'favorite', 'love', 'dislike'],
-  };
-
-  let detectedType = 'other';
-  for (const [type, words] of Object.entries(keywords)) {
-    if (words.some(word => lowerText.includes(word))) {
-      detectedType = type;
-      break;
-    }
-  }
-
-  // Simple tag extraction
-  const commonTags = ['keys', 'wallet', 'glasses', 'phone', 'medication'];
-  commonTags.forEach(tag => {
-    if (lowerText.includes(tag)) {
-      tags.push(tag);
-    }
-  });
-
+function extractMemoryIntelligenceNaive(rawText: string) {
   return {
-    type: detectedType,
-    tags,
+    type: 'other',
+    tags: [],
+    emotional_tone: 'neutral',
+    confidence_score: 0.5,
     structured: {},
   };
 }
 
 /**
- * Generate a daily summary from the day's memories and questions
+ * Generate a proactive "Life Recap" summary
  */
-export async function generateDailySummary(
-  elderId: string,
-  date: string
-): Promise<string> {
-  // Fetch memories for the date
-  const startDate = new Date(date);
-  startDate.setHours(0, 0, 0, 0);
-  const endDate = new Date(date);
-  endDate.setHours(23, 59, 59, 999);
-
-  const { data: memories, error: memError } = await supabase
+export async function generateWeeklyRecap(elderId: string): Promise<string> {
+  const { data: memories } = await supabase
     .from('memories')
     .select('*')
     .eq('elder_id', elderId)
-    .gte('created_at', startDate.toISOString())
-    .lte('created_at', endDate.toISOString())
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(30);
 
-  if (memError) {
-    console.error('Error fetching memories:', memError);
-    throw new Error('Failed to fetch memories');
-  }
-
-  if (!memories || memories.length === 0) {
-    return "No memories recorded for today.";
-  }
+  if (!memories || memories.length < 3) return "We're just starting to collect your beautiful stories. Keep sharing!";
 
   const apiKey = getGeminiApiKey();
-  
-  if (apiKey) {
-    try {
-      return await generateSummaryWithGemini(memories as Memory[], apiKey);
-    } catch (error: any) {
-      // Check if it's a quota/rate limit error
-      const isQuotaError = error?.message?.includes('quota') || 
-                          error?.message?.includes('429') ||
-                          error?.status === 429;
-      
-      if (isQuotaError) {
-        console.warn('Gemini API quota exceeded, using simple summary fallback');
-      } else {
-        console.warn('Gemini API failed for summary, falling back:', error);
-      }
-      // Fall through to fallback
-    }
-  }
+  if (!apiKey) return "You've been busy sharing memories lately!";
 
-  // Fallback: simple concatenation
-  return memories.map((m, i) => `${i + 1}. ${m.raw_text}`).join('\n\n');
+  try {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const memoryFeed = memories.map(m => m.raw_text).join('\n');
+    const prompt = `Create a "Weekly Life Recap" for an elderly person based on these memories:
+${memoryFeed}
+
+Tone: Warm, celebratory, dignified.
+Length: 3-4 short sentences.
+Focus: On what they've been talking about most and positive highlights.`;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (error) {
+    return "You've shared some wonderful moments this week!";
+  }
 }
 
 /**
- * Generate summary using Gemini API
- */
-async function generateSummaryWithGemini(
-  memories: Memory[],
-  apiKey: string
-): Promise<string> {
-  const { GoogleGenerativeAI } = await import('@google/generative-ai');
-  const genAI = new GoogleGenerativeAI(apiKey);
-
-  const memoryText = memories.map(m => m.raw_text).join('\n\n');
-
-  const prompt = `Create a warm, simple daily summary for an elderly person based on their memories from today.
-
-Memories:
-${memoryText}
-
-Instructions:
-- Write 3-5 sentences in simple, clear language
-- Be warm and encouraging
-- Highlight the most important moments
-- Use simple words and short sentences
-- Make it feel like a friendly conversation
-
-Summary:`;
-
-  // Try multiple model names in order
-  const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
-  let lastError: any = null;
-  
-  for (const modelName of modelNames) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      return result.response.text().trim();
-    } catch (error: any) {
-      // If it's a 404 (model not found), try next model
-      if (error?.status === 404 || error?.message?.includes('404')) {
-        lastError = error;
-        continue;
-      }
-      // For other errors (quota, etc.), throw immediately
-      throw error;
-    }
-  }
-  
-  // If all models failed with 404, throw the last error
-  throw lastError || new Error('No available Gemini models');
-}
-
-/**
- * Keyword-based memory matching (fallback when AI is unavailable)
+ * Keyword matching fallback
  */
 export function matchMemoriesByKeyword(
   question: string,
@@ -414,7 +255,7 @@ export function matchMemoriesByKeyword(
 
   return memories.filter(memory => {
     const text = memory.raw_text.toLowerCase();
-    const tags = memory.tags.map(t => t.toLowerCase());
+    const tags = (memory.tags || []).map(t => t.toLowerCase());
     
     return keywords.some(keyword => 
       text.includes(keyword) || tags.some(tag => tag.includes(keyword))

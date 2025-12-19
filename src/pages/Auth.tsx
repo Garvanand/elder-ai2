@@ -123,38 +123,54 @@ export default function AuthPage() {
                     />
                   </div>
                   
-                  <div className="space-y-3">
-                    <label className="text-lg font-medium">I am a...</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setRole('elder')}
-                        className={`p-4 rounded-xl border-2 transition-all ${
-                          role === 'elder'
-                            ? 'border-primary bg-primary/10 shadow-soft'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <Heart className={`w-8 h-8 mx-auto mb-2 ${role === 'elder' ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`text-lg font-medium ${role === 'elder' ? 'text-primary' : 'text-foreground'}`}>
-                          Memory User
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRole('caregiver')}
-                        className={`p-4 rounded-xl border-2 transition-all ${
-                          role === 'caregiver'
-                            ? 'border-primary bg-primary/10 shadow-soft'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <Users className={`w-8 h-8 mx-auto mb-2 ${role === 'caregiver' ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`text-lg font-medium ${role === 'caregiver' ? 'text-primary' : 'text-foreground'}`}>
-                          Caregiver
-                        </span>
-                      </button>
+                    <div className="space-y-3">
+                      <label className="text-lg font-medium">I am a...</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setRole('elder')}
+                          className={`p-4 rounded-xl border-2 transition-all ${
+                            role === 'elder'
+                              ? 'border-primary bg-primary/10 shadow-soft'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <Heart className={`w-8 h-8 mx-auto mb-2 ${role === 'elder' ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span className={`text-sm font-bold ${role === 'elder' ? 'text-primary' : 'text-foreground'}`}>
+                            Elder
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRole('caregiver')}
+                          className={`p-4 rounded-xl border-2 transition-all ${
+                            role === 'caregiver'
+                              ? 'border-primary bg-primary/10 shadow-soft'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <Users className={`w-8 h-8 mx-auto mb-2 ${role === 'caregiver' ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span className={`text-sm font-bold ${role === 'caregiver' ? 'text-primary' : 'text-foreground'}`}>
+                            Caregiver
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRole('family')}
+                          className={`p-4 rounded-xl border-2 transition-all ${
+                            role === 'family'
+                              ? 'border-primary bg-primary/10 shadow-soft'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <Heart className={`w-8 h-8 mx-auto mb-2 ${role === 'family' ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span className={`text-sm font-bold ${role === 'family' ? 'text-primary' : 'text-foreground'}`}>
+                            Family
+                          </span>
+                        </button>
+                      </div>
                     </div>
+
                   </div>
                 </>
               )}
