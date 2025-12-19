@@ -51,7 +51,7 @@ Respond in JSON format only:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-3-pro-preview',
+        model: 'google/gemini-1.5-flash-latest',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: rawText }

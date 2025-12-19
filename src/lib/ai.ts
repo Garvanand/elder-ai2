@@ -127,12 +127,10 @@ Guidelines:
 
 Answer:`;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        thinking_level: 'MINIMAL'
-      } as any
+      generationConfig: {}
     });
     const answer = result.response.text().trim();
 
@@ -162,7 +160,7 @@ export async function extractMemoryIntelligence(rawText: string): Promise<{
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const prompt = `Analyze this memory text from an elderly person:
 "${rawText}"
@@ -183,9 +181,7 @@ Extract and return ONLY a JSON object:
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        thinking_level: 'low'
-      } as any
+      generationConfig: {}
     });
     const responseText = result.response.text().trim();
     const jsonText = responseText.replace(/```json\n?|```/g, '').trim();
@@ -233,7 +229,7 @@ export async function generateWeeklyRecap(elderId: string): Promise<string> {
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const memoryFeed = memories.map(m => m.raw_text).join('\n');
     const prompt = `Create a "Weekly Life Recap" for an elderly person based on these memories:
@@ -245,9 +241,7 @@ Focus: On what they've been talking about most and positive highlights.`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        thinking_level: 'low'
-      } as any
+      generationConfig: {}
     });
     return result.response.text().trim();
   } catch (error) {

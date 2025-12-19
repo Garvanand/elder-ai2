@@ -90,7 +90,7 @@ async function extractStructuredMemoryWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const prompt = `Analyze the following memory text and extract structured information. The memory type is: ${type}
 
@@ -114,9 +114,7 @@ Return only the JSON, no additional text.`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        thinking_level: 'low'
-      } as any
+generationConfig: {}
     });
     const response = result.response;
     const responseText = response.text().trim();
@@ -216,7 +214,7 @@ async function answerQuestionWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     // Format memories for context
     const memoryContext = memories
@@ -244,9 +242,7 @@ MEMORIES: [comma-separated memory numbers]`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        thinking_level: 'low'
-      } as any
+generationConfig: {}
     });
     const response = result.response;
     const responseText = response.text().trim();
@@ -326,7 +322,7 @@ async function generateDailySummaryWithGemini(
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     // Format memories for context
     const memoryList = memories
@@ -350,9 +346,7 @@ Return only the summary text, no additional formatting or labels.`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        thinking_level: 'low'
-      } as any
+generationConfig: {}
     });
     const response = result.response;
     return response.text().trim();
