@@ -56,9 +56,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY is not configured');
     }
 
     const memoriesText = memories.map((m: any) => `- ${m.raw_text}`).join('\n');
@@ -74,18 +74,19 @@ ${questionsText || 'No questions today.'}
 
 Write a brief, encouraging summary (2-3 sentences) highlighting what was shared and any patterns or important information. Use a warm, friendly tone.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-1.5-flash',
+        model: 'openai/gpt-oss-120b',
         messages: [
           { role: 'system', content: 'You are a caring assistant creating daily summaries for elderly users. Keep summaries warm, brief, and encouraging.' },
           { role: 'user', content: prompt }
         ],
+        reasoning_effort: 'medium',
       }),
     });
 

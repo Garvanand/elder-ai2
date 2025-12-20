@@ -47,10 +47,10 @@ serve(async (req) => {
       `Memory ${i + 1} (${m.type}): ${m.raw_text}`
     ).join('\n\n') || 'No memories recorded yet.';
 
-    // Call Lovable AI Gateway
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    // Call Groq API
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY is not configured');
     }
 
     const systemPrompt = `You are a warm, patient, and caring memory assistant for elderly users. Your role is to help answer questions based on the memories that have been shared with you.
@@ -66,18 +66,19 @@ Guidelines:
 Here are the user's recorded memories:
 ${memoryContext}`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-1.5-flash',
+        model: 'openai/gpt-oss-120b',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question }
         ],
+        reasoning_effort: 'medium',
       }),
     });
 

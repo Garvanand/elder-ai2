@@ -6,14 +6,15 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Memory, AnswerResponse, BehavioralSignal } from "@/types";
+import { Groq } from 'groq-sdk';
 
 
-// Get Gemini API key from environment
-const getGeminiApiKey = (): string | null => {
+// Get Groq API key from environment
+const getGroqApiKey = (): string | null => {
   if (typeof window !== 'undefined') {
-    return (import.meta.env?.VITE_GEMINI_API_KEY as string) || null;
+    return (import.meta.env?.VITE_GROQ_API_KEY as string) || null;
   }
-  return (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || null;
+  return (typeof process !== 'undefined' && process.env?.GROQ_API_KEY) || null;
 };
 
 
@@ -40,13 +41,13 @@ export async function answerQuestion(
   // Also track this as a potential behavioral signal (repeated questions)
   await trackQuestionActivity(question, elderId);
 
-  const apiKey = getGeminiApiKey();
+  const apiKey = getGroqApiKey();
   
   if (apiKey && memories && memories.length > 0) {
     try {
-      return await answerQuestionWithGemini(question, memories as Memory[], apiKey);
+      return await answerQuestionWithGroq(question, memories as Memory[], apiKey);
     } catch (error: any) {
-      console.warn('Gemini API failed, falling back to keyword matching:', error);
+      console.warn('Groq API failed, falling back to keyword matching:', error);
     }
   }
 
@@ -96,15 +97,14 @@ async function trackQuestionActivity(question: string, elderId: string) {
 }
 
 /**
- * Answer question using Gemini API
+ * Answer question using Groq API
  */
-async function answerQuestionWithGemini(
+async function answerQuestionWithGroq(
   question: string,
   memories: Memory[],
   apiKey: string
 ): Promise<AnswerResponse> {
-  const { GoogleGenerativeAI } = await import('@google/generative-ai');
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
   
   const memoryContext = memories.slice(0, 15).map((m, i) => 
     `Memory ${i + 1}: ${m.raw_text} (Type: ${m.type})`
@@ -127,12 +127,22 @@ Guidelines:
 
 Answer:`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {}
-    });
-    const answer = result.response.text().trim();
+  const chatCompletion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    model: "openai/gpt-oss-120b",
+    temperature: 1,
+    max_completion_tokens: 1024,
+    top_p: 1,
+    stream: false,
+    reasoning_effort: "medium",
+  });
+
+  const answer = chatCompletion.choices[0]?.message?.content?.trim() || "";
 
   // Simple relevance filtering
   const matchedMemories = matchMemoriesByKeyword(question, memories).slice(0, 3);
@@ -153,14 +163,12 @@ export async function extractMemoryIntelligence(rawText: string): Promise<{
   confidence_score: number;
   structured: Record<string, unknown>;
 }> {
-  const apiKey = getGeminiApiKey();
+  const apiKey = getGroqApiKey();
   
   if (!apiKey) return extractMemoryIntelligenceNaive(rawText);
 
   try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
 
     const prompt = `Analyze this memory text from an elderly person:
 "${rawText}"
@@ -179,11 +187,22 @@ Extract and return ONLY a JSON object:
   }
 }`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {}
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "openai/gpt-oss-120b",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false,
+      reasoning_effort: "medium",
     });
-    const responseText = result.response.text().trim();
+
+    const responseText = chatCompletion.choices[0]?.message?.content?.trim() || "";
     const jsonText = responseText.replace(/```json\n?|```/g, '').trim();
     const parsed = JSON.parse(jsonText);
 
@@ -223,13 +242,11 @@ export async function generateWeeklyRecap(elderId: string): Promise<string> {
 
   if (!memories || memories.length < 3) return "We're just starting to collect your beautiful stories. Keep sharing!";
 
-  const apiKey = getGeminiApiKey();
+  const apiKey = getGroqApiKey();
   if (!apiKey) return "You've been busy sharing memories lately!";
 
   try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
 
     const memoryFeed = memories.map(m => m.raw_text).join('\n');
     const prompt = `Create a "Weekly Life Recap" for an elderly person based on these memories:
@@ -239,11 +256,22 @@ Tone: Warm, celebratory, dignified.
 Length: 3-4 short sentences.
 Focus: On what they've been talking about most and positive highlights.`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {}
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "openai/gpt-oss-120b",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false,
+      reasoning_effort: "medium",
     });
-    return result.response.text().trim();
+
+    return chatCompletion.choices[0]?.message?.content?.trim() || "You've shared some wonderful moments this week!";
   } catch (error) {
     return "You've shared some wonderful moments this week!";
   }

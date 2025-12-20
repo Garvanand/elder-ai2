@@ -49,6 +49,7 @@
     "date-fns": "latest",
     "embla-carousel-react": "latest",
     "framer-motion": "^12.23.26",
+    "groq-sdk": "^0.37.0",
     "input-otp": "latest",
     "jiti": "latest",
     "less": "latest",

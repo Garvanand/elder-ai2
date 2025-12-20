@@ -9,6 +9,7 @@
  */
 
 import type { Memory } from '../src/types';
+import { Groq } from 'groq-sdk';
 
 /**
  * Keywords to detect in memory text for naive tag extraction
@@ -50,10 +51,10 @@ export async function extractStructuredMemory(
   text: string,
   type: string
 ): Promise<StructuredMemory> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (apiKey) {
-    return extractStructuredMemoryWithGemini(text, type, apiKey);
+    return extractStructuredMemoryWithGroq(text, type, apiKey);
   }
 
   return extractStructuredMemoryNaive(text);
@@ -80,17 +81,15 @@ function extractStructuredMemoryNaive(text: string): StructuredMemory {
 }
 
 /**
- * Gemini API implementation for structured memory extraction
+ * Groq API implementation for structured memory extraction
  */
-async function extractStructuredMemoryWithGemini(
+async function extractStructuredMemoryWithGroq(
   text: string,
   type: string,
   apiKey: string
 ): Promise<StructuredMemory> {
   try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const groq = new Groq({ apiKey });
 
     const prompt = `Analyze the following memory text and extract structured information. The memory type is: ${type}
 
@@ -112,14 +111,22 @@ Return ONLY a valid JSON object with this exact structure:
 The tags should be relevant keywords that help categorize this memory. Include the memory type "${type}" as a tag.
 Return only the JSON, no additional text.`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-generationConfig: {}
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "openai/gpt-oss-120b",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false,
+      reasoning_effort: "medium",
     });
-    const response = result.response;
-    const responseText = response.text().trim();
 
-    // Parse JSON response (handle markdown code blocks if present)
+    const responseText = chatCompletion.choices[0]?.message?.content?.trim() || "";
     let jsonText = responseText;
     if (responseText.startsWith('```')) {
       jsonText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -136,8 +143,7 @@ generationConfig: {}
       tags: parsed.tags || [],
     };
   } catch (error) {
-    console.error('Error calling Gemini API for memory extraction:', error);
-    // Fall back to naive implementation
+    console.error('Error calling Groq API for memory extraction:', error);
     return extractStructuredMemoryNaive(text);
   }
 }
@@ -152,10 +158,10 @@ export async function answerQuestionFromMemories(
   question: string,
   memories: Memory[]
 ): Promise<AnswerResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (apiKey && memories.length > 0) {
-    return answerQuestionWithGemini(question, memories, apiKey);
+    return answerQuestionWithGroq(question, memories, apiKey);
   }
 
   return answerQuestionNaive(question, memories);
@@ -204,17 +210,15 @@ function answerQuestionNaive(question: string, memories: Memory[]): AnswerResult
 }
 
 /**
- * Gemini API implementation for question answering
+ * Groq API implementation for question answering
  */
-async function answerQuestionWithGemini(
+async function answerQuestionWithGroq(
   question: string,
   memories: Memory[],
   apiKey: string
 ): Promise<AnswerResult> {
   try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const groq = new Groq({ apiKey });
 
     // Format memories for context
     const memoryContext = memories
@@ -240,12 +244,22 @@ After your answer, list the memory numbers (1, 2, 3, etc.) that you used, separa
 ANSWER: [your answer here]
 MEMORIES: [comma-separated memory numbers]`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-generationConfig: {}
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "openai/gpt-oss-120b",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false,
+      reasoning_effort: "medium",
     });
-    const response = result.response;
-    const responseText = response.text().trim();
+
+    const responseText = chatCompletion.choices[0]?.message?.content?.trim() || "";
 
     // Parse response
     const answerMatch = responseText.match(/ANSWER:\s*(.+?)(?=MEMORIES:|$)/is);
@@ -272,7 +286,7 @@ generationConfig: {}
       matchedMemories,
     };
   } catch (error) {
-    console.error('Error calling Gemini API for question answering:', error);
+    console.error('Error calling Groq API for question answering:', error);
     // Fall back to naive implementation
     return answerQuestionNaive(question, memories);
   }
@@ -281,14 +295,14 @@ generationConfig: {}
 /**
  * Generate a daily summary from memories
  * 
- * If GEMINI_API_KEY is set, uses Gemini to generate a 3-5 sentence summary.
+ * If GROQ_API_KEY is set, uses Groq to generate a 3-5 sentence summary.
  * Otherwise creates a simple bullet-point list.
  */
 export async function generateDailySummary(memories: Memory[]): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (apiKey && memories.length > 0) {
-    return generateDailySummaryWithGemini(memories, apiKey);
+    return generateDailySummaryWithGroq(memories, apiKey);
   }
 
   return generateDailySummaryNaive(memories);
@@ -313,16 +327,14 @@ function generateDailySummaryNaive(memories: Memory[]): string {
 }
 
 /**
- * Gemini API implementation for daily summary generation
+ * Groq API implementation for daily summary generation
  */
-async function generateDailySummaryWithGemini(
+async function generateDailySummaryWithGroq(
   memories: Memory[],
   apiKey: string
 ): Promise<string> {
   try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const groq = new Groq({ apiKey });
 
     // Format memories for context
     const memoryList = memories
@@ -344,14 +356,24 @@ Instructions:
 
 Return only the summary text, no additional formatting or labels.`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-generationConfig: {}
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "openai/gpt-oss-120b",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false,
+      reasoning_effort: "medium",
     });
-    const response = result.response;
-    return response.text().trim();
+
+    return chatCompletion.choices[0]?.message?.content?.trim() || "";
   } catch (error) {
-    console.error('Error calling Gemini API for summary generation:', error);
+    console.error('Error calling Groq API for summary generation:', error);
     // Fall back to naive implementation
     return generateDailySummaryNaive(memories);
   }
