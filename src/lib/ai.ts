@@ -9,12 +9,17 @@ import type { Memory, AnswerResponse, BehavioralSignal } from "@/types";
 import { Groq } from 'groq-sdk';
 
 
-// Get Groq API key from environment
+// Safe env access for both Next.js and Vite builds
+const nextEnv =
+  typeof process !== 'undefined' && process.env ? process.env : {};
+
 const getGroqApiKey = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return (import.meta.env?.VITE_GROQ_API_KEY as string) || null;
-  }
-  return (typeof process !== 'undefined' && process.env?.GROQ_API_KEY) || null;
+  return (
+    nextEnv.VITE_GROQ_API_KEY ||
+    nextEnv.GROQ_API_KEY ||
+    (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_GROQ_API_KEY : '') ||
+    null
+  );
 };
 
 

@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextEnv = typeof process !== 'undefined' && process.env ? process.env : {};
     const supabaseUrl =
       nextEnv.NEXT_PUBLIC_SUPABASE_URL ||
-      import.meta.env.VITE_SUPABASE_URL;
+      (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : '');
     if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
       setLoading(false);
       return;
