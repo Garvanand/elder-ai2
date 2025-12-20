@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
-  onRefresh: () => void;
+  onRefresh: (silent?: boolean) => void;
 }
 
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
@@ -97,7 +97,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       
       setMemoryText('');
       setView('home');
-      onRefresh();
+      onRefresh(true);
     } catch (error) {
       console.error('Error saving memory:', error);
       toast({
@@ -131,10 +131,10 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     setAnswer('');
     
     try {
-      const response = await answerQuestion(questionText, user.id);
-      setAnswer(response.answer);
-      onRefresh();
-    } catch (error) {
+        const response = await answerQuestion(questionText, user.id);
+        setAnswer(response.answer);
+        onRefresh(true);
+      } catch (error) {
       console.error('Error getting answer:', error);
       toast({
         title: 'Could not get answer',

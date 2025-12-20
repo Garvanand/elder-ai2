@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ElderDashboard from '@/components/elder/ElderDashboard';
 import CaregiverDashboard from '@/components/caregiver/CaregiverDashboard';
 import { supabase } from '@/integrations/supabase/client';
-import type { Memory, Question } from '@/types';
+import type { Memory, Question, BehavioralSignal } from '@/types';
 import { Loader2 } from 'lucide-react';
 
 export default function ElderPage() {
@@ -12,6 +12,7 @@ export default function ElderPage() {
   const navigate = useNavigate();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [signals, setSignals] = useState<BehavioralSignal[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,17 +21,17 @@ export default function ElderPage() {
     }
   }, [user, authLoading, navigate]);
 
-  const fetchData = async () => {
+  const fetchData = async (silent = false) => {
     if (!user) return;
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       // Get the elder ID (self if elder, elder_id from profile if caregiver)
       const elderId = profile?.role === 'caregiver' && profile?.elder_id 
         ? profile.elder_id 
         : user.id;
 
-      const [memoriesRes, questionsRes] = await Promise.all([
+      const [memoriesRes, questionsRes, signalsRes] = await Promise.all([
         supabase
           .from('memories')
           .select('*')
@@ -38,6 +39,11 @@ export default function ElderPage() {
           .order('created_at', { ascending: false }),
         supabase
           .from('questions')
+          .select('*')
+          .eq('elder_id', elderId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('behavioral_signals')
           .select('*')
           .eq('elder_id', elderId)
           .order('created_at', { ascending: false }),
@@ -49,10 +55,13 @@ export default function ElderPage() {
       if (questionsRes.data) {
         setQuestions(questionsRes.data as Question[]);
       }
+      if (signalsRes.data) {
+        setSignals(signalsRes.data as BehavioralSignal[]);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -83,6 +92,7 @@ export default function ElderPage() {
       <CaregiverDashboard
         memories={memories}
         questions={questions}
+        signals={signals}
         onRefresh={fetchData}
       />
     );

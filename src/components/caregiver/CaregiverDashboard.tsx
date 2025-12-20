@@ -18,51 +18,15 @@ interface CaregiverDashboardProps {
   memories: Memory[];
   questions: Question[];
   signals: BehavioralSignal[];
-  onRefresh: () => void;
+  onRefresh: (silent?: boolean) => void;
 }
 
-const memoryTypeIcons: Record<string, React.ReactNode> = {
-  story: <Star className="w-5 h-5" />,
-  person: <User className="w-5 h-5" />,
-  event: <Calendar className="w-5 h-5" />,
-  medication: <Pill className="w-5 h-5" />,
-  routine: <Clock className="w-5 h-5" />,
-  preference: <Heart className="w-5 h-5" />,
-  other: <HelpCircle className="w-5 h-5" />,
-};
-
-const memoryTypeColors: Record<string, string> = {
-  story: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  person: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  event: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  medication: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  routine: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  preference: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
-  other: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300',
-};
-
-export default function CaregiverDashboard({ memories, questions, onRefresh }: CaregiverDashboardProps) {
+export default function CaregiverDashboard({ memories, questions, signals, onRefresh }: CaregiverDashboardProps) {
   const { profile, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'memories' | 'questions'>('overview');
-  const [signals, setSignals] = useState<BehavioralSignal[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    fetchSignals();
-  }, [profile]);
-
-  const fetchSignals = async () => {
-    if (!profile?.elder_id) return;
-    const { data } = await supabase
-      .from('behavioral_signals')
-      .select('*')
-      .eq('elder_id', profile.elder_id)
-      .order('created_at', { ascending: false });
-    
-    if (data) setSignals(data as BehavioralSignal[]);
-  };
 
   // Get unique tags
   const allTags = useMemo(() => {
