@@ -2,6 +2,19 @@ import { useState, useEffect, useMemo } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext";
+import { cn } from "../lib/utils";
+import { 
+  BrainCircuit, 
+  LayoutDashboard, 
+  Users, 
+  Heart, 
+  Bell, 
+  LogOut, 
+  X, 
+  Menu 
+} from "lucide-react";
+import { Button } from "./ui/button";
 
 // Polyfill for process if it doesn't exist (primarily for Vite dev environment)
 if (typeof process === 'undefined') {
@@ -9,27 +22,22 @@ if (typeof process === 'undefined') {
   globalThis.process = { env: {} };
 }
 
-export const Navbar = () => {
-  const { user, profile, signOut } = useAuth();
+  export const Navbar = () => {
+    const { user, profile, signOut } = useAuth();
   
-  // Detect if we are in a Next.js environment
-  const isNext = useMemo(() => {
-    try {
-      return !!require.resolve('next/link');
-    } catch (e) {
-      return false;
-    }
-  }, []);
-
-  // Safe Link component that works in both Vite and Next.js
-  const SafeLink = ({ href, children, ...props }: any) => {
-    // If it's a relative path and we're in Vite, use RouterLink
-    if (typeof window !== 'undefined' && !window.location.port.includes('3000') && !window.__NEXT_DATA__) {
-      return <RouterLink to={href} {...props}>{children}</RouterLink>;
-    }
-    // Otherwise use NextLink
-    return <NextLink href={href} {...props}>{children}</NextLink>;
-  };
+    // Safe Link component that works in both Vite and Next.js
+    const SafeLink = ({ href, children, ...props }: any) => {
+      // If we're in Vite (local dev), use RouterLink
+      const isVite = typeof window !== 'undefined' && 
+                     !window.__NEXT_DATA__ && 
+                     (window.location.port === '8080' || window.location.port === '5173');
+      
+      if (isVite) {
+        return <RouterLink to={href} {...props}>{children}</RouterLink>;
+      }
+      // Otherwise use NextLink
+      return <NextLink href={href} {...props}>{children}</NextLink>;
+    };
 
   // Safe location/pathname access
   let pathname = "";
@@ -45,8 +53,6 @@ export const Navbar = () => {
     } catch (e2) {
       pathname = "";
     }
-  }
-
   }
 
   const [isScrolled, setIsScrolled] = useState(false);
