@@ -8,29 +8,30 @@ const nextEnv =
 
 const SUPABASE_URL =
   nextEnv.NEXT_PUBLIC_SUPABASE_URL ||
-  import.meta.env.VITE_SUPABASE_URL ||
+  (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : '') ||
   '';
 
 const SUPABASE_PUBLISHABLE_KEY =
   nextEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY : '') ||
   '';
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Safe storage for SSR
+const isBrowser = typeof window !== 'undefined';
+const storage = isBrowser ? window.localStorage : undefined;
 
 // Only create client if we have valid credentials
 export const supabase = SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY
   ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
-        storage: localStorage,
+        storage: storage,
         persistSession: true,
         autoRefreshToken: true,
       }
     })
   : createClient<Database>('https://placeholder.supabase.co', 'placeholder-key', {
       auth: {
-        storage: localStorage,
+        storage: storage,
         persistSession: false,
         autoRefreshToken: false,
       }

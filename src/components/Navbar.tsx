@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link as RouterLink, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { 
@@ -16,7 +18,21 @@ import { cn } from "@/lib/utils";
 
 export const Navbar = () => {
   const { user, profile, signOut } = useAuth();
-  const location = useLocation();
+  
+  // Safe location/pathname access for both Next.js and React Router
+  let pathname = "";
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    pathname = usePathname() || "";
+  } catch (e) {
+    try {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      pathname = useLocation().pathname;
+    } catch (e2) {
+      pathname = "";
+    }
+  }
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -34,7 +50,30 @@ export const Navbar = () => {
     { name: "Family", path: "/family", icon: Users, roles: ["family", "admin"] },
   ].filter(link => !link.roles || (profile && link.roles.includes(profile.role)));
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
+
+  const Logo = () => (
+    <div className="flex items-center gap-2 group">
+      <div className="p-2 bg-primary rounded-xl text-primary-foreground shadow-lg shadow-primary/20">
+        <Heart className="w-6 h-6 fill-current" />
+      </div>
+      <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 group-hover:to-primary transition-all duration-300">
+        MemoryFriend
+      </span>
+    </div>
+  );
+
+  const NavItem = ({ link }: { link: typeof navLinks[0] }) => (
+    <div className={cn(
+      "relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2",
+      isActive(link.path) 
+        ? "bg-primary text-primary-foreground" 
+        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+    )}>
+      <link.icon className={cn("w-4 h-4 relative z-10", isActive(link.path) ? "animate-pulse" : "")} />
+      <span className="relative z-10">{link.name}</span>
+    </div>
+  );
 
   return (
     <nav
@@ -45,32 +84,15 @@ export const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <div
-            className="p-2 bg-primary rounded-xl text-primary-foreground shadow-lg shadow-primary/20"
-          >
-            <Heart className="w-6 h-6 fill-current" />
-          </div>
-          <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 group-hover:to-primary transition-all duration-300">
-            MemoryFriend
-          </span>
+        <Link href="/">
+          <Logo />
         </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-1 bg-muted/50 p-1 rounded-full border">
           {navLinks.map((link) => (
-            <Link key={link.path} to={link.path}>
-              <div
-                className={cn(
-                  "relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2",
-                  isActive(link.path) 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                <link.icon className={cn("w-4 h-4 relative z-10", isActive(link.path) ? "animate-pulse" : "")} />
-                <span className="relative z-10">{link.name}</span>
-              </div>
+            <Link key={link.path} href={link.path}>
+              <NavItem link={link} />
             </Link>
           ))}
         </div>
@@ -91,7 +113,7 @@ export const Navbar = () => {
               </div>
             </>
           ) : (
-            <Link to="/auth">
+            <Link href="/auth">
               <Button className="rounded-full px-6 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
                 Login
               </Button>
@@ -117,7 +139,7 @@ export const Navbar = () => {
             {navLinks.map((link) => (
               <Link 
                 key={link.path} 
-                to={link.path}
+                href={link.path}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className={cn(
