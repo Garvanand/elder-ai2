@@ -102,18 +102,29 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
 
   const handleCapture = async () => {
     if (!videoRef.current || capturing) return;
+    console.log("Starting face capture...");
     setCapturing(true);
     setStatus('analyzing');
     try {
       // Small visual pause for impact but reduced for "quickness"
       await new Promise(r => setTimeout(r, 100));
       
+      console.log("Getting face descriptor...");
       const descriptor = await getFaceDescriptor(videoRef.current);
+      console.log("Descriptor result:", descriptor ? "Found" : "Not found");
+
       if (descriptor) {
         setStatus('verifying');
         // Very small delay before confirming
         await new Promise(r => setTimeout(r, 300));
-        onCapture(descriptor);
+        
+        console.log("Calling onCapture callback...");
+        try {
+          onCapture(descriptor);
+        } catch (callbackError) {
+          console.error("Error in onCapture callback:", callbackError);
+          throw callbackError;
+        }
       } else {
         toast({
           title: 'Signature Not found',
@@ -123,9 +134,10 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
         setStatus('ready');
       }
     } catch (error) {
+      console.error('Face recognition scan failed:', error);
       toast({
         title: 'Neural Engine Error',
-        description: 'Failed to synthesize facial map.',
+        description: 'Failed to synthesize facial map: ' + (error instanceof Error ? error.message : 'Unknown error'),
         variant: 'destructive',
       });
       setStatus('ready');
@@ -149,7 +161,7 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
         exit={{ scale: 0.95, opacity: 0 }}
         className="w-full max-w-2xl relative"
       >
-        <Card className="bg-slate-900/90 border-white/10 text-white rounded-[40px] overflow-hidden shadow-[0_0_100px_rgba(var(--primary-rgb),0.3)]">
+        <Card className="bg-slate-900/90 border-white/10 text-white rounded-[40px] overflow-hidden shadow-2xl shadow-primary/20">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary animate-[shimmer_2s_infinite]" />
           
           <CardHeader className="relative pt-12 pb-6 px-10">
@@ -206,7 +218,7 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
                   autoPlay 
                   muted 
                   playsInline 
-                  className="w-full h-full object-cover mirror grayscale brightness-110 active:grayscale-0 transition-all duration-700"
+                  className="w-full h-full object-cover -scale-x-100 grayscale brightness-110 active:grayscale-0 transition-all duration-700"
                 />
               )}
               

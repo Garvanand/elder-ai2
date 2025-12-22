@@ -88,7 +88,12 @@ export default function AuthPage() {
           return;
         }
 
-        const isMatch = compareFaceDescriptors(capturedDescriptor, profile.face_descriptor as number[]);
+        // Ensure stored descriptor is treated as an array
+        const storedDescriptor = Array.isArray(profile.face_descriptor) 
+          ? profile.face_descriptor 
+          : Object.values(profile.face_descriptor as any);
+
+        const isMatch = compareFaceDescriptors(capturedDescriptor, storedDescriptor as number[]);
         
         if (isMatch) {
           toast({
