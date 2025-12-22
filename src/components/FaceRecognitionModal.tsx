@@ -115,8 +115,6 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
 
       if (descriptor) {
         setStatus('verifying');
-        // Very small delay before confirming
-        await new Promise(r => setTimeout(r, 300));
         
         console.log("Calling onCapture callback...");
         try {

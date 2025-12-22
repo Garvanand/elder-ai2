@@ -56,7 +56,6 @@
     "cmdk": "latest",
     "date-fns": "latest",
     "embla-carousel-react": "latest",
-    "face-api.js": "^0.22.2",
     "framer-motion": "^12.23.26",
     "groq-sdk": "^0.37.0",
     "input-otp": "latest",

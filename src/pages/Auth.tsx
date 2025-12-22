@@ -206,6 +206,7 @@ export default function AuthPage() {
       <AnimatePresence>
         {showFaceModal && (
           <FaceRecognitionModal
+            key="face-modal"
             onClose={() => setShowFaceModal(false)}
             onCapture={onFaceCapture}
             onUsePin={() => {
