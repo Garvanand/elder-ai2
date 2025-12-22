@@ -9,11 +9,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface FaceRecognitionModalProps {
   onCapture: (descriptor: number[]) => void;
   onClose: () => void;
+  onUsePin?: () => void;
   title: string;
   description: string;
 }
 
-export function FaceRecognitionModal({ onCapture, onClose, title, description }: FaceRecognitionModalProps) {
+export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, description }: FaceRecognitionModalProps) {
   const [loading, setLoading] = useState(true);
   const [capturing, setCapturing] = useState(false);
   const [status, setStatus] = useState<'initializing' | 'ready' | 'analyzing' | 'verifying'>('initializing');
@@ -222,17 +223,30 @@ export function FaceRecognitionModal({ onCapture, onClose, title, description }:
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <Button 
-                variant="outline" 
-                size="elderLg" 
-                onClick={onClose}
-                className="h-20 rounded-[24px] border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all"
-              >
-                Abort Link
-              </Button>
-              <Button 
-                onClick={handleCapture}
+              <div className="grid grid-cols-2 gap-6">
+                {onUsePin ? (
+                  <Button 
+                    variant="outline" 
+                    size="elderLg" 
+                    onClick={onUsePin}
+                    className="h-20 rounded-[24px] border-primary/20 bg-white/5 hover:bg-white/10 text-primary font-black uppercase tracking-widest transition-all gap-3"
+                  >
+                    <ShieldCheck className="w-6 h-6" />
+                    Use PIN
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="elderLg" 
+                    onClick={onClose}
+                    className="h-20 rounded-[24px] border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all"
+                  >
+                    Abort Link
+                  </Button>
+                )}
+                <Button 
+                  onClick={handleCapture}
+
                 disabled={loading || capturing}
                 className="h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 gap-4 group"
               >

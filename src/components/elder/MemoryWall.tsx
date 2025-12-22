@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, MessageCircle, X, ChevronRight, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
 
 interface MemoryWallProps {
   elderId: string;
@@ -31,124 +32,132 @@ export function MemoryWall({ elderId, onTriggerConversation }: MemoryWallProps) 
     fetchMemories();
   }, [elderId]);
 
-  if (loading) return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 animate-pulse">
-      {[1, 2, 3, 4, 5, 6].map(i => (
-        <div key={i} className="aspect-square bg-muted rounded-2xl" />
-      ))}
-    </div>
-  );
-
-  if (memories.length === 0) return (
-    <Card className="border-dashed bg-slate-50/50 p-12 text-center">
-      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <ImageIcon className="w-8 h-8 text-slate-400" />
-      </div>
-      <h3 className="text-xl font-semibold text-slate-600 mb-2">No photos yet</h3>
-      <p className="text-slate-500">Add memories with photos to see them here.</p>
-    </Card>
-  );
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-        {memories.map((memory, index) => (
-          <motion.div
-            key={memory.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ scale: 1.03 }}
-            onClick={() => setSelectedMemory(memory)}
-          >
-            <Card className="cursor-pointer overflow-hidden rounded-2xl border-4 border-white shadow-lg group">
-              <div className="aspect-square relative">
-                <img 
-                  src={memory.image_url!} 
-                  alt="Memory" 
-                  className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="bg-primary text-white p-2 rounded-full shadow-lg">
-                    <MessageCircle className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
+    if (loading) return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          <div key={i} className="aspect-square bg-slate-200/50 rounded-[32px] animate-pulse" />
         ))}
       </div>
+    );
 
-      <AnimatePresence>
-        {selectedMemory && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    if (memories.length === 0) return (
+      <Card className="rounded-[48px] bg-white/20 border-dashed border-white/40 p-20 text-center shadow-inner">
+        <div className="w-24 h-24 bg-white/40 rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl">
+          <ImageIcon className="w-12 h-12 text-primary animate-pulse" />
+        </div>
+        <h3 className="text-3xl font-black uppercase tracking-tighter text-foreground mb-4">Archive Empty</h3>
+        <p className="text-xl text-muted-foreground font-medium italic">"The canvas of your temporal journey awaits its first stroke."</p>
+      </Card>
+    );
+
+    return (
+      <div className="space-y-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          {memories.map((memory, index) => (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-4xl bg-white rounded-3xl overflow-hidden shadow-2xl"
+              key={memory.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05, type: 'spring', stiffness: 200 }}
+              whileHover={{ scale: 1.05, rotate: 2 }}
+              onClick={() => setSelectedMemory(memory)}
+              className="relative group"
             >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute right-4 top-4 z-10 bg-black/20 hover:bg-black/40 text-white rounded-full h-12 w-12"
-                onClick={() => setSelectedMemory(null)}
-              >
-                <X className="w-8 h-8" />
-              </Button>
-
-              <div className="flex flex-col md:flex-row h-full max-h-[90vh]">
-                <div className="md:w-3/5 bg-slate-900 flex items-center justify-center">
+              <div className="absolute inset-x-0 bottom-[-10px] h-1/2 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Card className="cursor-pointer overflow-hidden rounded-[40px] border-[6px] border-white shadow-2xl relative z-10">
+                <div className="aspect-square relative">
                   <img 
-                    src={selectedMemory.image_url!} 
-                    className="max-h-full max-w-full object-contain"
-                    alt="Memory Large"
+                    src={memory.image_url!} 
+                    alt="Memory" 
+                    className="w-full h-full object-cover grayscale brightness-90 contrast-125 transition-all duration-700 group-hover:grayscale-0 group-hover:brightness-100"
                   />
-                </div>
-                <div className="md:w-2/5 p-8 flex flex-col justify-between overflow-y-auto">
-                  <div className="space-y-6">
-                    <div>
-                      <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full">
-                        {selectedMemory.type}
-                      </span>
-                      <h2 className="text-2xl font-bold mt-4 text-foreground leading-tight">
-                        Memory from {new Date(selectedMemory.created_at).toLocaleDateString()}
-                      </h2>
-                    </div>
-                    <p className="text-xl text-muted-foreground leading-relaxed">
-                      {selectedMemory.raw_text}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-6 inset-x-0 px-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
+                    <p className="text-white text-xs font-black uppercase tracking-widest leading-none drop-shadow-md">
+                      {new Date(memory.created_at).toLocaleDateString()}
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedMemory.tags?.map(tag => (
-                        <span key={tag} className="px-3 py-1 bg-secondary rounded-full text-sm text-secondary-foreground font-medium">#{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-8 space-y-3">
-                    <p className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                       <Play className="w-4 h-4 fill-primary text-primary" /> Want to talk about this?
-                    </p>
-                    <Button 
-                      variant="elder" 
-                      size="elderLg" 
-                      className="w-full gap-3 py-8 text-2xl"
-                      onClick={() => {
-                        onTriggerConversation(selectedMemory);
-                        setSelectedMemory(null);
-                      }}
-                    >
-                      <MessageCircle className="w-8 h-8" />
-                      Talk with AI Friend
-                    </Button>
                   </div>
                 </div>
-              </div>
+              </Card>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+          ))}
+        </div>
+
+        <AnimatePresence>
+          {selectedMemory && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-6">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                className="relative w-full max-w-6xl bg-slate-900 border border-white/10 rounded-[64px] overflow-hidden shadow-[0_0_100px_rgba(var(--primary-rgb),0.2)]"
+              >
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary animate-[shimmer_3s_infinite]" />
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-10 top-10 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full h-16 w-16 group"
+                  onClick={() => setSelectedMemory(null)}
+                >
+                  <X className="w-10 h-10 group-hover:rotate-90 transition-transform duration-500" />
+                </Button>
+
+                <div className="flex flex-col md:flex-row h-full max-h-[85vh]">
+                  <div className="md:w-3/5 bg-black flex items-center justify-center relative group">
+                    <img 
+                      src={selectedMemory.image_url!} 
+                      className="max-h-full max-w-full object-contain p-4 group-hover:scale-[1.02] transition-transform duration-1000"
+                      alt="Memory Large"
+                    />
+                    <div className="absolute top-10 left-10 p-4 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10">
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Neural Archive 0x{selectedMemory.id.slice(0,4)}</p>
+                    </div>
+                  </div>
+                  <div className="md:w-2/5 p-16 flex flex-col justify-between overflow-y-auto bg-slate-900 border-l border-white/10">
+                    <div className="space-y-10">
+                      <div>
+                        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-primary/20 text-primary text-xs font-black uppercase tracking-widest border border-primary/20">
+                          <ImageIcon className="w-4 h-4" /> {selectedMemory.type}
+                        </div>
+                        <h2 className="text-5xl font-black mt-8 text-white tracking-tighter uppercase leading-none">
+                          Record Entry
+                        </h2>
+                        <p className="text-primary/60 font-bold uppercase tracking-widest mt-2">{format(new Date(selectedMemory.created_at), 'MMMM dd, yyyy')}</p>
+                      </div>
+                      <p className="text-3xl font-bold leading-snug text-white/80 italic">
+                        “{selectedMemory.raw_text}”
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        {selectedMemory.tags?.map(tag => (
+                          <span key={tag} className="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs text-white/60 font-black uppercase tracking-widest hover:bg-primary/20 hover:text-white transition-all cursor-default">#{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-12 space-y-6">
+                      <div className="h-px bg-white/10 w-full" />
+                      <div className="space-y-4">
+                        <Button 
+                          className="w-full h-24 rounded-[32px] bg-primary hover:bg-primary/90 text-2xl font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 gap-6 group"
+                          onClick={() => {
+                            onTriggerConversation(selectedMemory);
+                            setSelectedMemory(null);
+                          }}
+                        >
+                          <MessageCircle className="w-10 h-10 group-hover:scale-110 transition-transform" />
+                          Initiate Recount
+                        </Button>
+                        <p className="text-center text-xs font-bold text-white/30 uppercase tracking-[0.3em]">Neural Engine Synchronization Required</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+
 }

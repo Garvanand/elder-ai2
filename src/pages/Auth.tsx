@@ -20,8 +20,35 @@ export default function AuthPage() {
   const [role, setRole] = useState<UserRole>('elder');
   const [loading, setLoading] = useState(false);
   const [showFaceModal, setShowFaceModal] = useState(false);
-  const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
+    const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
+    const [pin, setPin] = useState('');
+    const [showPinInput, setShowPinInput] = useState(false);
+
   
+  const handlePinLogin = async () => {
+    if (!email || !pin) return;
+    setLoading(true);
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('pin_code')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (profile?.pin_code === pin) {
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if (!error) {
+           toast({ title: 'PIN Verified!', description: 'Check email for login link.' });
+        }
+      } else {
+        toast({ title: 'Invalid PIN', description: 'The PIN you entered is incorrect.', variant: 'destructive' });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -174,9 +201,36 @@ export default function AuthPage() {
           <FaceRecognitionModal
             onClose={() => setShowFaceModal(false)}
             onCapture={onFaceCapture}
+            onUsePin={() => {
+              setShowFaceModal(false);
+              setShowPinInput(true);
+            }}
             title={isLogin ? "Neural Identity Check" : "Scan Neutral Map"}
             description={isLogin ? "Scanning biometric signatures to confirm access" : "Map your facial contours for future identity verification"}
           />
+        )}
+        {showPinInput && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4">
+            <Card className="w-full max-w-md bg-slate-900 border-white/10 text-white rounded-[40px] p-8 space-y-6">
+              <div className="text-center space-y-2">
+                <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-4" />
+                <h2 className="text-2xl font-black uppercase tracking-widest">Enter Access PIN</h2>
+                <p className="text-sm text-white/40">Provide your 4-6 digit security code</p>
+              </div>
+              <Input
+                type="password"
+                maxLength={6}
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="h-20 text-center text-4xl font-black tracking-[0.5em] bg-white/5 border-white/10 rounded-2xl"
+                autoFocus
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="ghost" onClick={() => setShowPinInput(false)} className="h-14 rounded-xl uppercase font-bold">Cancel</Button>
+                <Button onClick={handlePinLogin} className="h-14 rounded-xl bg-primary text-white uppercase font-black tracking-widest">Verify PIN</Button>
+              </div>
+            </Card>
+          </div>
         )}
       </AnimatePresence>
 

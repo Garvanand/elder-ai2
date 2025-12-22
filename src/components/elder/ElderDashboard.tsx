@@ -12,6 +12,10 @@ import type { Question, Routine, Reminder, Memory } from '@/types';
 import { format } from 'date-fns';
 import { MemoryWall } from './MemoryWall';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BrainModelContainer } from '@/components/BrainModel';
+import { cn } from '@/lib/utils';
+import { PeopleScanner } from './PeopleScanner';
+import { generateAdaptiveQuestion } from '@/lib/ai';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -21,10 +25,12 @@ interface ElderDashboardProps {
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
-  const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
-  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall'>('home');
-  const [memoryText, setMemoryText] = useState('');
-  const [questionText, setQuestionText] = useState('');
+    const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
+    const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner'>('home');
+    const [memoryText, setMemoryText] = useState('');
+    const [questionText, setQuestionText] = useState('');
+    const [adaptiveQuestion, setAdaptiveQuestion] = useState('');
+
   const [answer, setAnswer] = useState('');
   const [recap, setRecap] = useState('');
   const [loading, setLoading] = useState(false);
@@ -92,14 +98,19 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
           confidence_score: intel.confidence_score,
         });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: 'Neural Link Established!',
-        description: 'Memory successfully archived in secure storage.',
-      });
-      
-      setMemoryText('');
+        // Generate adaptive question
+        const adaptive = await generateAdaptiveQuestion(memoryText, user.id);
+        setAdaptiveQuestion(adaptive);
+
+        toast({
+          title: 'Neural Link Established!',
+          description: 'Memory successfully archived in secure storage.',
+        });
+        
+        setMemoryText('');
+
       setView('home');
       onRefresh(true);
     } catch (error) {
@@ -180,14 +191,20 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Brain className="w-40 h-40 text-primary" />
               </div>
-              <div className="relative z-10 space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
-                  <ShieldCheck className="w-3 h-3" /> Identity Verified
+                <div className="relative z-10 space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                    <ShieldCheck className="w-3 h-3" /> Identity Verified
+                  </div>
+                  <h1 className="text-5xl font-black tracking-tighter">Welcome Back, {profile?.full_name?.split(' ')[0]}</h1>
+                  <p className="text-xl text-muted-foreground font-medium italic">"Every memory is a bridge to the future."</p>
                 </div>
-                <h1 className="text-5xl font-black tracking-tighter">Welcome Back, {profile?.full_name?.split(' ')[0]}</h1>
-                <p className="text-xl text-muted-foreground font-medium italic">"Every memory is a bridge to the future."</p>
+                
+                {/* 3D Brain Background Integration */}
+                <div className="absolute top-0 right-0 w-1/2 h-full opacity-60 pointer-events-none">
+                  <BrainModelContainer />
+                </div>
               </div>
-            </div>
+
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* Daily Checklist */}
@@ -259,10 +276,12 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                 </h2>
                 <div className="grid grid-cols-1 gap-4">
                   {[
-                    { label: 'Neural Capture', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record new temporal data' },
-                    { label: 'Visual Wall', icon: ImageIcon, view: 'memoryWall', color: 'bg-accent', secondary: 'Review interactive archives' },
-                    { label: 'Retrieval Engine', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Recall specific datasets' },
-                    { label: 'Life Synthesis', icon: Brain, view: 'recap', color: 'bg-emerald-600', secondary: 'Generate weekly summary' }
+                      { label: 'Neural Capture', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record new temporal data' },
+                      { label: 'Visual Wall', icon: ImageIcon, view: 'memoryWall', color: 'bg-accent', secondary: 'Review interactive archives' },
+                      { label: 'Identify Friend', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify individuals' },
+                      { label: 'Retrieval Engine', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Recall specific datasets' },
+                      { label: 'Life Synthesis', icon: Brain, view: 'recap', color: 'bg-emerald-600', secondary: 'Generate weekly summary' }
+
                   ].map((btn, i) => (
                     <motion.button
                       whileHover={{ scale: 1.02, x: 5 }}
@@ -458,7 +477,11 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
             </Card>
           </motion.div>
         )}
-      </AnimatePresence>
+          {view === 'peopleScanner' && (
+            <PeopleScanner elderId={user!.id} onClose={() => setView('home')} />
+          )}
+        </AnimatePresence>
+
     </div>
   );
 }

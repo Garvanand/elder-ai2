@@ -16,6 +16,9 @@ import CaregiverInsights from './CaregiverInsights';
 import CaregiverSignals from './CaregiverSignals';
 import { CognitiveJournal } from './CognitiveJournal';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BrainModelContainer } from '@/components/BrainModel';
+import { cn } from '@/lib/utils';
+import { generateCaregiverDailySummary } from '@/lib/ai';
 
 interface CaregiverDashboardProps {
   memories: Memory[];
@@ -50,6 +53,20 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dailySummary, setDailySummary] = useState<string>('');
+  const [loadingSummary, setLoadingSummary] = useState(false);
+
+  useEffect(() => {
+    async function fetchSummary() {
+      if (memories.length > 0) {
+        setLoadingSummary(true);
+        const summary = await generateCaregiverDailySummary(memories[0].elder_id);
+        setDailySummary(summary);
+        setLoadingSummary(false);
+      }
+    }
+    fetchSummary();
+  }, [memories]);
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -79,20 +96,26 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
   return (
     <div className="space-y-12 max-w-7xl mx-auto pt-24 pb-20 px-6">
       {/* Header Info */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-4">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-4"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
-            <ShieldCheck className="w-3 h-3" /> Collective Intelligence Active
+        <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-4 relative">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-4 z-10"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
+              <ShieldCheck className="w-3 h-3" /> Collective Intelligence Active
+            </div>
+            <h1 className="text-6xl font-black tracking-tighter">Observatory Hub</h1>
+            <p className="text-xl text-muted-foreground font-medium italic">"Monitoring the temporal health of your lineage."</p>
+          </motion.div>
+          
+          {/* 3D Brain Background Integration */}
+          <div className="absolute top-[-100px] left-[300px] w-[600px] h-[400px] opacity-40 pointer-events-none">
+            <BrainModelContainer />
           </div>
-          <h1 className="text-6xl font-black tracking-tighter">Observatory Hub</h1>
-          <p className="text-xl text-muted-foreground font-medium italic">"Monitoring the temporal health of your lineage."</p>
-        </motion.div>
-        
-        <div className="flex items-center gap-4 bg-white/40 backdrop-blur-3xl p-4 rounded-3xl border border-white shadow-2xl">
+
+          <div className="flex items-center gap-4 bg-white/40 backdrop-blur-3xl p-4 rounded-3xl border border-white shadow-2xl z-10">
+
           <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <UserCircle className="w-7 h-7 text-white" />
           </div>
@@ -166,10 +189,40 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
             ))}
         </div>
 
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-              <CaregiverInsights memories={memories} />
+          <AnimatePresence mode="wait">
+            {activeTab === 'overview' && (
+              <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                
+                {/* AI Daily Summary Card */}
+                <Card className="bg-primary/5 border-primary/20 shadow-xl rounded-[40px] overflow-hidden">
+                  <CardHeader className="bg-primary/10 border-b border-primary/10 p-8 flex flex-row items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-1">Intelligence Protocol</p>
+                      <CardTitle className="text-3xl font-black uppercase tracking-tighter">Daily Neural Synthesis</CardTitle>
+                    </div>
+                    <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+                  </CardHeader>
+                  <CardContent className="p-10">
+                    {loadingSummary ? (
+                      <div className="flex items-center gap-4 animate-pulse">
+                        <div className="w-12 h-12 rounded-full bg-primary/20" />
+                        <div className="space-y-2">
+                          <div className="h-4 w-64 bg-primary/10 rounded" />
+                          <div className="h-4 w-48 bg-primary/10 rounded" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative p-8 bg-white/40 rounded-3xl border border-white shadow-inner">
+                        <p className="text-2xl font-bold leading-relaxed text-foreground/80 italic whitespace-pre-line">
+                          {dailySummary || "Awaiting more data fragments to complete synthesis."}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <CaregiverInsights memories={memories} />
+
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <section className="space-y-6">

@@ -65,11 +65,41 @@ export default function ElderPage() {
     }
   };
 
-  useEffect(() => {
-    if (user && profile) {
-      fetchData();
-    }
-  }, [user, profile]);
+    useEffect(() => {
+      if (user && profile) {
+        fetchData();
+
+        // Subscribe to real-time changes
+        const channel = supabase
+          .channel('schema-db-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'memories',
+              filter: `elder_id=eq.${user.id}`
+            },
+            () => fetchData(true)
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'questions',
+              filter: `elder_id=eq.${user.id}`
+            },
+            () => fetchData(true)
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      }
+    }, [user, profile]);
+
 
   if (authLoading || loading) {
     return (

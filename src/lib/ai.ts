@@ -1,13 +1,12 @@
 /**
  * AI Module for Memory Friend
  * 
- * This module contains AI-related functions using Gemini API directly.
+ * This module contains AI-related functions using Groq API.
  */
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Memory, AnswerResponse, BehavioralSignal } from "@/types";
 import { Groq } from 'groq-sdk';
-
 
 // Safe env access for both Next.js and Vite builds
 const nextEnv =
@@ -22,6 +21,7 @@ const getGroqApiKey = (): string | null => {
   );
 };
 
+const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 /**
  * Answer a question using the elder's memories as context
@@ -141,12 +141,9 @@ async function answerQuestionWithGroq(
         content: prompt,
       },
     ],
-    model: "openai/gpt-oss-120b",
-    temperature: 1,
-    max_completion_tokens: 1024,
-    top_p: 1,
-    stream: false,
-    reasoning_effort: "medium",
+    model: GROQ_MODEL,
+    temperature: 0.7,
+    max_tokens: 500,
   });
 
   const answer = chatCompletion.choices[0]?.message?.content?.trim() || "";
@@ -201,12 +198,9 @@ Extract and return ONLY a JSON object:
           content: prompt,
         },
       ],
-      model: "openai/gpt-oss-120b",
-      temperature: 1,
-      max_completion_tokens: 1024,
-      top_p: 1,
-      stream: false,
-      reasoning_effort: "medium",
+      model: GROQ_MODEL,
+      temperature: 0.2,
+      max_tokens: 1000,
     });
 
     const responseText = chatCompletion.choices[0]?.message?.content?.trim() || "";
@@ -221,7 +215,7 @@ Extract and return ONLY a JSON object:
       structured: parsed.structured || {},
     };
   } catch (error) {
-    console.error('Gemini intelligence extraction failed:', error);
+    console.error('Groq intelligence extraction failed:', error);
     return extractMemoryIntelligenceNaive(rawText);
   }
 }
@@ -270,17 +264,105 @@ Focus: On what they've been talking about most and positive highlights.`;
           content: prompt,
         },
       ],
-      model: "openai/gpt-oss-120b",
-      temperature: 1,
-      max_completion_tokens: 1024,
-      top_p: 1,
-      stream: false,
-      reasoning_effort: "medium",
+      model: GROQ_MODEL,
+      temperature: 0.8,
+      max_tokens: 500,
     });
 
     return chatCompletion.choices[0]?.message?.content?.trim() || "You've shared some wonderful moments this week!";
   } catch (error) {
     return "You've shared some wonderful moments this week!";
+  }
+}
+
+/**
+ * Generate an adaptive follow-up question to keep the conversation going
+ */
+export async function generateAdaptiveQuestion(rawText: string, elderId: string): Promise<string> {
+  const apiKey = getGroqApiKey();
+  if (!apiKey) return "That's lovely. Could you tell me more about it?";
+
+  try {
+    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+
+    const prompt = `Based on this shared memory: "${rawText}", ask ONE warm, engaging follow-up question that helps the person recall more details or feelings. Keep it very short and senior-friendly. Don't be intrusive.`;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: GROQ_MODEL,
+      temperature: 0.8,
+      max_tokens: 100,
+    });
+
+    return chatCompletion.choices[0]?.message?.content?.trim() || "Tell me more about that moment.";
+  } catch (error) {
+    return "Could you tell me more about it?";
+  }
+}
+
+/**
+ * Generate a detailed summary for the caregiver
+ */
+export async function generateCaregiverDailySummary(elderId: string): Promise<string> {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const { data: memories } = await supabase
+    .from('memories')
+    .select('*')
+    .eq('elder_id', elderId)
+    .gte('created_at', today.toISOString());
+
+  const { data: signals } = await supabase
+    .from('behavioral_signals')
+    .select('*')
+    .eq('elder_id', elderId)
+    .gte('created_at', today.toISOString());
+
+  if (!memories?.length && !signals?.length) return "No activity recorded today.";
+
+  const apiKey = getGroqApiKey();
+  if (!apiKey) return "Activity recorded. Please check logs.";
+
+  try {
+    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+
+    const content = `
+    Memories: ${memories?.map(m => m.raw_text).join('\n')}
+    Anomalies/Signals: ${signals?.map(s => s.description).join('\n')}
+    `;
+
+    const prompt = `Act as a professional geriatric care assistant. Summarize today's interactions for the caregiver.
+    In 2-3 bullet points, highlight:
+    1. Overall mood and cognitive clarity.
+    2. Key memories shared.
+    3. Any concerns (repeated questions, confusion).
+    Keep it professional and concise.`;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+        {
+          role: "system",
+          content: content
+        }
+      ],
+      model: GROQ_MODEL,
+      temperature: 0.5,
+      max_tokens: 500,
+    });
+
+    return chatCompletion.choices[0]?.message?.content?.trim() || "Summary compiled in logs.";
+  } catch (error) {
+    return "Summary generated. Please review interaction logs.";
   }
 }
 
