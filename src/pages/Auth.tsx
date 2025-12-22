@@ -121,8 +121,21 @@ export default function AuthPage() {
             throw new Error("Invalid biometric data in records.");
           }
 
-          console.log("Auth: Comparing descriptors of lengths:", capturedDescriptor.length, storedDescriptor.length);
-          const isMatch = compareFaceDescriptors(capturedDescriptor, storedDescriptor);
+            console.log("Auth: Comparing descriptors of lengths:", capturedDescriptor.length, storedDescriptor.length);
+            
+            // Validate descriptor lengths match
+            if (capturedDescriptor.length !== storedDescriptor.length) {
+              console.error("Auth: Descriptor length mismatch:", capturedDescriptor.length, "vs", storedDescriptor.length);
+              toast({
+                title: 'Data mismatch',
+                description: 'Your biometric data is in an incompatible format. Please re-register your face.',
+                variant: 'destructive',
+              });
+              setLoading(false);
+              return;
+            }
+
+            const isMatch = compareFaceDescriptors(capturedDescriptor, storedDescriptor);
           console.log("Auth: Face match result:", isMatch);
 
         
