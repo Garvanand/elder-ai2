@@ -22,6 +22,7 @@ export default function AuthPage() {
   const [showFaceModal, setShowFaceModal] = useState(false);
     const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
     const [pin, setPin] = useState('');
+    const [signupPin, setSignupPin] = useState('');
     const [showPinInput, setShowPinInput] = useState(false);
 
   
@@ -167,7 +168,8 @@ export default function AuthPage() {
         }
         
         const { error } = await signUp(email, password, fullName, role, {
-          face_descriptor: faceDescriptor
+          face_descriptor: faceDescriptor,
+          pin_code: signupPin
         });
         if (error) {
           toast({
@@ -333,9 +335,25 @@ export default function AuthPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center ml-1">
-                    <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Security Phrase</label>
+                  {!isLogin && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground ml-1">Access PIN (Quick Login)</label>
+                      <Input
+                        className="h-14 bg-white/50 border-white/30 rounded-2xl text-lg focus:ring-primary/20"
+                        placeholder="4-6 digit code"
+                        type="password"
+                        maxLength={6}
+                        value={signupPin}
+                        onChange={(e) => setSignupPin(e.target.value.replace(/\D/g, ''))}
+                        required={!isLogin}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center ml-1">
+                      <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Security Phrase</label>
+
                     {isLogin && <button type="button" className="text-xs text-primary/70 hover:text-primary underline">Forgot?</button>}
                   </div>
                   <Input

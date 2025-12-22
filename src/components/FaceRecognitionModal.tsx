@@ -24,35 +24,55 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
 
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: any;
+
     async function setup() {
       try {
         setStatus('initializing');
-        await loadModels();
-        if (!isMounted) return;
         
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        // Start loading models and camera in parallel
+        const modelsPromise = loadModels();
+        const cameraPromise = navigator.mediaDevices.getUserMedia({ 
           video: { 
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 640 }, // Lower resolution for speed
+            height: { ideal: 480 },
             facingMode: "user"
           } 
         });
+
+        // Set a timeout to catch hanging connections
+        timeoutId = setTimeout(() => {
+          if (loading && isMounted) {
+            console.warn("Neural Link initialization taking too long, forcing ready...");
+            setLoading(false);
+            setStatus('ready');
+          }
+        }, 8000);
+
+        const [_, stream] = await Promise.all([modelsPromise, cameraPromise]);
         
-        if (videoRef.current && isMounted) {
+        if (!isMounted) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+
+        if (videoRef.current) {
           videoRef.current.srcObject = stream;
           streamRef.current = stream;
           
-          // Wait for metadata and play
+          // Clear any previous plays
           videoRef.current.onloadedmetadata = async () => {
-            if (videoRef.current) {
+            if (videoRef.current && isMounted) {
               try {
                 await videoRef.current.play();
-                if (isMounted) {
-                  setLoading(false);
-                  setStatus('ready');
-                }
+                setLoading(false);
+                setStatus('ready');
+                clearTimeout(timeoutId);
               } catch (e) {
                 console.error("Auto-play failed:", e);
+                // Fallback for some browsers
+                setLoading(false);
+                setStatus('ready');
               }
             }
           };
@@ -73,6 +93,7 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -80,15 +101,18 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
   }, [onClose, toast]);
 
   const handleCapture = async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || capturing) return;
     setCapturing(true);
     setStatus('analyzing');
     try {
+      // Small visual pause for impact but reduced for "quickness"
+      await new Promise(r => setTimeout(r, 100));
+      
       const descriptor = await getFaceDescriptor(videoRef.current);
       if (descriptor) {
         setStatus('verifying');
-        // Give a small delay for "futuristic" feel
-        await new Promise(r => setTimeout(r, 600));
+        // Very small delay before confirming
+        await new Promise(r => setTimeout(r, 300));
         onCapture(descriptor);
       } else {
         toast({
@@ -106,7 +130,9 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
       });
       setStatus('ready');
     } finally {
-      setCapturing(false);
+      if (status !== 'verifying') {
+        setCapturing(false);
+      }
     }
   };
 
@@ -115,15 +141,15 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4"
+      className="fixed inset-0 z-[101] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4"
     >
       <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         className="w-full max-w-2xl relative"
       >
-        <Card className="bg-slate-900 border-white/10 text-white rounded-[40px] overflow-hidden shadow-[0_0_100px_rgba(var(--primary-rgb),0.2)]">
+        <Card className="bg-slate-900/90 border-white/10 text-white rounded-[40px] overflow-hidden shadow-[0_0_100px_rgba(var(--primary-rgb),0.3)]">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary animate-[shimmer_2s_infinite]" />
           
           <CardHeader className="relative pt-12 pb-6 px-10">
@@ -152,7 +178,7 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
                 <div className="absolute inset-0 pointer-events-none z-10">
                   <motion.div 
                     animate={{ y: ['0%', '100%', '0%'] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                     className="w-full h-[2px] bg-primary/50 shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)]"
                   />
                   {/* Corner brackets */}
@@ -171,7 +197,7 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
                   </div>
                   <div className="text-center space-y-2">
                     <p className="text-xl font-black uppercase tracking-widest animate-pulse">Initializing Neural Link</p>
-                    <p className="text-xs text-white/40 uppercase font-bold tracking-tighter">Connecting to biometric cloud...</p>
+                    <p className="text-xs text-white/40 uppercase font-bold tracking-tighter">Establishing optical stream...</p>
                   </div>
                 </div>
               ) : (
@@ -215,16 +241,16 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
 
               <div className="absolute bottom-6 left-0 right-0 flex justify-center z-10 px-8">
                 <div className="bg-black/80 backdrop-blur-xl px-6 py-3 rounded-2xl text-white border border-white/10 flex items-center gap-4">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <div className={`w-2 h-2 rounded-full ${status === 'ready' ? 'bg-emerald-500' : 'bg-primary'} animate-pulse`} />
                   <p className="text-xs font-black uppercase tracking-widest opacity-80">
-                    {status === 'ready' ? 'System Ready: Align Face with Scan Matrix' : 'Neural Stream Busy...'}
+                    {status === 'ready' ? 'System Ready: Align Face' : 'Neural Stream Busy...'}
                   </p>
                 </div>
               </div>
             </div>
 
               <div className="grid grid-cols-2 gap-6">
-                {onUsePin ? (
+                {(onUsePin && status === 'ready') ? (
                   <Button 
                     variant="outline" 
                     size="elderLg" 
@@ -246,9 +272,8 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
                 )}
                 <Button 
                   onClick={handleCapture}
-
                 disabled={loading || capturing}
-                className="h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 gap-4 group"
+                className="h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 gap-4 group transition-all active:scale-95"
               >
                 {capturing ? (
                   <RefreshCw className="h-8 w-8 animate-spin" />
@@ -281,4 +306,3 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
     </motion.div>
   );
 }
-
