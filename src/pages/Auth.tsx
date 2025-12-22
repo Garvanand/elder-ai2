@@ -164,13 +164,26 @@ export default function AuthPage() {
           });
           
           console.log("Auth: Requesting Magic Link...");
-          const { error } = await supabase.auth.signInWithOtp({ email });
+          const { error } = await supabase.auth.signInWithOtp({ 
+            email,
+            options: {
+              emailRedirectTo: window.location.origin,
+            }
+          });
           
           if (error) {
             console.error("Auth: Magic Link error:", error);
+            let description = error.message;
+            
+            // Handle Supabase 429 Rate Limit error specifically
+            if (error.message.includes("security purposes") || error.message.includes("Too Many Requests")) {
+              const seconds = error.message.match(/\d+/)?.[0] || "60";
+              description = `Security cooldown active. Please wait ${seconds} seconds before trying face login again. You can also use your password instead.`;
+            }
+
             toast({
-              title: 'Verification failed',
-              description: error.message,
+              title: 'Verification paused',
+              description: description,
               variant: 'destructive',
             });
           } else {
