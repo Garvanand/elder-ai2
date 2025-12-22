@@ -214,7 +214,7 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(email, password, faceDescriptor || undefined);
         if (error) {
           toast({
             title: 'Sign in failed',
@@ -222,20 +222,13 @@ export default function AuthPage() {
             variant: 'destructive',
           });
         } else {
-          // If a face was scanned but not used for login, link it now
+          // Success! User is authenticated.
+          // The faceDescriptor link happened inside AuthContext.signIn already.
           if (faceDescriptor) {
-            console.log("Auth: Linking biometric scanner data to account...");
-            const { error: linkError } = await supabase
-              .from('profiles')
-              .update({ face_descriptor: faceDescriptor })
-              .eq('email', email);
-            
-            if (!linkError) {
-              toast({
-                title: 'Identity Linked',
-                description: 'Your biometric signature has been added to your profile.',
-              });
-            }
+            toast({
+              title: 'Identity Linked',
+              description: 'Your biometric signature has been added to your profile.',
+            });
           } else {
             toast({
               title: 'Welcome back!',

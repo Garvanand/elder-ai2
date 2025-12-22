@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string, faceDescriptor?: number[]) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, role: UserRole, extraData?: any) => Promise<{ error: Error | null }>;
   signInWithOAuth: (provider: 'google' | 'github') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -86,11 +86,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+  const signIn = async (email: string, password: string, faceDescriptor?: number[]) => {
+    const { data: { session }, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (!error && session?.user && faceDescriptor) {
+      // Auto-link face descriptor upon successful password login if provided
+      await supabase
+        .from('profiles')
+        .update({ face_descriptor: faceDescriptor })
+        .eq('user_id', session.user.id);
+    }
+
     return { error: error ? new Error(error.message) : null };
   };
 
