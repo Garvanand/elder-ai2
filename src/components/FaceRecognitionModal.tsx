@@ -17,83 +17,100 @@ interface FaceRecognitionModalProps {
 export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, description }: FaceRecognitionModalProps) {
   const [loading, setLoading] = useState(true);
   const [capturing, setCapturing] = useState(false);
-  const [status, setStatus] = useState<'initializing' | 'ready' | 'analyzing' | 'verifying'>('initializing');
+  const [status, setStatus] = useState<'initializing' | 'ready' | 'analyzing' | 'verifying' | 'error'>('initializing');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
+  const setup = async () => {
     let isMounted = true;
     let timeoutId: any;
 
-    async function setup() {
-      try {
-        setStatus('initializing');
-        
-        // Start loading models and camera in parallel
-        const modelsPromise = loadModels();
-        const cameraPromise = navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            width: { ideal: 640 }, // Lower resolution for speed
-            height: { ideal: 480 },
-            facingMode: "user"
-          } 
-        });
+    try {
+      setLoading(true);
+      setStatus('initializing');
+      setErrorMessage(null);
+      
+      console.log("FaceRecognitionModal: Starting setup...");
+      
+      // Start loading models and camera in parallel
+      const modelsPromise = loadModels().catch(err => {
+        console.error("Models failed to load:", err);
+        throw new Error("Neural models could not be loaded. Please check your internet connection.");
+      });
 
-        // Set a timeout to catch hanging connections
-        timeoutId = setTimeout(() => {
-          if (loading && isMounted) {
-            console.warn("Neural Link initialization taking too long, forcing ready...");
-            setLoading(false);
-            setStatus('ready');
-          }
-        }, 8000);
+      const cameraPromise = navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: "user"
+        } 
+      }).catch(err => {
+        console.error("Camera failed to start:", err);
+        throw new Error("Camera access denied. Please enable camera permissions in your browser.");
+      });
 
-        const [_, stream] = await Promise.all([modelsPromise, cameraPromise]);
-        
-        if (!isMounted) {
-          stream.getTracks().forEach(t => t.stop());
-          return;
+      // Set a safety timeout for the entire setup
+      timeoutId = setTimeout(() => {
+        if (loading && isMounted) {
+          console.error("FaceRecognitionModal: Setup timed out after 15s");
+          setErrorMessage("Neural Link connection timed out. Please try again.");
+          setStatus('error');
+          setLoading(false);
         }
+      }, 15000);
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          streamRef.current = stream;
-          
-          // Clear any previous plays
-          videoRef.current.onloadedmetadata = async () => {
-            if (videoRef.current && isMounted) {
-              try {
-                await videoRef.current.play();
-                setLoading(false);
-                setStatus('ready');
-                clearTimeout(timeoutId);
-              } catch (e) {
-                console.error("Auto-play failed:", e);
-                // Fallback for some browsers
-                setLoading(false);
-                setStatus('ready');
-              }
+      const [_, stream] = await Promise.all([modelsPromise, cameraPromise]);
+      
+      if (!isMounted) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+
+      console.log("FaceRecognitionModal: Models and Camera ready.");
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        
+        videoRef.current.onloadedmetadata = async () => {
+          if (videoRef.current && isMounted) {
+            try {
+              await videoRef.current.play();
+              console.log("FaceRecognitionModal: Video playing.");
+              clearTimeout(timeoutId);
+              setLoading(false);
+              setStatus('ready');
+            } catch (e) {
+              console.error("Auto-play failed:", e);
+              setStatus('ready');
+              setLoading(false);
             }
-          };
-        }
-      } catch (error) {
-        console.error('Face recognition setup failed:', error);
-        if (isMounted) {
-          toast({
-            title: 'Neural Link Error',
-            description: 'Could not establish visual connection. Ensure camera access is enabled.',
-            variant: 'destructive',
-          });
-          onClose();
-        }
+          }
+        };
+      }
+    } catch (error) {
+      console.error('Face recognition setup failed:', error);
+      if (isMounted) {
+        setErrorMessage(error instanceof Error ? error.message : "Initialization failed");
+        setStatus('error');
+        setLoading(false);
+        toast({
+          title: 'Neural Link Error',
+          description: error instanceof Error ? error.message : 'Could not establish visual connection.',
+          variant: 'destructive',
+        });
       }
     }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
     setup();
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -208,6 +225,23 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
                   <div className="text-center space-y-2">
                     <p className="text-xl font-black uppercase tracking-widest animate-pulse">Initializing Neural Link</p>
                     <p className="text-xs text-white/40 uppercase font-bold tracking-tighter">Establishing optical stream...</p>
+                  </div>
+                </div>
+              ) : status === 'error' ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-slate-900/80 backdrop-blur-md p-8 text-center">
+                  <div className="p-4 bg-red-500/20 rounded-full">
+                    <X className="h-16 w-16 text-red-500" />
+                  </div>
+                  <div className="space-y-4">
+                    <p className="text-2xl font-black uppercase tracking-widest text-red-400">Connection Failed</p>
+                    <p className="text-white/60 font-medium max-w-sm mx-auto">{errorMessage || "The neural link could not be established."}</p>
+                    <Button 
+                      onClick={() => setup()} 
+                      className="bg-white/10 hover:bg-white/20 text-white rounded-xl gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Retry Connection
+                    </Button>
                   </div>
                 </div>
               ) : (

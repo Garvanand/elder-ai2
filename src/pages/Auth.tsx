@@ -67,18 +67,26 @@ export default function AuthPage() {
   };
 
   const onFaceCapture = async (capturedDescriptor: number[]) => {
+    console.log("Auth: onFaceCapture triggered");
     setShowFaceModal(false);
     setLoading(true);
 
     try {
       if (isLogin) {
+        console.log("Auth: Attempting face login for", email);
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('face_descriptor, email')
           .eq('email', email)
           .maybeSingle();
 
-        if (profileError || !profile?.face_descriptor) {
+        if (profileError) {
+          console.error("Auth: Profile fetch error:", profileError);
+          throw profileError;
+        }
+
+        if (!profile?.face_descriptor) {
+          console.warn("Auth: No face descriptor found for", email);
           toast({
             title: 'Face Login unavailable',
             description: 'No face profile found for this email. Please use your password.',
@@ -88,12 +96,14 @@ export default function AuthPage() {
           return;
         }
 
+        console.log("Auth: Found face profile, comparing descriptors...");
         // Ensure stored descriptor is treated as an array
         const storedDescriptor = Array.isArray(profile.face_descriptor) 
           ? profile.face_descriptor 
           : Object.values(profile.face_descriptor as any);
 
         const isMatch = compareFaceDescriptors(capturedDescriptor, storedDescriptor as number[]);
+        console.log("Auth: Face match result:", isMatch);
         
         if (isMatch) {
           toast({
@@ -101,15 +111,18 @@ export default function AuthPage() {
             description: 'Signing you in...',
           });
           
+          console.log("Auth: Requesting Magic Link...");
           const { error } = await supabase.auth.signInWithOtp({ email });
           
           if (error) {
+            console.error("Auth: Magic Link error:", error);
             toast({
               title: 'Verification failed',
               description: error.message,
               variant: 'destructive',
             });
           } else {
+            console.log("Auth: Magic Link sent successfully.");
             toast({
               title: 'Success!',
               description: 'Check your email for the login link.',
@@ -123,6 +136,7 @@ export default function AuthPage() {
           });
         }
       } else {
+        console.log("Auth: Face captured for registration.");
         setFaceDescriptor(capturedDescriptor);
         toast({
           title: 'Face captured!',
@@ -130,7 +144,7 @@ export default function AuthPage() {
         });
       }
     } catch (err) {
-      console.error(err);
+      console.error("Auth: onFaceCapture Exception:", err);
       toast({
         title: 'Error',
         description: 'An error occurred during face recognition.',
@@ -138,6 +152,7 @@ export default function AuthPage() {
       });
     } finally {
       setLoading(false);
+      console.log("Auth: onFaceCapture process complete.");
     }
   };
 
