@@ -11,6 +11,7 @@ export interface Profile {
   preferences: Record<string, unknown>;
   full_name: string | null;
   avatar_url: string | null;
+  face_descriptor: number[] | null;
   created_at: string;
   updated_at: string;
 }

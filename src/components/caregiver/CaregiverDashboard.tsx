@@ -2,17 +2,19 @@ import { useState, useMemo, useEffect } from 'react';
 import { 
   Brain, LogOut, Calendar, Tag, Filter, MessageCircle, 
   Clock, User, Heart, Pill, Star, HelpCircle, 
-  TrendingUp, Search, PlusCircle, ArrowUpRight, AlertTriangle
+  TrendingUp, Search, PlusCircle, ArrowUpRight, AlertTriangle,
+  BookOpen, Story, UserCircle, CalendarDays, Settings, Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import type { Memory, Question, BehavioralSignal } from '@/types';
+import type { Memory, Question, BehavioralSignal, MemoryType } from '@/types';
 import { format } from 'date-fns';
 import CaregiverInsights from './CaregiverInsights';
 import CaregiverSignals from './CaregiverSignals';
+import { CognitiveJournal } from './CognitiveJournal';
 
 interface CaregiverDashboardProps {
   memories: Memory[];
@@ -21,9 +23,29 @@ interface CaregiverDashboardProps {
   onRefresh: (silent?: boolean) => void;
 }
 
+const memoryTypeColors: Record<MemoryType, string> = {
+  story: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  person: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  event: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  medication: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  routine: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  preference: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+};
+
+const memoryTypeIcons: Record<MemoryType, React.ReactNode> = {
+  story: <Star className="w-3.5 h-3.5" />,
+  person: <User className="w-3.5 h-3.5" />,
+  event: <Calendar className="w-3.5 h-3.5" />,
+  medication: <Pill className="w-3.5 h-3.5" />,
+  routine: <Clock className="w-3.5 h-3.5" />,
+  preference: <Heart className="w-3.5 h-3.5" />,
+  other: <HelpCircle className="w-3.5 h-3.5" />
+};
+
 export default function CaregiverDashboard({ memories, questions, signals, onRefresh }: CaregiverDashboardProps) {
   const { profile, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'memories' | 'questions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'memories' | 'questions' | 'journal'>('overview');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,6 +81,8 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const fetchSignals = () => onRefresh(true);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -125,19 +149,27 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
 
       {/* Main Content Area */}
       <div className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/20 p-8 shadow-card">
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-2 mb-8 overflow-x-auto pb-2 sm:pb-0">
             <Button
               variant={activeTab === 'overview' ? 'default' : 'ghost'}
               onClick={() => setActiveTab('overview')}
-              className={`rounded-xl h-12 px-6 ${activeTab === 'overview' ? 'shadow-button' : ''}`}
+              className={`rounded-xl h-11 px-6 ${activeTab === 'overview' ? 'shadow-button' : ''}`}
             >
               <Star className="w-4 h-4 mr-2" />
               Overview
             </Button>
             <Button
+              variant={activeTab === 'journal' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('journal')}
+              className={`rounded-xl h-11 px-6 ${activeTab === 'journal' ? 'shadow-button' : ''}`}
+            >
+              <BookOpen className="w-4 h-4 mr-2" />
+              Journal
+            </Button>
+            <Button
               variant={activeTab === 'signals' ? 'default' : 'ghost'}
               onClick={() => setActiveTab('signals')}
-              className={`rounded-xl h-12 px-6 ${activeTab === 'signals' ? 'shadow-button' : ''}`}
+              className={`rounded-xl h-11 px-6 ${activeTab === 'signals' ? 'shadow-button' : ''}`}
             >
               <AlertTriangle className="w-4 h-4 mr-2" />
               Signals
@@ -148,20 +180,19 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
             <Button
               variant={activeTab === 'memories' ? 'default' : 'ghost'}
               onClick={() => setActiveTab('memories')}
-              className={`rounded-xl h-12 px-6 ${activeTab === 'memories' ? 'shadow-button' : ''}`}
+              className={`rounded-xl h-11 px-6 ${activeTab === 'memories' ? 'shadow-button' : ''}`}
             >
               <Brain className="w-4 h-4 mr-2" />
               Memories
             </Button>
-
-          <Button
-            variant={activeTab === 'questions' ? 'default' : 'ghost'}
-            onClick={() => setActiveTab('questions')}
-            className={`rounded-xl h-12 px-6 ${activeTab === 'questions' ? 'shadow-button' : ''}`}
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Questions
-          </Button>
+            <Button
+              variant={activeTab === 'questions' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('questions')}
+              className={`rounded-xl h-11 px-6 ${activeTab === 'questions' ? 'shadow-button' : ''}`}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Questions
+            </Button>
         </div>
 
           {activeTab === 'overview' && (
@@ -226,12 +257,17 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
             </div>
           )}
 
+          {activeTab === 'journal' && (
+            <div className="animate-slide-up">
+              <CognitiveJournal memories={memories} signals={signals} />
+            </div>
+          )}
+
           {activeTab === 'signals' && (
             <div className="animate-slide-up">
               <CaregiverSignals signals={signals} onRefresh={fetchSignals} />
             </div>
           )}
-
 
         {activeTab === 'memories' && (
           <div className="animate-slide-up">

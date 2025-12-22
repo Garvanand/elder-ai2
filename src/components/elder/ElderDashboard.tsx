@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,8 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useSpeech } from '@/hooks/useSpeech';
 import { supabase } from '@/integrations/supabase/client';
 import { extractMemoryIntelligence, answerQuestion, generateWeeklyRecap } from '@/lib/ai';
-import type { Question, Routine, Reminder } from '@/types';
+import type { Question, Routine, Reminder, Memory } from '@/types';
 import { format } from 'date-fns';
+import { MemoryWall } from './MemoryWall';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -20,13 +21,18 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
   const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
-  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines'>('home');
+  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall'>('home');
   const [memoryText, setMemoryText] = useState('');
   const [questionText, setQuestionText] = useState('');
   const [answer, setAnswer] = useState('');
   const [recap, setRecap] = useState('');
   const [loading, setLoading] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+
+  const handleTriggerConversation = (memory: Memory) => {
+    setQuestionText(`Tell me more about ${memory.raw_text}`);
+    setView('askQuestion');
+  };
 
   useEffect(() => {
     if (user) {
@@ -149,6 +155,32 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const handleSignOut = async () => {
     await signOut();
   };
+
+  if (view === 'memoryWall') {
+    return (
+      <div className="min-h-screen bg-background p-6 animate-fade-in">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="elderOutline"
+            onClick={() => setView('home')}
+            className="mb-6"
+          >
+            ← Back to Home
+          </Button>
+          
+          <h1 className="text-4xl font-display font-bold mb-8 flex items-center gap-3">
+            <ImageIcon className="w-10 h-10 text-primary" />
+            Your Memory Wall
+          </h1>
+          
+          <MemoryWall 
+            elderId={user!.id} 
+            onTriggerConversation={handleTriggerConversation} 
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'recap') {
     return (
@@ -411,15 +443,25 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
 
         {/* Main Actions */}
         <div className="space-y-4 mb-12">
-          <Button
-            variant="elder"
-            size="elderLg"
-            onClick={() => setView('addMemory')}
-            className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
-          >
-            <Plus className="w-8 h-8" />
-            Add a Memory
-          </Button>
+            <Button
+              variant="elder"
+              size="elderLg"
+              onClick={() => setView('addMemory')}
+              className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
+            >
+              <Plus className="w-8 h-8" />
+              Add a Memory
+            </Button>
+
+            <Button
+              variant="elderSuccess"
+              size="elderLg"
+              onClick={() => setView('memoryWall')}
+              className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
+            >
+              <ImageIcon className="w-8 h-8" />
+              Memory Wall
+            </Button>
           
           <Button
             variant="elderSecondary"
