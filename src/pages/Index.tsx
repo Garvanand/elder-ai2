@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Heart, Users, Shield, ArrowRight, Sparkles, CheckCircle2, Activity, MessageSquare } from 'lucide-react';
+import { Brain, Heart, Users, Shield, ArrowRight, Sparkles, CheckCircle2, Activity, MessageSquare, Globe, Zap, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
+  const { scrollYProgress } = useScroll();
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.8]);
 
   useEffect(() => {
     if (!loading && user && profile) {
@@ -20,135 +22,183 @@ const Index = () => {
   const features = [
     {
       icon: <Brain className="w-8 h-8 text-primary" />,
-      title: 'Cognitive Support',
-      description: 'AI-driven memory retrieval designed for cognitive ease and dignity.',
-      color: 'bg-blue-50'
+      title: 'Neural Recovery',
+      description: 'AI-driven memory synthesis designed for cognitive elasticity and dignity.',
+      color: 'bg-primary/10'
     },
     {
       icon: <Activity className="w-8 h-8 text-rose-500" />,
-      title: 'Real-time Insights',
-      description: 'Caregivers monitor cognitive trends and behavioral signals passively.',
-      color: 'bg-rose-50'
+      title: 'Bio-Sync Monitoring',
+      description: 'Synchronized health telemetry correlates vitals with cognitive readiness.',
+      color: 'bg-rose-500/10'
     },
     {
-      icon: <Heart className="w-8 h-8 text-amber-500" />,
-      title: 'Emotional Connection',
-      description: 'Bridge the gap between family and elders with shared life highlights.',
-      color: 'bg-amber-50'
+      icon: <Globe className="w-8 h-8 text-amber-500" />,
+      title: 'Global Presence',
+      description: 'Bridge physical distance with holographic-ready memory sharing.',
+      color: 'bg-amber-500/10'
     },
     {
       icon: <Shield className="w-8 h-8 text-emerald-500" />,
-      title: 'Secure & Private',
-      description: 'Enterprise-grade security ensuring memories stay within the family circle.',
-      color: 'bg-emerald-50'
+      title: 'Quantum Guard',
+      description: 'Post-quantum encryption ensuring the sanctity of your life data.',
+      color: 'bg-emerald-500/10'
     },
   ];
 
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] selection:bg-primary/20">
-        {/* Background Orbs */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-500/5 rounded-full blur-[120px]" />
+  return (
+    <div className="min-h-screen text-[#1A1A1A] selection:bg-primary/20 overflow-x-hidden">
+      <main className="relative z-10">
+        {/* Floating background elements */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
+          <motion.div 
+            animate={{ 
+              y: [0, -20, 0],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-[10%] left-[5%] w-64 h-64 bg-primary/20 rounded-full blur-3xl" 
+          />
+          <motion.div 
+            animate={{ 
+              y: [0, 20, 0],
+              opacity: [0.2, 0.4, 0.2]
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute top-[40%] right-[10%] w-96 h-96 bg-accent/20 rounded-full blur-3xl" 
+          />
         </div>
 
-        <main className="relative z-10">
-          {/* Hero Section */}
-
-        <section className="pt-24 pb-32 px-6 overflow-hidden">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+        {/* Hero Section */}
+        <section className="relative pt-32 pb-40 px-6">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-8"
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="space-y-10"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-                <Sparkles className="w-3 h-3" />
-                Trusted by 5,000+ families
+              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/40 backdrop-blur-md border border-white/40 shadow-xl text-primary text-xs font-black uppercase tracking-[0.2em]">
+                <Sparkles className="w-4 h-4" />
+                Next-Gen Care Ecosystem
               </div>
-              <h1 className="text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight">
-                A digital <span className="text-primary italic">companion</span> for every memory.
+              <h1 className="text-7xl md:text-8xl font-black leading-[0.9] tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-foreground via-foreground to-foreground/40">
+                Beyond <span className="text-primary italic">Memory</span>.
               </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed max-w-xl">
-                The first emotionally intelligent platform designed to preserve life stories for elders while providing real-time peace of mind for families.
+              <p className="text-2xl text-muted-foreground leading-relaxed max-w-xl font-medium">
+                The first decentralized, emotionally aware platform architected to preserve humanity through technology.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-6 pt-4">
                 <Link to="/auth">
-                  <Button size="lg" className="h-16 px-10 text-lg rounded-2xl w-full sm:w-auto shadow-2xl shadow-primary/30">
-                    Join as an Elder
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button size="lg" className="h-20 px-12 text-xl font-black rounded-3xl w-full sm:w-auto shadow-[0_20px_50px_rgba(var(--primary-rgb),0.3)] bg-primary group uppercase tracking-widest">
+                      Enter Collective
+                      <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
+                    </Button>
+                  </motion.div>
                 </Link>
                 <Link to="/auth">
-                  <Button variant="outline" size="lg" className="h-16 px-10 text-lg rounded-2xl w-full sm:w-auto border-2 hover:bg-black/5">
-                    I&apos;m a Caregiver
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button variant="outline" size="lg" className="h-20 px-12 text-xl font-black rounded-3xl w-full sm:w-auto border-2 border-white/60 bg-white/20 backdrop-blur-md hover:bg-white/40 uppercase tracking-widest">
+                      Monitor Hub
+                    </Button>
+                  </motion.div>
                 </Link>
+              </div>
+              
+              <div className="flex items-center gap-8 pt-6">
+                <div className="flex -space-x-4">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-12 h-12 rounded-2xl border-4 border-white bg-slate-200 shadow-lg overflow-hidden relative">
+                      <img src={`https://i.pravatar.cc/150?u=${i}`} alt="user" className="object-cover w-full h-full grayscale" />
+                    </div>
+                  ))}
+                </div>
+                <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                  <span className="text-foreground block text-lg">99.8%</span> Reliability Score
+                </div>
               </div>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8 }}
-              className="relative"
+              initial={{ opacity: 0, scale: 0.8, rotateY: 20 }}
+              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+              transition={{ duration: 1.2, ease: "circOut" }}
+              className="relative perspective-1000"
             >
-              <div className="relative z-10 rounded-[40px] border-[12px] border-white shadow-2xl overflow-hidden aspect-[4/3] bg-gradient-to-br from-primary/20 to-rose-500/20">
+              <div className="relative z-10 rounded-[60px] border-[1px] border-white/60 shadow-2xl overflow-hidden aspect-[4/3] bg-white/20 backdrop-blur-3xl transform rotate-3 hover:rotate-0 transition-all duration-700 group">
+                <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-accent/10 opacity-50" />
                 <div className="absolute inset-0 flex items-center justify-center p-12">
-                  <div className="w-full space-y-4">
-                    <div className="p-6 bg-white rounded-3xl shadow-xl flex gap-4 animate-slide-up">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <MessageSquare className="w-6 h-6 text-primary" />
+                  <div className="w-full space-y-6">
+                    <motion.div 
+                      whileHover={{ scale: 1.02, x: 10 }}
+                      className="p-8 bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl flex gap-6 border border-white"
+                    >
+                      <div className="w-16 h-16 rounded-[24px] bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                        <Zap className="w-8 h-8 text-white" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-bold">Memory Captured</p>
-                        <p className="text-xs text-muted-foreground">"I remember my first day in London, 1968..."</p>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Biometric Sync</p>
+                        <p className="text-xl font-bold">Neural Pattern Verified</p>
+                        <p className="text-sm text-muted-foreground">Identity hash matches cognitive baseline.</p>
                       </div>
-                    </div>
-                    <div className="p-6 bg-white rounded-3xl shadow-xl flex gap-4 animate-slide-up [animation-delay:0.2s]">
-                      <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center">
-                        <Activity className="w-6 h-6 text-rose-500" />
+                    </motion.div>
+                    
+                    <motion.div 
+                      whileHover={{ scale: 1.02, x: 10 }}
+                      className="p-8 bg-black/5 backdrop-blur-xl rounded-[32px] shadow-2xl flex gap-6 border border-white/30 ml-8"
+                    >
+                      <div className="w-16 h-16 rounded-[24px] bg-accent/80 flex items-center justify-center shadow-lg shadow-accent/20">
+                        <Database className="w-8 h-8 text-white" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-bold">Insight for Family</p>
-                        <p className="text-xs text-muted-foreground">Cognitive engagement is 15% higher this week.</p>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-accent">Memory Bank</p>
+                        <p className="text-xl font-bold">Memory Index Updated</p>
+                        <p className="text-sm text-muted-foreground font-medium">"Spring in Kyoto, 1992" archived 2m ago.</p>
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
               </div>
-              {/* Decorative elements */}
-              <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-primary/20 rounded-full blur-2xl" />
-              <div className="absolute bottom-[-20px] left-[-20px] w-32 h-32 bg-rose-500/20 rounded-full blur-2xl" />
+              {/* Futuristic floating rings */}
+              <div className="absolute -top-10 -left-10 w-40 h-40 border-[20px] border-primary/5 rounded-full animate-float" />
+              <div className="absolute -bottom-20 -right-20 w-80 h-80 border-[40px] border-accent/5 rounded-full animate-float [animation-delay:1s]" />
             </motion.div>
           </div>
         </section>
 
         {/* Features Grid */}
-        <section id="features" className="py-24 px-6 bg-white">
-          <div className="max-w-7xl mx-auto space-y-16">
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl font-bold tracking-tight">Designed for trust and dignity</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                We combine empathetic AI with clinical-adjacent insights to support both elders and their support network.
+        <section id="features" className="py-40 px-6 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto space-y-24">
+            <div className="text-center space-y-6">
+              <motion.h2 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-5xl md:text-6xl font-black tracking-tighter"
+              >
+                Synthesized for trust and longevity.
+              </motion.h2>
+              <p className="text-2xl text-muted-foreground max-w-3xl mx-auto font-medium leading-relaxed">
+                Seamlessly blending empathetic intelligence with clinical-grade analytics to fortify the human experience.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
               {features.map((feature, index) => (
                 <motion.div
                   key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.1, ease: "circOut" }}
                 >
-                  <Card className="border-none shadow-none hover:bg-slate-50 transition-colors p-8 h-full">
-                    <div className={`w-16 h-16 rounded-[24px] ${feature.color} flex items-center justify-center mb-6`}>
+                  <Card className="border-none bg-white/40 backdrop-blur-xl hover:bg-white/80 transition-all duration-500 p-10 h-full rounded-[48px] shadow-2xl shadow-black/5 group cursor-default">
+                    <div className={`w-20 h-20 rounded-[30px] ${feature.color} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500`}>
                       {feature.icon}
                     </div>
-                    <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed text-sm">
+                    <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">{feature.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed text-lg font-medium">
                       {feature.description}
                     </p>
                   </Card>
@@ -158,114 +208,111 @@ const Index = () => {
           </div>
         </section>
 
-        {/* How It Works */}
-        <section id="how-it-works" className="py-32 px-6">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-24 items-center">
-            <div className="space-y-8">
-              <h2 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight">
-                Empowering the <span className="text-primary italic">golden years</span> with technology that cares.
+        {/* How It Works - Connected View */}
+        <section id="how-it-works" className="py-40 px-6 bg-black/5 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-32 items-center">
+            <div className="space-y-12">
+              <h2 className="text-6xl font-black leading-[1.1] tracking-tighter">
+                Bridging the <span className="text-primary italic">temporal gap</span>.
               </h2>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {[
-                  { title: "One-tap Memory Capture", desc: "No complex forms. Just talk or type, and our AI does the rest." },
-                  { title: "Intelligent Q&A", desc: "Natural language retrieval that feels like talking to a friend." },
-                  { title: "Behavioral Alert System", desc: "Peace of mind for families through automated signal detection." }
+                  { title: "Zero-Knowledge Ingestion", desc: "Speak naturally. Our engine parses memories without compromising biological privacy." },
+                  { title: "Predictive Health Logic", desc: "Correlation models detect subtle shifts in cognitive readiness before they manifest." },
+                  { title: "Unified Insight Portal", desc: "Every family member synchronized on a single, secure intelligence stream." }
                 ].map((item, i) => (
-                  <div key={i} className="flex gap-4">
+                  <motion.div 
+                    key={i} 
+                    whileHover={{ x: 10 }}
+                    className="flex gap-6 items-start p-6 rounded-3xl hover:bg-white/40 transition-all"
+                  >
                     <div className="flex-shrink-0 mt-1">
-                      <CheckCircle2 className="w-6 h-6 text-primary" />
+                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <CheckCircle2 className="w-6 h-6" />
+                      </div>
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg">{item.title}</h4>
-                      <p className="text-muted-foreground text-sm">{item.desc}</p>
+                      <h4 className="font-black text-2xl uppercase tracking-tighter mb-2">{item.title}</h4>
+                      <p className="text-muted-foreground text-lg leading-relaxed font-medium">{item.desc}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
-            <div className="bg-slate-900 rounded-[40px] p-12 text-white relative overflow-hidden">
-              <div className="relative z-10 space-y-6">
-                <blockquote className="text-2xl font-medium italic leading-relaxed">
-                  "This app changed our family dynamic. My grandmother feels heard, and I finally have clarity on how she's doing day-to-day."
-                </blockquote>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-slate-800" />
-                  <div>
-                    <p className="font-bold">Sarah Jenkins</p>
-                    <p className="text-sm text-slate-400">Primary Caregiver</p>
+            
+            <div className="relative">
+              <div className="bg-slate-950 rounded-[80px] p-20 text-white relative overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.4)]">
+                <div className="absolute top-0 right-0 p-10 opacity-20">
+                  <Globe className="w-64 h-64 text-primary animate-spin-[20s]" />
+                </div>
+                <div className="relative z-10 space-y-10">
+                  <div className="inline-flex px-4 py-1.5 rounded-full bg-primary/20 text-primary text-xs font-black tracking-widest uppercase">Testimonial Protocol</div>
+                  <blockquote className="text-4xl font-black leading-tight tracking-tight italic">
+                    "Cognitive engagement metrics increased by 40% within the first lunar cycle. The emotional bridge is restored."
+                  </blockquote>
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-3xl bg-slate-800 shadow-xl overflow-hidden grayscale">
+                      <img src="https://i.pravatar.cc/150?u=sarah" alt="sarah" />
+                    </div>
+                    <div>
+                      <p className="font-black text-xl tracking-tighter uppercase">Dr. Helena Vance</p>
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Lead Research & Caregiver</p>
+                    </div>
                   </div>
                 </div>
               </div>
-              <Brain className="absolute right-[-20%] bottom-[-20%] w-64 h-64 text-white/5" />
             </div>
           </div>
         </section>
 
-        {/* Trust/Security Section */}
-        <section id="security" className="py-24 px-6 border-t border-black/5 bg-[#FDFDFD]">
-          <div className="max-w-7xl mx-auto text-center space-y-12">
-            <div className="flex justify-center">
-              <Shield className="w-16 h-16 text-emerald-500" />
-            </div>
-            <h2 className="text-3xl font-bold">Your privacy is our baseline.</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-left max-w-4xl mx-auto">
-              <div>
-                <h4 className="font-bold mb-2">End-to-End Encryption</h4>
-                <p className="text-sm text-muted-foreground">All memory data is encrypted at rest and in transit.</p>
-              </div>
-              <div>
-                <h4 className="font-bold mb-2">Role-Based Access</h4>
-                <p className="text-sm text-muted-foreground">Strict permission controls ensure only linked caregivers have access.</p>
-              </div>
-              <div>
-                <h4 className="font-bold mb-2">HIPAA Compliant Architecture</h4>
-                <p className="text-sm text-muted-foreground">Built on infrastructure designed for sensitive healthcare data.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-32 px-6">
-          <div className="max-w-4xl mx-auto text-center space-y-12 bg-primary p-16 rounded-[48px] shadow-2xl shadow-primary/20 text-white relative overflow-hidden">
-            <div className="relative z-10 space-y-6">
-              <h2 className="text-5xl font-bold">Start your journey today.</h2>
-              <p className="text-xl text-white/80 max-w-xl mx-auto">
-                Join thousands of families who are preserving memories with dignity and care.
+        {/* Final Integrated CTA */}
+        <section className="py-40 px-6 relative z-10">
+          <motion.div 
+            style={{ scale }}
+            className="max-w-5xl mx-auto text-center space-y-12 bg-gradient-to-br from-primary via-primary to-accent p-24 rounded-[80px] shadow-[0_40px_120px_rgba(var(--primary-rgb),0.4)] text-white relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+            <div className="relative z-10 space-y-8">
+              <h2 className="text-6xl md:text-7xl font-black tracking-tighter leading-none uppercase">Join the Collective Intelligence.</h2>
+              <p className="text-2xl text-white/80 max-w-2xl mx-auto font-medium">
+                Synchronize your lineage. Preserve your legacy. Ensure the future of care.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center pt-8">
                 <Link to="/auth">
-                  <Button size="lg" className="h-16 px-12 text-lg rounded-2xl bg-white text-primary hover:bg-slate-100 shadow-xl">
-                    Get Started Free
+                  <Button size="lg" className="h-20 px-16 text-xl font-black rounded-3xl bg-white text-primary hover:bg-slate-50 shadow-2xl shadow-black/20 uppercase tracking-widest group">
+                    Initialize Setup
+                    <Zap className="w-6 h-6 ml-3 group-hover:fill-current transition-all" />
                   </Button>
                 </Link>
                 <Link to="/auth">
-                  <Button variant="ghost" size="lg" className="h-16 px-12 text-lg rounded-2xl text-white hover:bg-white/10">
-                    Learn More
+                  <Button variant="ghost" size="lg" className="h-20 px-16 text-xl font-black rounded-3xl text-white hover:bg-white/10 border-2 border-white/20 uppercase tracking-widest">
+                    Network Status
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="absolute top-0 right-0 p-8">
-              <Sparkles className="w-12 h-12 text-white/20 animate-pulse" />
+            <div className="absolute -top-10 -right-10">
+              <Sparkles className="w-40 h-40 text-white/10 animate-pulse" />
             </div>
-          </div>
+          </motion.div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-black/5 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-3">
-            <Brain className="w-6 h-6 text-primary" />
-            <span className="font-bold">Memory Friend</span>
+      <footer className="py-20 border-t border-black/5 px-6 bg-white/20 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex items-center gap-4 group">
+            <div className="p-3 bg-primary rounded-2xl text-white shadow-xl">
+              <Brain className="w-8 h-8" />
+            </div>
+            <span className="font-black text-3xl tracking-tighter uppercase group-hover:text-primary transition-colors">MemoryFriend</span>
           </div>
-          <div className="flex gap-8 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-primary">Privacy Policy</a>
-            <a href="#" className="hover:text-primary">Terms of Service</a>
-            <a href="#" className="hover:text-primary">Contact Support</a>
+          <div className="flex gap-12 text-sm font-black uppercase tracking-widest text-muted-foreground">
+            <a href="#" className="hover:text-primary transition-colors">Privacy Prot</a>
+            <a href="#" className="hover:text-primary transition-colors">Terms of Ops</a>
+            <a href="#" className="hover:text-primary transition-colors">Support Link</a>
           </div>
-          <p className="text-sm text-muted-foreground">© 2025 Memory Friend. All rights reserved.</p>
+          <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest opacity-50">© 2025 Neural Core v1.0.4</p>
         </div>
       </footer>
     </div>

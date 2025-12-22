@@ -3,7 +3,7 @@ import {
   Brain, LogOut, Calendar, Tag, Filter, MessageCircle, 
   Clock, User, Heart, Pill, Star, HelpCircle, 
   TrendingUp, Search, PlusCircle, ArrowUpRight, AlertTriangle,
-  BookOpen, Story, UserCircle, CalendarDays, Settings, Activity
+  BookOpen, UserCircle, CalendarDays, Settings, Activity, Sparkles, Globe, Zap, Database, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import CaregiverInsights from './CaregiverInsights';
 import CaregiverSignals from './CaregiverSignals';
 import { CognitiveJournal } from './CognitiveJournal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CaregiverDashboardProps {
   memories: Memory[];
@@ -24,13 +25,13 @@ interface CaregiverDashboardProps {
 }
 
 const memoryTypeColors: Record<MemoryType, string> = {
-  story: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  person: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  event: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  medication: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  routine: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  preference: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-  other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+  story: 'bg-blue-500 text-white',
+  person: 'bg-purple-500 text-white',
+  event: 'bg-emerald-500 text-white',
+  medication: 'bg-rose-500 text-white',
+  routine: 'bg-amber-500 text-white',
+  preference: 'bg-indigo-500 text-white',
+  other: 'bg-slate-500 text-white'
 };
 
 const memoryTypeIcons: Record<MemoryType, React.ReactNode> = {
@@ -50,14 +51,12 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
   const [tagFilter, setTagFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Get unique tags
   const allTags = useMemo(() => {
     const tags = new Set<string>();
     memories.forEach(m => m.tags?.forEach(t => tags.add(t)));
     return Array.from(tags);
   }, [memories]);
 
-  // Filter memories
   const filteredMemories = useMemo(() => {
     return memories.filter(m => {
       if (typeFilter !== 'all' && m.type !== typeFilter) return false;
@@ -67,7 +66,6 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
     });
   }, [memories, typeFilter, tagFilter, searchQuery]);
 
-  // Group memories by date
   const groupedMemories = useMemo(() => {
     const groups: Record<string, Memory[]> = {};
     filteredMemories.forEach(m => {
@@ -78,312 +76,289 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
     return groups;
   }, [filteredMemories]);
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  const fetchSignals = () => onRefresh(true);
-
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/10 shadow-soft">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                <Brain className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold tracking-tight">{memories.length}</p>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Memories</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-accent/5 to-accent/10 border-accent/10 shadow-soft">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold tracking-tight">{questions.length}</p>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Questions</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500/5 to-green-500/10 border-green-500/10 shadow-soft">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold tracking-tight">
-                  {Object.keys(groupedMemories).length}
-                </p>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Days Active</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500/5 to-purple-500/10 border-purple-500/10 shadow-soft">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Tag className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold tracking-tight">{allTags.length}</p>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Unique Tags</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-12 max-w-7xl mx-auto pt-24 pb-20 px-6">
+      {/* Header Info */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-4">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="space-y-4"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
+            <ShieldCheck className="w-3 h-3" /> Collective Intelligence Active
+          </div>
+          <h1 className="text-6xl font-black tracking-tighter">Observatory Hub</h1>
+          <p className="text-xl text-muted-foreground font-medium italic">"Monitoring the temporal health of your lineage."</p>
+        </motion.div>
+        
+        <div className="flex items-center gap-4 bg-white/40 backdrop-blur-3xl p-4 rounded-3xl border border-white shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <UserCircle className="w-7 h-7 text-white" />
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-black uppercase tracking-tighter text-muted-foreground opacity-60">Operations Officer</p>
+            <p className="text-lg font-bold truncate max-w-[150px]">{profile?.full_name}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/20 p-8 shadow-card">
-        <div className="flex flex-col sm:flex-row gap-2 mb-8 overflow-x-auto pb-2 sm:pb-0">
-            <Button
-              variant={activeTab === 'overview' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('overview')}
-              className={`rounded-xl h-11 px-6 ${activeTab === 'overview' ? 'shadow-button' : ''}`}
-            >
-              <Star className="w-4 h-4 mr-2" />
-              Overview
-            </Button>
-            <Button
-              variant={activeTab === 'journal' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('journal')}
-              className={`rounded-xl h-11 px-6 ${activeTab === 'journal' ? 'shadow-button' : ''}`}
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Journal
-            </Button>
-            <Button
-              variant={activeTab === 'signals' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('signals')}
-              className={`rounded-xl h-11 px-6 ${activeTab === 'signals' ? 'shadow-button' : ''}`}
-            >
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              Signals
-              {signals.length > 0 && (
-                <span className="ml-2 flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              )}
-            </Button>
-            <Button
-              variant={activeTab === 'memories' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('memories')}
-              className={`rounded-xl h-11 px-6 ${activeTab === 'memories' ? 'shadow-button' : ''}`}
-            >
-              <Brain className="w-4 h-4 mr-2" />
-              Memories
-            </Button>
-            <Button
-              variant={activeTab === 'questions' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('questions')}
-              className={`rounded-xl h-11 px-6 ${activeTab === 'questions' ? 'shadow-button' : ''}`}
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Questions
-            </Button>
+      {/* Futuristic Grid Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { icon: Brain, label: 'Memory Bank', value: memories.length, color: 'text-primary', bg: 'bg-primary/5' },
+          { icon: MessageCircle, label: 'Retrieval Logs', value: questions.length, color: 'text-accent', bg: 'bg-accent/5' },
+          { icon: Activity, label: 'Bio-Telemetry', value: signals.length, color: 'text-rose-500', bg: 'bg-rose-500/5' },
+          { icon: Tag, label: 'Neural Tags', value: allTags.length, color: 'text-purple-500', bg: 'bg-purple-500/5' }
+        ].map((stat, i) => (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            key={stat.label}
+          >
+            <Card className="bg-white/40 backdrop-blur-3xl border border-white/40 shadow-xl rounded-[32px] overflow-hidden group hover:scale-[1.02] transition-all">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-6">
+                  <div className={cn("w-16 h-16 rounded-[24px] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform", stat.bg)}>
+                    <stat.icon className={cn("w-8 h-8", stat.color)} />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black tracking-tighter text-foreground">{stat.value}</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Main Interface */}
+      <div className="bg-white/30 backdrop-blur-3xl rounded-[48px] border border-white/40 p-10 shadow-2xl">
+        <div className="flex flex-col sm:flex-row gap-4 mb-12 overflow-x-auto pb-4 no-scrollbar">
+            {[
+              { id: 'overview', label: 'Dashboard', icon: Globe },
+              { id: 'journal', label: 'Cognitive Log', icon: BookOpen },
+              { id: 'signals', label: 'Anomalies', icon: AlertTriangle, count: signals.length },
+              { id: 'memories', label: 'Archive Bank', icon: Database },
+              { id: 'questions', label: 'Neural Logs', icon: Zap }
+            ].map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? 'default' : 'ghost'}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  "rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-xs transition-all flex items-center gap-3 shrink-0",
+                  activeTab === tab.id 
+                    ? "bg-primary text-white shadow-xl shadow-primary/25 scale-105" 
+                    : "bg-white/40 border border-white hover:bg-white/60"
+                )}
+              >
+                <tab.icon className="w-5 h-5" />
+                {tab.label}
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className="flex items-center justify-center w-5 h-5 bg-rose-500 text-[10px] rounded-full animate-pulse ml-1 shadow-lg">
+                    {tab.count}
+                  </span>
+                )}
+              </Button>
+            ))}
         </div>
 
+        <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
-            <div className="space-y-8 animate-slide-up">
+            <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
               <CaregiverInsights memories={memories} />
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <section className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold flex items-center gap-2 text-primary">
-                      <Clock className="w-5 h-5" />
-                      Recent Activity
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <section className="space-y-6">
+                  <div className="flex items-center justify-between ml-2">
+                    <h3 className="text-xl font-black uppercase tracking-[0.2em] flex items-center gap-3">
+                      <Clock className="w-6 h-6 text-primary" />
+                      Neural Activity Stream
                     </h3>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('memories')} className="text-primary hover:text-primary/80">
-                      View all <ArrowUpRight className="w-4 h-4 ml-1" />
-                    </Button>
                   </div>
                   <div className="space-y-4">
-                    {memories.slice(0, 4).map(memory => (
-                      <div key={memory.id} className="p-4 rounded-2xl bg-white/60 border border-primary/5 shadow-sm hover:shadow-md transition-all hover:translate-x-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`p-1.5 rounded-lg ${memoryTypeColors[memory.type]}`}>
-                            {memoryTypeIcons[memory.type]}
+                    {memories.slice(0, 5).map(memory => (
+                      <motion.div 
+                        whileHover={{ x: 5 }}
+                        key={memory.id} 
+                        className="p-6 rounded-[32px] bg-white/50 border border-white/60 shadow-xl hover:shadow-2xl transition-all"
+                      >
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className={cn("p-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2", memoryTypeColors[memory.type])}>
+                            {memoryTypeIcons[memory.type]} {memory.type}
                           </span>
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {format(new Date(memory.created_at), 'MMM d, h:mm a')}
+                          <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter">
+                            Archived {format(new Date(memory.created_at), 'MMM d, h:mm a')}
                           </span>
                         </div>
-                        <p className="text-sm line-clamp-2 font-medium">{memory.raw_text}</p>
-                      </div>
+                        <p className="text-lg font-bold leading-snug text-foreground/80 italic">“{memory.raw_text.slice(0, 160)}...”</p>
+                      </motion.div>
                     ))}
                     {memories.length === 0 && (
-                      <div className="p-8 text-center bg-white/40 rounded-2xl border border-dashed border-primary/20">
-                        <p className="text-muted-foreground italic">No memories captured yet.</p>
+                      <div className="p-12 text-center bg-white/20 rounded-[40px] border border-dashed border-white/40">
+                        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs italic opacity-50">No temporal fragments detected.</p>
                       </div>
                     )}
                   </div>
                 </section>
 
-                <section className="space-y-4">
-                  <h3 className="text-xl font-bold flex items-center gap-2 text-accent-foreground">
-                    <Tag className="w-5 h-5" />
-                    Popular Topics
+                <section className="space-y-6">
+                  <h3 className="text-xl font-black uppercase tracking-[0.2em] flex items-center gap-3 ml-2">
+                    <Database className="w-6 h-6 text-accent" />
+                    Archive Indexer
                   </h3>
-                  <div className="bg-white/40 backdrop-blur-sm p-6 rounded-2xl border border-primary/5">
-                    <div className="flex flex-wrap gap-2">
+                  <div className="bg-white/40 backdrop-blur-xl p-10 rounded-[40px] border border-white shadow-inner">
+                    <div className="flex flex-wrap gap-3">
                       {allTags.map(tag => (
-                        <span key={tag} className="px-4 py-2 rounded-xl bg-primary/5 text-primary text-sm font-semibold border border-primary/10 hover:bg-primary/10 transition-colors cursor-default">
+                        <span key={tag} className="px-5 py-3 rounded-2xl bg-white/60 text-primary text-xs font-black uppercase tracking-widest border border-white shadow-sm hover:bg-primary hover:text-white transition-all cursor-pointer">
                           #{tag}
                         </span>
                       ))}
                       {allTags.length === 0 && (
-                        <div className="text-center w-full py-4">
-                          <p className="text-muted-foreground italic">No topics identified yet.</p>
-                          <p className="text-xs text-muted-foreground mt-1">Tags will appear as memories are added.</p>
+                        <div className="text-center w-full py-10">
+                          <p className="text-muted-foreground font-black uppercase tracking-widest text-xs opacity-50 italic">Indexing system idle.</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </section>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {activeTab === 'journal' && (
-            <div className="animate-slide-up">
+            <motion.div key="journal" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="animate-slide-up">
               <CognitiveJournal memories={memories} signals={signals} />
-            </div>
+            </motion.div>
           )}
 
           {activeTab === 'signals' && (
-            <div className="animate-slide-up">
-              <CaregiverSignals signals={signals} onRefresh={fetchSignals} />
-            </div>
+            <motion.div key="signals" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
+              <CaregiverSignals signals={signals} onRefresh={() => onRefresh(true)} />
+            </motion.div>
           )}
 
-        {activeTab === 'memories' && (
-          <div className="animate-slide-up">
-            <div className="flex flex-col md:flex-row gap-4 mb-8 p-4 rounded-2xl bg-muted/30">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search memories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="rounded-xl border-white/40 bg-white/50 h-11"
-                />
+          {activeTab === 'memories' && (
+            <motion.div key="memories" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
+              <div className="flex flex-col md:flex-row gap-6 p-8 rounded-[40px] bg-white/20 border border-white shadow-xl backdrop-blur-md">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60" />
+                  <Input
+                    placeholder="Search neural bank..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-14 pl-12 bg-white/50 border-white rounded-2xl text-lg font-bold"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="px-6 h-14 rounded-2xl border border-white bg-white/50 text-xs font-black uppercase tracking-widest focus:ring-primary/20 cursor-pointer"
+                  >
+                    <option value="all">Protocol: All</option>
+                    <option value="story">Fragment: Story</option>
+                    <option value="person">Neural: Person</option>
+                    <option value="event">Temporal: Event</option>
+                  </select>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 h-11 rounded-xl border border-white/40 bg-white/50 text-sm focus:ring-primary/20"
-                >
-                  <option value="all">All Types</option>
-                  <option value="story">Stories</option>
-                  <option value="person">People</option>
-                  <option value="event">Events</option>
-                </select>
-                <select
-                  value={tagFilter}
-                  onChange={(e) => setTagFilter(e.target.value)}
-                  className="px-4 h-11 rounded-xl border border-white/40 bg-white/50 text-sm focus:ring-primary/20"
-                >
-                  <option value="">All Tags</option>
-                  {allTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-                </select>
-              </div>
-            </div>
 
-            <div className="space-y-12">
-              {Object.entries(groupedMemories)
-                .sort(([a], [b]) => b.localeCompare(a))
-                .map(([date, dayMemories]) => (
-                  <div key={date} className="relative pl-8">
-                    <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-primary/30 via-transparent to-transparent" />
-                    <div className="absolute left-[-4px] top-2 w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10" />
-                    
-                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-primary">
-                      {format(new Date(date), 'EEEE, MMMM d')}
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {dayMemories.map(memory => (
-                        <Card key={memory.id} className="group hover:scale-[1.02] transition-all duration-300 border-primary/5 shadow-sm overflow-hidden">
-                          <CardContent className="p-0">
-                            <div className={`h-1.5 w-full ${memoryTypeColors[memory.type].split(' ')[0]}`} />
-                            <div className="p-5">
-                              <div className="flex items-center gap-2 mb-3">
-                                <span className={`p-1 rounded-lg ${memoryTypeColors[memory.type]}`}>
-                                  {memoryTypeIcons[memory.type]}
-                                </span>
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                                  {memory.type} • {format(new Date(memory.created_at), 'h:mm a')}
-                                </span>
-                              </div>
-                              <p className="text-sm leading-relaxed text-foreground/80">{memory.raw_text}</p>
-                              {memory.tags && memory.tags.length > 0 && (
-                                <div className="mt-4 flex flex-wrap gap-1.5">
-                                  {memory.tags.map(tag => (
-                                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">
-                                      {tag}
-                                    </span>
-                                  ))}
+              <div className="space-y-16">
+                {Object.entries(groupedMemories)
+                  .sort(([a], [b]) => b.localeCompare(a))
+                  .map(([date, dayMemories], i) => (
+                    <div key={date} className="relative pl-12 border-l-2 border-white/20">
+                      <div className="absolute left-[-11px] top-2 w-5 h-5 rounded-full bg-primary ring-8 ring-primary/5 shadow-lg" />
+                      
+                      <h3 className="text-2xl font-black uppercase tracking-tighter mb-10 text-primary flex items-center gap-4">
+                        <CalendarDays className="w-6 h-6" />
+                        Temporal Block: {format(new Date(date), 'MMMM dd, yyyy')}
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {dayMemories.map(memory => (
+                          <Card key={memory.id} className="group hover:bg-white/80 transition-all duration-500 border-white/60 bg-white/40 backdrop-blur-md shadow-xl rounded-[32px] overflow-hidden">
+                            <CardContent className="p-0">
+                              <div className={cn("h-2 w-full", memoryTypeColors[memory.type].split(' ')[0])} />
+                              <div className="p-8">
+                                <div className="flex items-center gap-3 mb-6">
+                                  <span className={cn("p-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2", memoryTypeColors[memory.type])}>
+                                    {memoryTypeIcons[memory.type]} {memory.type}
+                                  </span>
+                                  <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground/50">
+                                    Log: {format(new Date(memory.created_at), 'h:mm a')}
+                                  </span>
                                 </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'questions' && (
-          <div className="space-y-4 animate-slide-up">
-            {questions.map(q => (
-              <Card key={q.id} className="border-primary/5 shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden">
-                <CardHeader className="bg-primary/5 border-b border-primary/5 pb-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <CardTitle className="text-base font-bold flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <MessageCircle className="w-4 h-4 text-primary" />
+                                <p className="text-xl font-bold leading-tight text-foreground/80 italic group-hover:text-foreground transition-colors">“{memory.raw_text}”</p>
+                                {memory.tags && memory.tags.length > 0 && (
+                                  <div className="mt-8 flex flex-wrap gap-2">
+                                    {memory.tags.map(tag => (
+                                      <span key={tag} className="text-[10px] px-3 py-1.5 rounded-xl bg-primary/5 text-primary font-black uppercase tracking-widest border border-primary/10">
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
-                      {q.question_text}
-                    </CardTitle>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap pt-2">
-                      {format(new Date(q.created_at), 'MMM d')}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-5">
-                  {q.answer_text ? (
-                    <div className="relative pl-6">
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
-                      <p className="text-sm leading-relaxed text-foreground/90 font-medium italic">"{q.answer_text}"</p>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-muted-foreground italic text-sm">
-                      <Clock className="w-4 h-4" />
-                      Awaiting answer from elder...
+                  ))}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'questions' && (
+            <motion.div key="questions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              {questions.map(q => (
+                <Card key={q.id} className="border-white/60 bg-white/30 backdrop-blur-md shadow-xl rounded-[40px] overflow-hidden hover:bg-white/50 transition-all">
+                  <CardHeader className="p-10 pb-6 border-b border-white/20">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 rounded-[24px] bg-primary/10 flex items-center justify-center shadow-inner">
+                          <Zap className="w-8 h-8 text-primary" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Query Protocol Trace</p>
+                          <h3 className="text-2xl font-black tracking-tighter uppercase leading-none">{q.question_text}</h3>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black text-muted-foreground uppercase opacity-50 pt-2 tracking-widest">
+                        Data Cycle: {format(new Date(q.created_at), 'MM/dd')}
+                      </span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </CardHeader>
+                  <CardContent className="p-10 pt-8">
+                    {q.answer_text ? (
+                      <div className="relative p-8 rounded-[32px] bg-white/40 border border-white shadow-inner">
+                        <p className="text-xl font-bold leading-relaxed text-foreground/90 italic">“{q.answer_text}”</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4 text-rose-500 font-black uppercase tracking-[0.2em] text-xs animate-pulse p-6 bg-rose-500/5 rounded-3xl border border-rose-500/20">
+                        <Activity className="w-5 h-5" />
+                        Awaiting Bio-Response Connection...
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              {questions.length === 0 && (
+                <div className="p-20 text-center bg-white/20 rounded-[60px] border border-dashed border-white/40">
+                  <HelpCircle className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
+                  <p className="text-muted-foreground font-black uppercase tracking-widest text-sm opacity-50 italic">No retrieval queries indexed.</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 }
+

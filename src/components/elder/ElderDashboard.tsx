@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon } from 'lucide-react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +11,7 @@ import { extractMemoryIntelligence, answerQuestion, generateWeeklyRecap } from '
 import type { Question, Routine, Reminder, Memory } from '@/types';
 import { format } from 'date-fns';
 import { MemoryWall } from './MemoryWall';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -67,9 +68,9 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       
       if (error) throw error;
       fetchReminders();
-      toast({ title: "Reminder completed!", description: "Great job!" });
+      toast({ title: "Task Optimized!", description: "Daily routine synchronized." });
     } catch (error) {
-      toast({ title: "Error", description: "Could not update reminder.", variant: "destructive" });
+      toast({ title: "Error", description: "Could not sync routine.", variant: "destructive" });
     }
   };
 
@@ -78,10 +79,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     
     setLoading(true);
     try {
-      // Extract metadata using AI
       const intel = await extractMemoryIntelligence(memoryText);
-      
-      // Save memory to database
       const { error } = await supabase
         .from('memories')
         .insert({
@@ -97,8 +95,8 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       if (error) throw error;
 
       toast({
-        title: 'Memory saved!',
-        description: 'Your memory has been recorded safely.',
+        title: 'Neural Link Established!',
+        description: 'Memory successfully archived in secure storage.',
       });
       
       setMemoryText('');
@@ -107,8 +105,8 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     } catch (error) {
       console.error('Error saving memory:', error);
       toast({
-        title: 'Could not save',
-        description: 'Please try again.',
+        title: 'Sync Failed',
+        description: 'Connection interrupted. Please retry.',
         variant: 'destructive',
       });
     } finally {
@@ -124,7 +122,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       const text = await generateWeeklyRecap(user.id);
       setRecap(text);
     } catch (error) {
-      setRecap("You've shared some wonderful moments recently!");
+      setRecap("Your recent temporal data signals show strong positive engagement! You've shared many valuable stories.");
     } finally {
       setLoading(false);
     }
@@ -143,8 +141,8 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       } catch (error) {
       console.error('Error getting answer:', error);
       toast({
-        title: 'Could not get answer',
-        description: 'Please try again in a moment.',
+        title: 'Neural Engine Timeout',
+        description: 'Could not retrieve data from the memory bank. Re-linking...',
         variant: 'destructive',
       });
     } finally {
@@ -152,363 +150,316 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  const breadcrumbs = (
+    <div className="flex items-center gap-2 mb-8 text-sm font-black uppercase tracking-widest text-muted-foreground/60 overflow-x-auto whitespace-nowrap pb-2">
+      <button onClick={() => setView('home')} className="hover:text-primary transition-colors">Core</button>
+      {view !== 'home' && (
+        <>
+          <ArrowRight className="w-3 h-3" />
+          <span className="text-primary">{view === 'memoryWall' ? 'Visual Wall' : view === 'addMemory' ? 'Neural Capture' : view === 'askQuestion' ? 'Information Retrieval' : 'Temporal Recap'}</span>
+        </>
+      )}
+    </div>
+  );
 
-  if (view === 'memoryWall') {
-    return (
-      <div className="min-h-screen bg-background p-6 animate-fade-in">
-        <div className="max-w-4xl mx-auto">
-          <Button
-            variant="elderOutline"
-            onClick={() => setView('home')}
-            className="mb-6"
-          >
-            ← Back to Home
-          </Button>
-          
-          <h1 className="text-4xl font-display font-bold mb-8 flex items-center gap-3">
-            <ImageIcon className="w-10 h-10 text-primary" />
-            Your Memory Wall
-          </h1>
-          
-          <MemoryWall 
-            elderId={user!.id} 
-            onTriggerConversation={handleTriggerConversation} 
-          />
-        </div>
-      </div>
-    );
-  }
+  return (
+    <div className="min-h-screen p-6 relative z-0 max-w-4xl mx-auto pt-24">
+      {breadcrumbs}
 
-  if (view === 'recap') {
-    return (
-      <div className="min-h-screen bg-background p-6 animate-fade-in">
-        <div className="max-w-2xl mx-auto">
-          <Button
-            variant="elderOutline"
-            onClick={() => setView('home')}
-            className="mb-6"
+      <AnimatePresence mode="wait">
+        {view === 'home' && (
+          <motion.div 
+            key="home"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-12"
           >
-            ← Go Back
-          </Button>
-          
-          <Card variant="elder" className="bg-primary/5 border-primary/20">
-            <CardHeader>
-              <CardTitle elder className="text-3xl flex items-center gap-3">
-                <Brain className="w-8 h-8 text-primary" />
-                Your Life Recap
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                {loading ? (
-                  <div className="flex flex-col items-center py-12 space-y-4">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xl text-muted-foreground italic">Thinking about your wonderful stories...</p>
-                  </div>
-                ) : (
-                  <div className="relative p-8 bg-white/50 rounded-3xl border border-white shadow-inner animate-slide-up">
-                    <div className="absolute top-4 right-4 flex gap-2">
-                      {supported.tts && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="rounded-full w-12 h-12"
-                          onClick={() => isSpeaking ? stopSpeaking() : speak(recap)}
+            {/* User Greeting Card */}
+            <div className="relative p-10 rounded-[48px] bg-white/40 backdrop-blur-3xl border border-white shadow-2xl overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Brain className="w-40 h-40 text-primary" />
+              </div>
+              <div className="relative z-10 space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                  <ShieldCheck className="w-3 h-3" /> Identity Verified
+                </div>
+                <h1 className="text-5xl font-black tracking-tighter">Welcome Back, {profile?.full_name?.split(' ')[0]}</h1>
+                <p className="text-xl text-muted-foreground font-medium italic">"Every memory is a bridge to the future."</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Daily Checklist */}
+              <div className="space-y-6">
+                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 ml-2">
+                  <ListTodo className="w-6 h-6 text-primary" />
+                  Routine Protocol
+                </h2>
+                <div className="space-y-4">
+                  {reminders.length > 0 ? (
+                    reminders.map((reminder) => (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        key={reminder.id}
+                      >
+                        <Card 
+                          className={cn(
+                            "p-5 flex items-center justify-between rounded-3xl border border-white/40 transition-all duration-500 shadow-xl",
+                            reminder.status === 'completed' ? 'bg-green-50/30' : 'bg-white/40 backdrop-blur-md'
+                          )}
                         >
-                          {isSpeaking ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
-                        </Button>
-                      )}
-                    </div>
-                    <p className="text-2xl leading-relaxed text-foreground font-medium">
-                      {recap}
-                    </p>
+                          <div className="flex items-center gap-4">
+                            <div className={cn(
+                              "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-inner",
+                              reminder.status === 'completed' ? 'bg-green-100' : 'bg-primary/5'
+                            )}>
+                              {reminder.status === 'completed' ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <Clock className="w-6 h-6 text-primary" />}
+                            </div>
+                            <div>
+                              <p className={cn(
+                                "text-lg font-bold transition-all",
+                                reminder.status === 'completed' ? 'line-through text-muted-foreground opacity-50' : 'text-foreground'
+                              )}>
+                                {reminder.title}
+                              </p>
+                              <p className="text-xs font-black uppercase tracking-tighter text-muted-foreground/60">
+                                Schedule: {format(new Date(reminder.due_at), 'h:mm a')}
+                              </p>
+                            </div>
+                          </div>
+                          {reminder.status === 'pending' && (
+                            <Button 
+                              variant="ghost"
+                              size="sm" 
+                              onClick={() => handleCompleteReminder(reminder.id)}
+                              className="rounded-xl px-6 h-10 border-2 border-primary/20 hover:bg-primary hover:text-white transition-all font-black uppercase tracking-widest text-[10px]"
+                            >
+                              Complete
+                            </Button>
+                          )}
+                        </Card>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <Card className="p-10 text-center border-dashed rounded-[40px] bg-white/20 backdrop-blur-sm">
+                      <Sparkles className="w-12 h-12 text-primary/20 mx-auto mb-4 animate-pulse" />
+                      <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">All Systems Synchronized</p>
+                    </Card>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Hub */}
+              <div className="space-y-6">
+                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 ml-2">
+                  <Zap className="w-6 h-6 text-primary" />
+                  Active Modules
+                </h2>
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { label: 'Neural Capture', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record new temporal data' },
+                    { label: 'Visual Wall', icon: ImageIcon, view: 'memoryWall', color: 'bg-accent', secondary: 'Review interactive archives' },
+                    { label: 'Retrieval Engine', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Recall specific datasets' },
+                    { label: 'Life Synthesis', icon: Brain, view: 'recap', color: 'bg-emerald-600', secondary: 'Generate weekly summary' }
+                  ].map((btn, i) => (
+                    <motion.button
+                      whileHover={{ scale: 1.02, x: 5 }}
+                      whileTap={{ scale: 0.98 }}
+                      key={btn.label}
+                      onClick={() => btn.view === 'recap' ? handleShowRecap() : setView(btn.view as any)}
+                      className="group flex items-center gap-6 p-6 rounded-[32px] bg-white/40 backdrop-blur-xl border border-white shadow-2xl hover:bg-white/60 transition-all text-left"
+                    >
+                      <div className={cn("w-16 h-16 rounded-[24px] flex items-center justify-center text-white shadow-lg", btn.color)}>
+                        <btn.icon className="w-8 h-8 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xl font-black tracking-tighter uppercase mb-0.5">{btn.label}</p>
+                        <p className="text-xs text-muted-foreground font-medium opacity-70 italic">{btn.secondary}</p>
+                      </div>
+                      <ArrowRight className="w-6 h-6 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:text-primary transition-all mr-2" />
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Recent History Horizontal Stream */}
+            {recentQuestions.length > 0 && (
+              <div className="space-y-6 pt-8 pb-12">
+                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 ml-2">
+                  <History className="w-6 h-6 text-primary" />
+                  Neural Stream
+                </h2>
+                <div className="flex gap-6 overflow-x-auto pb-6 -mx-6 px-6 snap-x no-scrollbar">
+                  {recentQuestions.slice(0, 8).map((q, i) => (
+                    <motion.div 
+                      key={q.id}
+                      className="snap-center flex-shrink-0 w-[400px]"
+                    >
+                      <Card className="h-full bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/40 shadow-xl hover:bg-white/50 transition-all cursor-pointer group">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 opacity-60">Log ID: {q.id.slice(0,8)}</div>
+                        <p className="text-xl font-bold text-foreground mb-4 leading-snug group-hover:text-primary transition-colors">
+                          “{q.question_text}”
+                        </p>
+                        {q.answer_text && (
+                          <div className="pt-4 border-t border-white/20">
+                            <p className="text-muted-foreground text-sm font-medium leading-relaxed italic">
+                              {q.answer_text.slice(0, 140)}...
+                            </p>
+                          </div>
+                        )}
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {view === 'memoryWall' && (
+          <motion.div key="memoryWall" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+            <div className="space-y-8">
+              <h1 className="text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Temporal Archive</h1>
+              <MemoryWall elderId={user!.id} onTriggerConversation={handleTriggerConversation} />
+            </div>
+          </motion.div>
+        )}
+
+        {(view === 'addMemory' || view === 'askQuestion') && (
+          <motion.div 
+            key={view}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="pt-12"
+          >
+            <Card className="rounded-[80px] bg-white/40 backdrop-blur-3xl border border-white p-16 shadow-[0_50px_100px_rgba(0,0,0,0.1)]">
+              <div className="max-w-xl mx-auto space-y-12">
+                <div className="space-y-6 text-center">
+                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-8 shadow-inner shadow-primary/20">
+                    {view === 'addMemory' ? <Plus className="w-12 h-12 text-primary" /> : <MessageCircleQuestion className="w-12 h-12 text-primary" />}
                   </div>
-                )}
-              
-              {!loading && (
-                <Button
-                  variant="elder"
-                  size="elderLg"
-                  onClick={() => setView('home')}
-                  className="w-full mt-4"
-                >
-                  That's lovely!
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+                  <h2 className="text-5xl font-black tracking-tighter">
+                    {view === 'addMemory' ? 'Capture Neural Data' : 'Retrieve Archives'}
+                  </h2>
+                  <p className="text-2xl text-muted-foreground font-medium leading-relaxed">
+                    {view === 'addMemory' 
+                      ? "Describe your experience. My AI core will categorize and secure the temporal details."
+                      : "Engage the search matrix. Ask anything regarding your indexed memories."}
+                  </p>
+                </div>
 
-  if (view === 'addMemory') {
-    return (
-      <div className="min-h-screen bg-background p-6 animate-fade-in">
-        <div className="max-w-2xl mx-auto">
-          <Button
-            variant="elderOutline"
-            onClick={() => setView('home')}
-            className="mb-6"
-          >
-            ← Go Back
-          </Button>
-          
-          <Card variant="elder">
-            <CardHeader>
-              <CardTitle elder className="text-3xl flex items-center gap-3">
-                <Plus className="w-8 h-8 text-primary" />
-                Add a Memory
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="text-xl text-muted-foreground">
-                Share something you'd like to remember. It could be a story, a person's name, 
-                an important event, or anything else.
-              </p>
-              
                 <div className="relative">
                   <Textarea
-                    elder
-                    placeholder="Type your memory here..."
-                    value={memoryText}
-                    onChange={(e) => setMemoryText(e.target.value)}
-                    rows={6}
-                    className="pr-16"
+                    className="min-h-[250px] p-10 rounded-[48px] bg-white/50 border-white text-2xl font-medium shadow-inner focus:ring-primary/20 transition-all resize-none"
+                    placeholder={view === 'addMemory' ? "Synthesize memory..." : "Define search parameters..."}
+                    value={view === 'addMemory' ? memoryText : questionText}
+                    onChange={(e) => view === 'addMemory' ? setMemoryText(e.target.value) : setQuestionText(e.target.value)}
                   />
                   {supported.stt && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`absolute right-4 bottom-4 rounded-full w-12 h-12 ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-primary/10 text-primary'}`}
-                      onClick={() => startListening((text) => setMemoryText(prev => prev ? `${prev} ${text}` : text))}
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => startListening((text) => {
+                        if (view === 'addMemory') setMemoryText(prev => prev ? `${prev} ${text}` : text);
+                        else setQuestionText(prev => prev ? `${prev} ${text}` : text);
+                      })}
+                      className={cn(
+                        "absolute right-8 bottom-8 rounded-full w-20 h-20 shadow-2xl transition-all flex items-center justify-center",
+                        isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-primary text-white'
+                      )}
                     >
-                      {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-                    </Button>
+                      {isListening ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
+                    </motion.button>
                   )}
                 </div>
-              
-              <Button
-                variant="elderSuccess"
-                size="elderLg"
-                onClick={handleAddMemory}
-                disabled={loading || !memoryText.trim()}
-                className="w-full"
-              >
-                {loading ? 'Saving...' : 'Save Memory'}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
-  if (view === 'askQuestion') {
-    return (
-      <div className="min-h-screen bg-background p-6 animate-fade-in">
-        <div className="max-w-2xl mx-auto">
-          <Button
-            variant="elderOutline"
-            onClick={() => {
-              setView('home');
-              setQuestionText('');
-              setAnswer('');
-            }}
-            className="mb-6"
-          >
-            ← Go Back
-          </Button>
-          
-          <Card variant="elder">
-            <CardHeader>
-              <CardTitle elder className="text-3xl flex items-center gap-3">
-                <MessageCircleQuestion className="w-8 h-8 text-primary" />
-                Ask a Question
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="text-xl text-muted-foreground">
-                Ask me anything about your memories. I'll help you remember!
-              </p>
-              
-                <div className="relative">
-                  <Textarea
-                    elder
-                    placeholder="What would you like to know?"
-                    value={questionText}
-                    onChange={(e) => setQuestionText(e.target.value)}
-                    rows={4}
-                    className="pr-16"
-                  />
-                  {supported.stt && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`absolute right-4 bottom-4 rounded-full w-12 h-12 ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-primary/10 text-primary'}`}
-                      onClick={() => startListening((text) => setQuestionText(prev => prev ? `${prev} ${text}` : text))}
+                <div className="space-y-6">
+                  <Button
+                    onClick={view === 'addMemory' ? handleAddMemory : handleAskQuestion}
+                    disabled={loading || !(view === 'addMemory' ? memoryText.trim() : questionText.trim())}
+                    className="w-full h-24 rounded-[32px] text-2xl font-black bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 uppercase tracking-[0.2em] transition-all"
+                  >
+                    {loading ? 'Processing System...' : view === 'addMemory' ? 'Archive Data' : 'Initialize Query'}
+                  </Button>
+                  
+                  {answer && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-10 bg-slate-100/50 backdrop-blur-md rounded-[48px] border border-white shadow-2xl relative"
                     >
-                      {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-                    </Button>
-                  )}
-                </div>
-                
-                <Button
-                  variant="elder"
-                  size="elderLg"
-                  onClick={handleAskQuestion}
-                  disabled={loading || !questionText.trim()}
-                  className="w-full"
-                >
-                  {loading ? 'Thinking...' : 'Get Answer'}
-                </Button>
-                
-                {answer && (
-                  <div className="mt-6 p-6 bg-secondary rounded-2xl animate-slide-up relative group">
-                    <div className="absolute top-4 right-4 flex gap-2">
+                      <p className="text-xs font-black text-primary uppercase tracking-[0.3em] mb-4">Neural Response Generated</p>
+                      <p className="text-3xl font-bold leading-tight italic">“{answer}”</p>
                       {supported.tts && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="rounded-full w-10 h-10 bg-white/50 hover:bg-white"
+                          className="absolute bottom-6 right-6 w-14 h-14 bg-white/80 rounded-full shadow-lg"
                           onClick={() => isSpeaking ? stopSpeaking() : speak(answer)}
                         >
-                          {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                          {isSpeaking ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                        </Button>
+                      )}
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {view === 'recap' && (
+          <motion.div key="recap" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="pt-12">
+             <Card className="rounded-[80px] bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-3xl border border-white p-20 shadow-2xl">
+              <div className="max-w-2xl mx-auto space-y-12">
+                <div className="text-center space-y-6">
+                  <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                    <Brain className="w-12 h-12 text-white" />
+                  </div>
+                  <h2 className="text-6xl font-black tracking-tighter">Life Synthesis Report</h2>
+                  <p className="text-xl font-bold uppercase tracking-widest text-primary/60 italic">Temporal analysis for current cycle</p>
+                </div>
+
+                {loading ? (
+                  <div className="flex flex-col items-center py-20 space-y-8">
+                    <div className="w-20 h-20 border-8 border-primary/20 border-t-primary rounded-full animate-spin shadow-inner" />
+                    <p className="text-3xl text-muted-foreground font-black uppercase tracking-tighter animate-pulse">Scanning Memory Spires...</p>
+                  </div>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-12 bg-white/60 backdrop-blur-2xl rounded-[60px] border border-white shadow-2xl relative"
+                  >
+                    <div className="absolute top-8 right-8">
+                      {supported.tts && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-16 h-16 rounded-full bg-primary/10 text-primary shadow-lg"
+                          onClick={() => isSpeaking ? stopSpeaking() : speak(recap)}
+                        >
+                          {isSpeaking ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
                         </Button>
                       )}
                     </div>
-                    <h3 className="text-xl font-semibold mb-3 text-secondary-foreground">Answer:</h3>
-                    <p className="text-xl leading-relaxed text-secondary-foreground pr-12">{answer}</p>
-                  </div>
-                )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-2xl mx-auto">
-        {/* Daily Checklist */}
-        <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          <h2 className="text-2xl font-display font-semibold mb-4 flex items-center gap-2">
-            <ListTodo className="w-6 h-6 text-primary" />
-            Today's Checklist
-          </h2>
-          <div className="space-y-3">
-            {reminders.length > 0 ? (
-              reminders.map((reminder) => (
-                <Card 
-                  key={reminder.id} 
-                  variant="memory" 
-                  className={`p-4 flex items-center justify-between transition-all ${reminder.status === 'completed' ? 'opacity-50 bg-slate-50' : ''}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${reminder.status === 'completed' ? 'bg-green-100' : 'bg-primary/10'}`}>
-                      {reminder.status === 'completed' ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <Clock className="w-6 h-6 text-primary" />}
-                    </div>
-                    <div>
-                      <p className={`text-xl font-medium ${reminder.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                        {reminder.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(reminder.due_at), 'h:mm a')}
-                      </p>
-                    </div>
-                  </div>
-                  {reminder.status === 'pending' && (
-                    <Button 
-                      variant="elderSuccess" 
-                      size="sm" 
-                      onClick={() => handleCompleteReminder(reminder.id)}
-                      className="rounded-xl px-6"
-                    >
-                      Done
-                    </Button>
-                  )}
-                </Card>
-              ))
-            ) : (
-              <Card className="p-8 text-center border-dashed bg-slate-50/50">
-                <CheckCircle2 className="w-10 h-10 text-green-500/30 mx-auto mb-2" />
-                <p className="text-muted-foreground italic text-lg">You've finished everything for now! Great job.</p>
-              </Card>
-            )}
-          </div>
-        </div>
-
-        {/* Main Actions */}
-        <div className="space-y-4 mb-12">
-            <Button
-              variant="elder"
-              size="elderLg"
-              onClick={() => setView('addMemory')}
-              className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
-            >
-              <Plus className="w-8 h-8" />
-              Add a Memory
-            </Button>
-
-            <Button
-              variant="elderSuccess"
-              size="elderLg"
-              onClick={() => setView('memoryWall')}
-              className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
-            >
-              <ImageIcon className="w-8 h-8" />
-              Memory Wall
-            </Button>
-          
-          <Button
-            variant="elderSecondary"
-            size="elderLg"
-            onClick={() => setView('askQuestion')}
-            className="w-full justify-start gap-4 shadow-xl hover:scale-[1.02] transition-transform"
-          >
-            <MessageCircleQuestion className="w-8 h-8" />
-            Ask a Question
-          </Button>
-
-          <Button
-            variant="elderOutline"
-            size="elderLg"
-            onClick={handleShowRecap}
-            className="w-full justify-start gap-4 border-2 border-primary/20 bg-primary/5 shadow-lg hover:scale-[1.02] transition-transform"
-          >
-            <Brain className="w-8 h-8 text-primary" />
-            Your Life Recap
-          </Button>
-        </div>
-
-          {/* Recent Questions */}
-          {recentQuestions.length > 0 && (
-            <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
-
-            <h2 className="text-2xl font-display font-semibold mb-4 flex items-center gap-2">
-              <History className="w-6 h-6 text-primary" />
-              Recent Questions
-            </h2>
-            <div className="space-y-3">
-              {recentQuestions.slice(0, 5).map((q) => (
-                <Card key={q.id} variant="memory" className="p-4">
-                  <p className="text-lg font-medium text-foreground mb-2">
-                    Q: {q.question_text}
-                  </p>
-                  {q.answer_text && (
-                    <p className="text-muted-foreground">
-                      A: {q.answer_text.slice(0, 100)}...
+                    <p className="text-4xl font-black leading-tight tracking-tight italic bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60">
+                      “{recap}”
                     </p>
-                  )}
-                </Card>
-              ))}
-            </div>
-          </div>
+                  </motion.div>
+                )}
+                
+                <Button variant="outline" className="w-full h-20 rounded-[32px] text-xl font-black uppercase tracking-widest border-2" onClick={() => setView('home')}>Close Portal</Button>
+              </div>
+            </Card>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
+

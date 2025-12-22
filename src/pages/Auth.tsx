@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Heart, Brain, Users, Camera } from 'lucide-react';
+import { Heart, Brain, Users, Camera, Sparkles, ShieldCheck } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { FaceRecognitionModal } from '@/components/FaceRecognitionModal';
 import { supabase } from '@/integrations/supabase/client';
 import { compareFaceDescriptors } from '@/lib/face-recognition';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -43,7 +44,6 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        // Find profile by email
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('face_descriptor, email')
@@ -68,8 +68,6 @@ export default function AuthPage() {
             description: 'Signing you in...',
           });
           
-          // Using a bypass for demo purposes if configured, or just normal sign in
-          // Realistic approach: signInWithOtp
           const { error } = await supabase.auth.signInWithOtp({ email });
           
           if (error) {
@@ -92,7 +90,6 @@ export default function AuthPage() {
           });
         }
       } else {
-        // Registration mode
         setFaceDescriptor(capturedDescriptor);
         toast({
           title: 'Face captured!',
@@ -146,19 +143,11 @@ export default function AuthPage() {
           face_descriptor: faceDescriptor
         });
         if (error) {
-          if (error.message.includes('already registered')) {
-            toast({
-              title: 'Account exists',
-              description: 'This email is already registered. Please sign in instead.',
-              variant: 'destructive',
-            });
-          } else {
-            toast({
-              title: 'Sign up failed',
-              description: error.message,
-              variant: 'destructive',
-            });
-          }
+          toast({
+            title: 'Sign up failed',
+            description: error.message,
+            variant: 'destructive',
+          });
         } else {
           toast({
             title: 'Account created!',
@@ -179,170 +168,201 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex flex-col items-center justify-center p-4">
-      {showFaceModal && (
-        <FaceRecognitionModal
-          onClose={() => setShowFaceModal(false)}
-          onCapture={onFaceCapture}
-          title={isLogin ? "Sign In with Face" : "Register Face"}
-          description={isLogin ? "Look at the camera to verify your identity" : "Capture your face to enable faster logins later"}
-        />
-      )}
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8 animate-fade-in">
-          <Link to="/" className="inline-flex items-center gap-3 mb-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-button">
-              <Brain className="w-9 h-9 text-primary-foreground" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative z-0">
+      <AnimatePresence>
+        {showFaceModal && (
+          <FaceRecognitionModal
+            onClose={() => setShowFaceModal(false)}
+            onCapture={onFaceCapture}
+            title={isLogin ? "Neural Identity Check" : "Scan Neutral Map"}
+            description={isLogin ? "Scanning biometric signatures to confirm access" : "Map your facial contours for future identity verification"}
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full max-w-lg"
+      >
+        <div className="text-center mb-10 pb-2">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="inline-flex items-center gap-3 mb-6 relative"
+          >
+            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg relative border border-white/20">
+              <Brain className="w-12 h-12 text-white animate-pulse-soft" />
             </div>
-          </Link>
-          <h1 className="text-3xl font-display font-bold text-foreground">Memory Friend</h1>
-          <p className="text-muted-foreground text-lg mt-2">Your caring memory companion</p>
+          </motion.div>
+          <h1 className="text-4xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 mb-2">
+            Memory Hub
+          </h1>
+          <p className="text-muted-foreground text-xl flex items-center justify-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            Empowering your cognitive journey
+          </p>
         </div>
 
-        <Card variant="elder" className="animate-slide-up">
-          <CardHeader className="text-center pb-4">
-            <CardTitle elder className="text-2xl">
-              {isLogin ? 'Welcome Back' : 'Create Account'}
+        <Card className="border-white/20 bg-white/40 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden relative border">
+          <div className="absolute top-0 right-0 p-4">
+            <ShieldCheck className="w-6 h-6 text-primary/40" />
+          </div>
+          <CardHeader className="text-center pb-2 pt-8">
+            <CardTitle className="text-3xl font-bold tracking-tight">
+              {isLogin ? 'Welcome Home' : 'Begin Journey'}
             </CardTitle>
-            <CardDescription elder>
-              {isLogin ? 'Sign in to continue' : 'Join Memory Friend today'}
+            <CardDescription className="text-lg">
+              {isLogin ? 'Access your digital memory palace' : 'Create your unique identity profile'}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {!isLogin && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-lg font-medium">Your Name</label>
-                    <Input
-                      elder
-                      placeholder="Enter your full name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required={!isLogin}
-                    />
-                  </div>
-                  
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <AnimatePresence mode="wait">
+                {!isLogin && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-6 py-2"
+                  >
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground ml-1">Full Name</label>
+                      <Input
+                        className="h-14 bg-white/50 border-white/30 rounded-2xl text-lg focus:ring-primary/20"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required={!isLogin}
+                      />
+                    </div>
+                    
                     <div className="space-y-3">
-                      <label className="text-lg font-medium">I am a...</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setRole('elder')}
-                          className={`p-4 rounded-xl border-2 transition-all ${
-                            role === 'elder'
-                              ? 'border-primary bg-primary/10 shadow-soft'
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                        >
-                          <Heart className={`w-8 h-8 mx-auto mb-2 ${role === 'elder' ? 'text-primary' : 'text-muted-foreground'}`} />
-                          <span className={`text-sm font-bold ${role === 'elder' ? 'text-primary' : 'text-foreground'}`}>
-                            Elder
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRole('caregiver')}
-                          className={`p-4 rounded-xl border-2 transition-all ${
-                            role === 'caregiver'
-                              ? 'border-primary bg-primary/10 shadow-soft'
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                        >
-                          <Users className={`w-8 h-8 mx-auto mb-2 ${role === 'caregiver' ? 'text-primary' : 'text-muted-foreground'}`} />
-                          <span className={`text-sm font-bold ${role === 'caregiver' ? 'text-primary' : 'text-foreground'}`}>
-                            Caregiver
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRole('family')}
-                          className={`p-4 rounded-xl border-2 transition-all ${
-                            role === 'family'
-                              ? 'border-primary bg-primary/10 shadow-soft'
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                        >
-                          <Heart className={`w-8 h-8 mx-auto mb-2 ${role === 'family' ? 'text-primary' : 'text-muted-foreground'}`} />
-                          <span className={`text-sm font-bold ${role === 'family' ? 'text-primary' : 'text-foreground'}`}>
-                            Family
-                          </span>
-                        </button>
+                      <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground ml-1">Identity Role</label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {(['elder', 'caregiver', 'family'] as const).map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => setRole(r)}
+                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 ${
+                              role === r
+                                ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105'
+                                : 'bg-white/30 border-white/40 text-muted-foreground hover:bg-white/50'
+                            }`}
+                          >
+                            {r === 'elder' && <Heart className="w-6 h-6 mb-2" />}
+                            {r === 'caregiver' && <Users className="w-6 h-6 mb-2" />}
+                            {r === 'family' && <Sparkles className="w-6 h-6 mb-2" />}
+                            <span className="text-xs font-bold uppercase tracking-tighter">
+                              {r}
+                            </span>
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  </>
+                  </motion.div>
                 )}
+              </AnimatePresence>
 
-              <div className="space-y-2">
-                <label className="text-lg font-medium">Email</label>
-                <Input
-                  elder
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground ml-1">Digital Mailbox</label>
+                  <Input
+                    className="h-14 bg-white/50 border-white/30 rounded-2xl text-lg focus:ring-primary/20"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Security Phrase</label>
+                    {isLogin && <button type="button" className="text-xs text-primary/70 hover:text-primary underline">Forgot?</button>}
+                  </div>
+                  <Input
+                    className="h-14 bg-white/50 border-white/30 rounded-2xl text-lg focus:ring-primary/20"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-lg font-medium">Password</label>
-                <Input
-                  elder
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-
+              <div className="pt-2 space-y-4">
                 <Button
                   type="submit"
-                  variant="elder"
-                  size="elderLg"
-                  className="w-full"
+                  className="w-full h-16 rounded-2xl text-xl font-bold bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
                   disabled={loading}
                 >
-                  {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}
+                  {loading ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    isLogin ? 'Enter Hub' : 'Initialize Profile'
+                  )}
                 </Button>
 
-                <div className="relative my-6">
+                <div className="relative py-4">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
+                    <span className="w-full border-t border-white/30" />
                   </div>
-                  <div className="relative flex justify-center text-sm uppercase">
-                    <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+                  <div className="relative flex justify-center text-xs uppercase font-bold text-muted-foreground bg-transparent transition-all">
+                    <span className="px-4 bg-[#f8fafc]/30 backdrop-blur-md italic">Neural Link Layer</span>
                   </div>
                 </div>
 
                 <Button
                   type="button"
-                  variant="outline"
-                  elder
-                  size="elderLg"
-                  className="w-full gap-3 py-6"
                   onClick={handleFaceLogin}
                   disabled={loading}
+                  variant="outline"
+                  className={`w-full h-16 rounded-2xl flex items-center justify-center gap-4 text-lg font-bold border-2 transition-all duration-300 active:scale-[0.98] ${
+                    faceDescriptor 
+                      ? 'bg-green-50/50 border-green-200 text-green-700' 
+                      : 'bg-white/50 border-white text-foreground hover:bg-white/80'
+                  }`}
                 >
-                  <Camera className={`h-6 w-6 ${faceDescriptor ? 'text-green-500' : 'text-primary'}`} />
-                  {faceDescriptor ? 'Face Captured ✓' : isLogin ? 'Sign in with Face' : 'Register Face ID'}
+                  {faceDescriptor ? (
+                    <>
+                      <ShieldCheck className="h-7 w-7 text-green-600 animate-pulse" />
+                      Face Map Locked
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-7 w-7 text-primary" />
+                      {isLogin ? 'Biometric Access' : 'Register Bio-Key'}
+                    </>
+                  )}
                 </Button>
-              </form>
+              </div>
+            </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-10 text-center">
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-lg text-primary hover:underline"
+                className="group relative inline-flex flex-col items-center"
               >
-                {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+                <span className="text-muted-foreground text-sm font-medium">
+                  {isLogin ? "No digital presence yet?" : "Already part of the collective?"}
+                </span>
+                <span className="text-primary font-bold text-lg group-hover:underline decoration-2 underline-offset-4">
+                  {isLogin ? 'Initialize New Account' : 'Return to Gate'}
+                </span>
               </button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
     </div>
   );
 }
+

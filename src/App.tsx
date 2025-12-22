@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
+import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Elder from "./pages/Elder";
@@ -21,15 +22,15 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <FuturisticBackground />
           <Navbar />
-          <main className="pt-20">
+          <main className="pt-20 min-h-screen">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/elder" element={<Elder />} />
               <Route path="/caregiver" element={<Caregiver />} />
               <Route path="/family" element={<Family />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
