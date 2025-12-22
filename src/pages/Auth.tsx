@@ -26,17 +26,17 @@ export default function AuthPage() {
     const [showPinInput, setShowPinInput] = useState(false);
 
   
-  const handlePinLogin = async () => {
-    if (!email || !pin) return;
-    setLoading(true);
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('pin_code')
-        .eq('email', email)
-        .maybeSingle();
+    const handlePinLogin = async () => {
+      if (!email || !pin) return;
+      setLoading(true);
+      try {
+        const { data: profiles, error } = await supabase
+          .rpc('get_profile_by_email', { email_input: email });
 
-      if (profile?.pin_code === pin) {
+        if (error) throw error;
+        const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+
+        if (profile?.pin_code === pin) {
         const { error } = await supabase.auth.signInWithOtp({ email });
         if (!error) {
            toast({ title: 'PIN Verified!', description: 'Check email for login link.' });
@@ -73,20 +73,21 @@ export default function AuthPage() {
       console.log("Auth: Modal hidden, loading state set to true");
 
       try {
-        if (isLogin) {
-          console.log("Auth: Attempting face login for", email);
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('face_descriptor, email')
-            .eq('email', email)
-            .maybeSingle();
+          if (isLogin) {
+            console.log("Auth: Attempting face login for", email);
+            
+            // Use RPC to bypass RLS for pre-auth profile lookup
+            const { data: profiles, error: profileError } = await supabase
+              .rpc('get_profile_by_email', { email_input: email });
 
-          if (profileError) {
-            console.error("Auth: Profile fetch error:", profileError);
-            throw profileError;
-          }
+            if (profileError) {
+              console.error("Auth: Profile fetch error via RPC:", profileError);
+              throw profileError;
+            }
 
-          if (!profile) {
+            const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+
+            if (!profile) {
             console.warn("Auth: No profile found for", email);
             toast({
               title: 'Account not found',
