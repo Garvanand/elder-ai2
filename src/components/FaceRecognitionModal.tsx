@@ -54,12 +54,12 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
       // Set a safety timeout for the entire setup
       timeoutId = setTimeout(() => {
         if (loading && isMounted) {
-          console.error("FaceRecognitionModal: Setup timed out after 15s");
-          setErrorMessage("Neural Link connection timed out. Please try again.");
+          console.error("FaceRecognitionModal: Setup timed out after 30s");
+          setErrorMessage("Neural Link connection timed out. Please check your signal and retry.");
           setStatus('error');
           setLoading(false);
         }
-      }, 15000);
+      }, 30000);
 
       const [_, stream] = await Promise.all([modelsPromise, cameraPromise]);
       
@@ -70,9 +70,11 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
 
       console.log("FaceRecognitionModal: Models and Camera ready.");
 
+      // Always try to attach to the stream ref first
+      streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        streamRef.current = stream;
         
         videoRef.current.onloadedmetadata = async () => {
           if (videoRef.current && isMounted) {
@@ -84,11 +86,25 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
               setStatus('ready');
             } catch (e) {
               console.error("Auto-play failed:", e);
+              clearTimeout(timeoutId);
               setStatus('ready');
               setLoading(false);
             }
           }
         };
+      } else {
+        console.warn("FaceRecognitionModal: videoRef.current not found during setup. Retrying attachment in 100ms...");
+        // Fallback if the video element isn't quite ready yet
+        setTimeout(() => {
+          if (videoRef.current && isMounted) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().then(() => {
+              clearTimeout(timeoutId);
+              setLoading(false);
+              setStatus('ready');
+            }).catch(console.error);
+          }
+        }, 100);
       }
     } catch (error) {
       console.error('Face recognition setup failed:', error);
@@ -216,43 +232,47 @@ export function FaceRecognitionModal({ onCapture, onClose, onUsePin, title, desc
                 </div>
               )}
 
-              {loading ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-slate-900/50 backdrop-blur-md">
-                  <div className="relative">
-                    <RefreshCw className="h-16 w-16 animate-spin text-primary opacity-50" />
-                    <Loader2 className="h-16 w-16 animate-spin text-primary absolute inset-0" style={{ animationDirection: 'reverse', animationDuration: '3s' }} />
-                  </div>
-                  <div className="text-center space-y-2">
-                    <p className="text-xl font-black uppercase tracking-widest animate-pulse">Initializing Neural Link</p>
-                    <p className="text-xs text-white/40 uppercase font-bold tracking-tighter">Establishing optical stream...</p>
-                  </div>
-                </div>
-              ) : status === 'error' ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-slate-900/80 backdrop-blur-md p-8 text-center">
-                  <div className="p-4 bg-red-500/20 rounded-full">
-                    <X className="h-16 w-16 text-red-500" />
-                  </div>
-                  <div className="space-y-4">
-                    <p className="text-2xl font-black uppercase tracking-widest text-red-400">Connection Failed</p>
-                    <p className="text-white/60 font-medium max-w-sm mx-auto">{errorMessage || "The neural link could not be established."}</p>
-                    <Button 
-                      onClick={() => setup()} 
-                      className="bg-white/10 hover:bg-white/20 text-white rounded-xl gap-2"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      Retry Connection
-                    </Button>
-                  </div>
-                </div>
-              ) : (
+                {/* Video Element - Always rendered to maintain ref */}
                 <video 
                   ref={videoRef} 
                   autoPlay 
                   muted 
                   playsInline 
-                  className="w-full h-full object-cover -scale-x-100 grayscale brightness-110 active:grayscale-0 transition-all duration-700"
+                  className={`absolute inset-0 w-full h-full object-cover -scale-x-100 grayscale brightness-110 active:grayscale-0 transition-all duration-700 ${(loading || status === 'error') ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                 />
-              )}
+
+                {loading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-slate-900/50 backdrop-blur-md z-30">
+                    <div className="relative">
+                      <RefreshCw className="h-16 w-16 animate-spin text-primary opacity-50" />
+                      <Loader2 className="h-16 w-16 animate-spin text-primary absolute inset-0" style={{ animationDirection: 'reverse', animationDuration: '3s' }} />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <p className="text-xl font-black uppercase tracking-widest animate-pulse">Initializing Neural Link</p>
+                      <p className="text-xs text-white/40 uppercase font-bold tracking-tighter">Establishing optical stream...</p>
+                    </div>
+                  </div>
+                )}
+
+                {status === 'error' && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-slate-900/80 backdrop-blur-md p-8 text-center z-30">
+                    <div className="p-4 bg-red-500/20 rounded-full">
+                      <X className="h-16 w-16 text-red-500" />
+                    </div>
+                    <div className="space-y-4">
+                      <p className="text-2xl font-black uppercase tracking-widest text-red-400">Connection Failed</p>
+                      <p className="text-white/60 font-medium max-w-sm mx-auto">{errorMessage || "The neural link could not be established."}</p>
+                      <Button 
+                        onClick={() => setup()} 
+                        className="bg-white/10 hover:bg-white/20 text-white rounded-xl gap-2"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Retry Connection
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
               
               <AnimatePresence>
                 {status === 'analyzing' && (

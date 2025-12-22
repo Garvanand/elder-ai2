@@ -66,44 +66,64 @@ export default function AuthPage() {
     setShowFaceModal(true);
   };
 
-  const onFaceCapture = async (capturedDescriptor: number[]) => {
-    console.log("Auth: onFaceCapture triggered");
-    setShowFaceModal(false);
-    setLoading(true);
+    const onFaceCapture = async (capturedDescriptor: number[]) => {
+      console.log("Auth: onFaceCapture triggered with descriptor length:", capturedDescriptor.length);
+      setShowFaceModal(false);
+      setLoading(true);
+      console.log("Auth: Modal hidden, loading state set to true");
 
-    try {
-      if (isLogin) {
-        console.log("Auth: Attempting face login for", email);
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('face_descriptor, email')
-          .eq('email', email)
-          .maybeSingle();
+      try {
+        if (isLogin) {
+          console.log("Auth: Attempting face login for", email);
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('face_descriptor, email')
+            .eq('email', email)
+            .maybeSingle();
 
-        if (profileError) {
-          console.error("Auth: Profile fetch error:", profileError);
-          throw profileError;
-        }
+          if (profileError) {
+            console.error("Auth: Profile fetch error:", profileError);
+            throw profileError;
+          }
 
-        if (!profile?.face_descriptor) {
-          console.warn("Auth: No face descriptor found for", email);
-          toast({
-            title: 'Face Login unavailable',
-            description: 'No face profile found for this email. Please use your password.',
-            variant: 'destructive',
-          });
-          setLoading(false);
-          return;
-        }
+          if (!profile) {
+            console.warn("Auth: No profile found for", email);
+            toast({
+              title: 'Account not found',
+              description: 'We couldn\'t find a profile for this email.',
+              variant: 'destructive',
+            });
+            setLoading(false);
+            return;
+          }
 
-        console.log("Auth: Found face profile, comparing descriptors...");
-        // Ensure stored descriptor is treated as an array
-        const storedDescriptor = Array.isArray(profile.face_descriptor) 
-          ? profile.face_descriptor 
-          : Object.values(profile.face_descriptor as any);
+          if (!profile.face_descriptor) {
+            console.warn("Auth: No face descriptor found for", email);
+            toast({
+              title: 'Face Login unavailable',
+              description: 'No face profile found for this email. Please use your password.',
+              variant: 'destructive',
+            });
+            setLoading(false);
+            return;
+          }
 
-        const isMatch = compareFaceDescriptors(capturedDescriptor, storedDescriptor as number[]);
-        console.log("Auth: Face match result:", isMatch);
+          console.log("Auth: Found face profile, comparing descriptors...");
+          // Ensure stored descriptor is treated as an array of numbers
+          let storedDescriptor: number[];
+          if (Array.isArray(profile.face_descriptor)) {
+            storedDescriptor = profile.face_descriptor;
+          } else if (typeof profile.face_descriptor === 'object' && profile.face_descriptor !== null) {
+            storedDescriptor = Object.values(profile.face_descriptor);
+          } else {
+            console.error("Auth: Invalid face_descriptor format in DB:", profile.face_descriptor);
+            throw new Error("Invalid biometric data in records.");
+          }
+
+          console.log("Auth: Comparing descriptors of lengths:", capturedDescriptor.length, storedDescriptor.length);
+          const isMatch = compareFaceDescriptors(capturedDescriptor, storedDescriptor);
+          console.log("Auth: Face match result:", isMatch);
+
         
         if (isMatch) {
           toast({
