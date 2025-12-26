@@ -14,7 +14,22 @@ export const useEmergency = (elderId: string | undefined) => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Sync pending alerts when back online
+    // Proactively fetch location on mount
+    useEffect(() => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          }),
+          (error) => console.warn("Initial location fetch failed:", error.message),
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+        );
+      }
+    }, []);
+
+    // Sync pending alerts when back online
+
   const syncPendingAlerts = useCallback(async () => {
     if (!elderId || !navigator.onLine) return;
 
@@ -65,27 +80,51 @@ export const useEmergency = (elderId: string | undefined) => {
     };
   }, [syncPendingAlerts]);
 
-  const triggerEmergency = useCallback(async (type: 'panic' | 'fall' | 'health' = 'panic') => {
-    if (!elderId) return;
-
-    setIsEmergency(true);
-    
-    // High Precision Location
-    let currentLocation = location;
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
+    const triggerEmergency = useCallback(async (type: 'panic' | 'fall' | 'health' = 'panic') => {
+      if (!elderId) return;
+  
+      setIsEmergency(true);
+      
+      // High Precision Location with better error handling and timeout
+      let currentLocation = location;
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 5000
+            });
+          });
           const newLoc = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
           setLocation(newLoc);
           currentLocation = newLoc;
-        },
-        (error) => console.error("Location error:", error),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    }
+        } catch (error) {
+          console.warn("Location fetch failed, using last known or null:", error);
+          // If high accuracy fails, try a quick low accuracy fetch as fallback
+          try {
+             const fallbackPos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                  enableHighAccuracy: false,
+                  timeout: 5000,
+                  maximumAge: 60000
+                });
+             });
+             const fallbackLoc = {
+               lat: fallbackPos.coords.latitude,
+               lng: fallbackPos.coords.longitude
+             };
+             setLocation(fallbackLoc);
+             currentLocation = fallbackLoc;
+          } catch (fallbackError) {
+             console.error("Fallback location also failed:", fallbackError);
+          }
+        }
+      }
+
 
     const alertData = {
       id: crypto.randomUUID(),
