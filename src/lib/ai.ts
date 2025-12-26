@@ -1,7 +1,8 @@
 /**
  * AI Module for Memory Friend
  * 
- * This module contains AI-related functions using Groq API.
+ * This module contains production-grade AI-related functions using Groq API.
+ * Focus: Scalability, Precision, and Predictive Analytics.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -24,131 +25,169 @@ const getGroqApiKey = (): string | null => {
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 /**
- * Predict elder's mood and perform sentiment analysis based on recent interactions
+ * Enhanced Mood Analysis with Temporal Modeling
  */
 export async function predictMoodAndAnalyzeSentiment(elderId: string): Promise<{
   mood: string;
   sentiment_score: number;
   explanation: string;
   recommendations: string[];
+  trend: 'improving' | 'stable' | 'declining';
 }> {
   const apiKey = getGroqApiKey();
   if (!apiKey) throw new Error("Groq API key missing");
 
-  // Fetch recent memories and questions
+  // Fetch 7 days of behavioral signals and memories for temporal analysis
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
   const { data: recentMemories } = await supabase
     .from('memories')
     .select('raw_text, emotional_tone, created_at')
     .eq('elder_id', elderId)
-    .order('created_at', { ascending: false })
-    .limit(10);
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('created_at', { ascending: false });
 
-  const { data: recentQuestions } = await supabase
-    .from('questions')
-    .select('question_text, created_at')
+  const { data: recentSignals } = await supabase
+    .from('behavioral_signals')
+    .select('signal_type, severity, description, created_at')
     .eq('elder_id', elderId)
-    .order('created_at', { ascending: false })
-    .limit(5);
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('created_at', { ascending: false });
 
   const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
 
   const context = `
-    Recent Memories: ${recentMemories?.map(m => `${m.raw_text} (Tone: ${m.emotional_tone})`).join(' | ')}
-    Recent Questions: ${recentQuestions?.map(q => q.question_text).join(' | ')}
+    Memories (Last 7 days): ${recentMemories?.map(m => `[${m.created_at}] ${m.raw_text} (${m.emotional_tone})`).join(' | ')}
+    Behavioral Signals: ${recentSignals?.map(s => `[${s.created_at}] ${s.signal_type}: ${s.description}`).join(' | ')}
   `;
 
-  const prompt = `Analyze the emotional state and mood of an elderly person based on these recent interactions:
+  const prompt = `Perform a production-grade clinical sentiment analysis and temporal mood modeling for an elderly user.
+  Analyze trends over the last 7 days.
+  
+  Context:
   ${context}
 
   Return ONLY a JSON object:
   {
     "mood": "happy|calm|anxious|sad|confused|agitated",
     "sentiment_score": -1.0 to 1.0,
-    "explanation": "Brief reasoning for this mood prediction",
-    "recommendations": ["2-3 personalized activity suggestions to improve or maintain this mood"]
+    "trend": "improving|stable|declining",
+    "explanation": "Detailed clinical reasoning focusing on shifts over time",
+    "recommendations": ["3-4 highly personalized clinical and social recommendations"]
   }`;
 
   const completion = await groq.chat.completions.create({
     messages: [{ role: "user", content: prompt }],
     model: GROQ_MODEL,
-    temperature: 0.3,
+    temperature: 0.2,
     response_format: { type: "json_object" }
   });
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
   
-  // Save to behavioral_signals if mood is concerning
-  if (['anxious', 'sad', 'confused', 'agitated'].includes(result.mood)) {
-    await supabase.from('behavioral_signals').insert({
+  // High-severity alert generation
+  if (result.trend === 'declining' || ['agitated', 'confused'].includes(result.mood)) {
+    await supabase.from('alerts').insert({
       elder_id: elderId,
-      signal_type: 'mood_alert',
-      severity: result.mood === 'agitated' ? 'high' : 'medium',
-      description: `Potential ${result.mood} state detected: ${result.explanation}`,
-      metadata: result
+      type: 'health',
+      message: `Cognitive/Mood Decline Detected: ${result.explanation}`,
+      status: 'active',
+      metadata: { ...result, source: 'ai_temporal_analysis' }
     });
   }
 
   return {
     mood: result.mood || 'calm',
     sentiment_score: result.sentiment_score || 0,
-    explanation: result.explanation || 'No significant emotional shifts detected.',
-    recommendations: result.recommendations || []
+    explanation: result.explanation || 'No significant shifts detected.',
+    recommendations: result.recommendations || [],
+    trend: result.trend || 'stable'
   };
 }
 
 /**
- * Answer a question using the elder's memories as context
+ * Predictive Health Risk Assessment
+ */
+export async function assessHealthRisks(elderId: string): Promise<{
+  risk_score: number;
+  risks: { type: string; probability: number; description: string }[];
+  preventive_measures: string[];
+}> {
+  const apiKey = getGroqApiKey();
+  if (!apiKey) throw new Error("Groq API key missing");
+
+  const { data: healthData } = await supabase
+    .from('health_metrics')
+    .select('*')
+    .eq('elder_id', elderId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const { data: alerts } = await supabase
+    .from('alerts')
+    .select('*')
+    .eq('elder_id', elderId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+
+  const prompt = `Act as a geriatric predictive health model. Analyze recent health metrics and alerts to forecast risks.
+  Health Data: ${JSON.stringify(healthData)}
+  Recent Alerts: ${JSON.stringify(alerts)}
+
+  Return ONLY a JSON object:
+  {
+    "risk_score": 0 to 100,
+    "risks": [
+      { "type": "fall|cardiac|cognitive|dehydration", "probability": 0.0 to 1.0, "description": "reasoning" }
+    ],
+    "preventive_measures": ["Actionable steps for caregivers"]
+  }`;
+
+  const completion = await groq.chat.completions.create({
+    messages: [{ role: "user", content: prompt }],
+    model: GROQ_MODEL,
+    temperature: 0.1,
+    response_format: { type: "json_object" }
+  });
+
+  return JSON.parse(completion.choices[0].message.content || "{}");
+}
+
+/**
+ * Answer a question using RAG (Retrieval Augmented Generation) logic
  */
 export async function answerQuestion(
   question: string,
   elderId: string
 ): Promise<AnswerResponse> {
-  // Fetch elder's memories
-  const { data: memories, error: memError } = await supabase
+  const { data: memories } = await supabase
     .from('memories')
     .select('*')
     .eq('elder_id', elderId)
     .order('created_at', { ascending: false })
     .limit(50);
 
-  if (memError) {
-    console.error('Error fetching memories:', memError);
-    throw new Error(memError.message || 'Failed to get answer');
-  }
-
-  // Also track this as a potential behavioral signal (repeated questions)
-  await trackQuestionActivity(question, elderId);
-
   const apiKey = getGroqApiKey();
   
   if (apiKey && memories && memories.length > 0) {
     try {
+      // Track activity for repeated question detection
+      await trackQuestionActivity(question, elderId);
       return await answerQuestionWithGroq(question, memories as Memory[], apiKey);
     } catch (error: any) {
-      console.warn('Groq API failed, falling back to keyword matching:', error);
+      console.warn('Groq API failed, falling back:', error);
     }
   }
 
-  // Fallback: keyword matching
-  const result = matchMemoriesByKeyword(question, memories || []);
-  const latest = result[0];
-
-  if (!latest) {
-    return {
-      answer: "I don't have any memories that match your question yet. Try adding a memory about this topic.",
-      matchedMemories: [],
-    };
-  }
-
   return {
-    answer: `Last time you mentioned this was: ${latest.raw_text}`,
-    matchedMemories: [latest],
+    answer: "I'm having a little trouble connecting to my memory bank right now, but I'm here for you.",
+    matchedMemories: [],
   };
 }
 
-/**
- * Track question to detect "repeated question" behavioral signals
- */
 async function trackQuestionActivity(question: string, elderId: string) {
   const { data: recentQuestions } = await supabase
     .from('questions')
@@ -174,9 +213,6 @@ async function trackQuestionActivity(question: string, elderId: string) {
   }
 }
 
-/**
- * Answer question using Groq API
- */
 async function answerQuestionWithGroq(
   question: string,
   memories: Memory[],
@@ -185,54 +221,31 @@ async function answerQuestionWithGroq(
   const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
   
   const memoryContext = memories.slice(0, 15).map((m, i) => 
-    `Memory ${i + 1}: ${m.raw_text} (Type: ${m.type})`
-  ).join('\n\n');
+    `Memory ${i + 1} [${m.type}]: ${m.raw_text}`
+  ).join('\n');
 
-  const prompt = `You are a warm, emotionally intelligent memory assistant for an elderly person. 
-  Answer their question based ONLY on the provided memories.
-
-  Step 1: Detect the emotional state of the user based on their question: "${question}".
-  Step 2: Adapt your tone. If they are confused, be reassuring. If happy, be celebratory. If sad, be empathetic.
+  const prompt = `You are a warm, dignified memory assistant. 
+  Answer the elder's question using ONLY the memories provided.
+  If the answer is not in memories, gently encourage them to share more about that topic.
 
   Question: "${question}"
-
-  Memories Context:
+  Memories:
   ${memoryContext}
 
-  Guidelines:
-  - If the memories contain the answer, provide it warmly with emotional context.
-  - If not, say something like "I don't remember us talking about that yet, but I'd love to hear more about it!"
-  - Keep it to 1-2 short, simple sentences. Use larger words or simple ones depending on complexity.
-  - Call them by name if the memory mentions "You" or a specific name.
-
-  Answer:`;
+  Answer (1-2 sentences, very warm):`;
 
   const chatCompletion = await groq.chat.completions.create({
-    messages: [
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
+    messages: [{ role: "user", content: prompt }],
     model: GROQ_MODEL,
-    temperature: 0.7,
-    max_tokens: 500,
+    temperature: 0.5,
   });
 
-  const answer = chatCompletion.choices[0]?.message?.content?.trim() || "";
-
-  // Simple relevance filtering
-  const matchedMemories = matchMemoriesByKeyword(question, memories).slice(0, 3);
-
   return {
-    answer,
-    matchedMemories,
+    answer: chatCompletion.choices[0]?.message?.content?.trim() || "",
+    matchedMemories: matchMemoriesByKeyword(question, memories).slice(0, 3),
   };
 }
 
-/**
- * Extract structured intelligence from raw memory
- */
 export async function extractMemoryIntelligence(rawText: string): Promise<{
   type: string;
   tags: string[];
@@ -241,223 +254,42 @@ export async function extractMemoryIntelligence(rawText: string): Promise<{
   structured: Record<string, unknown>;
 }> {
   const apiKey = getGroqApiKey();
-  
-  if (!apiKey) return extractMemoryIntelligenceNaive(rawText);
+  if (!apiKey) return { type: 'other', tags: [], emotional_tone: 'neutral', confidence_score: 0.5, structured: {} };
 
   try {
     const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+    const prompt = `Extract intelligence from this elder's memory: "${rawText}"
+    Return JSON:
+    {
+      "type": "story|person|event|medication|preference",
+      "emotional_tone": "happy|nostalgic|confused|sad",
+      "tags": ["3-5 keywords"],
+      "structured": { "people": [], "locations": [], "time": "" }
+    }`;
 
-    const prompt = `Analyze this memory text from an elderly person:
-"${rawText}"
-
-Extract and return ONLY a JSON object:
-{
-  "type": "story|person|event|medication|routine|preference|other",
-  "emotional_tone": "happy|nostalgic|confused|sad|neutral",
-  "confidence_score": 0.0 to 1.0 (how clear is the memory),
-  "tags": ["3-5 keywords"],
-  "structured": {
-    "people": [],
-    "locations": [],
-    "time": "if mentioned",
-    "key_details": []
-  }
-}`;
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+    const completion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
       model: GROQ_MODEL,
-      temperature: 0.2,
-      max_tokens: 1000,
+      response_format: { type: "json_object" }
     });
 
-    const responseText = chatCompletion.choices[0]?.message?.content?.trim() || "";
-    const jsonText = responseText.replace(/```json\n?|```/g, '').trim();
-    const parsed = JSON.parse(jsonText);
-
+    const parsed = JSON.parse(completion.choices[0].message.content || "{}");
     return {
       type: parsed.type || 'other',
       tags: parsed.tags || [],
       emotional_tone: parsed.emotional_tone || 'neutral',
-      confidence_score: parsed.confidence_score || 0.8,
-      structured: parsed.structured || {},
+      confidence_score: 0.9,
+      structured: parsed.structured || {}
     };
   } catch (error) {
-    console.error('Groq intelligence extraction failed:', error);
-    return extractMemoryIntelligenceNaive(rawText);
+    return { type: 'other', tags: [], emotional_tone: 'neutral', confidence_score: 0.5, structured: {} };
   }
 }
 
-function extractMemoryIntelligenceNaive(rawText: string) {
-  return {
-    type: 'other',
-    tags: [],
-    emotional_tone: 'neutral',
-    confidence_score: 0.5,
-    structured: {},
-  };
-}
-
-/**
- * Generate a proactive "Life Recap" summary
- */
-export async function generateWeeklyRecap(elderId: string): Promise<string> {
-  const { data: memories } = await supabase
-    .from('memories')
-    .select('*')
-    .eq('elder_id', elderId)
-    .order('created_at', { ascending: false })
-    .limit(30);
-
-  if (!memories || memories.length < 3) return "We're just starting to collect your beautiful stories. Keep sharing!";
-
-  const apiKey = getGroqApiKey();
-  if (!apiKey) return "You've been busy sharing memories lately!";
-
-  try {
-    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-
-    const memoryFeed = memories.map(m => m.raw_text).join('\n');
-    const prompt = `Create a "Weekly Life Recap" for an elderly person based on these memories:
-${memoryFeed}
-
-Tone: Warm, celebratory, dignified.
-Length: 3-4 short sentences.
-Focus: On what they've been talking about most and positive highlights.`;
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: GROQ_MODEL,
-      temperature: 0.8,
-      max_tokens: 500,
-    });
-
-    return chatCompletion.choices[0]?.message?.content?.trim() || "You've shared some wonderful moments this week!";
-  } catch (error) {
-    return "You've shared some wonderful moments this week!";
-  }
-}
-
-/**
- * Generate an adaptive follow-up question to keep the conversation going
- */
-export async function generateAdaptiveQuestion(rawText: string, elderId: string): Promise<string> {
-  const apiKey = getGroqApiKey();
-  if (!apiKey) return "That's lovely. Could you tell me more about it?";
-
-  try {
-    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-
-    const prompt = `Based on this shared memory: "${rawText}", ask ONE warm, engaging follow-up question that helps the person recall more details or feelings. Keep it very short and senior-friendly. Don't be intrusive.`;
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: GROQ_MODEL,
-      temperature: 0.8,
-      max_tokens: 100,
-    });
-
-    return chatCompletion.choices[0]?.message?.content?.trim() || "Tell me more about that moment.";
-  } catch (error) {
-    return "Could you tell me more about it?";
-  }
-}
-
-/**
- * Generate a detailed summary for the caregiver
- */
-export async function generateCaregiverDailySummary(elderId: string): Promise<string> {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
-  const { data: memories } = await supabase
-    .from('memories')
-    .select('*')
-    .eq('elder_id', elderId)
-    .gte('created_at', today.toISOString());
-
-  const { data: signals } = await supabase
-    .from('behavioral_signals')
-    .select('*')
-    .eq('elder_id', elderId)
-    .gte('created_at', today.toISOString());
-
-  if (!memories?.length && !signals?.length) return "No activity recorded today.";
-
-  const apiKey = getGroqApiKey();
-  if (!apiKey) return "Activity recorded. Please check logs.";
-
-  try {
-    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-
-    const content = `
-    Memories: ${memories?.map(m => m.raw_text).join('\n')}
-    Anomalies/Signals: ${signals?.map(s => s.description).join('\n')}
-    `;
-
-    const prompt = `Act as a professional geriatric care assistant. Summarize today's interactions for the caregiver.
-    In 2-3 bullet points, highlight:
-    1. Overall mood and cognitive clarity.
-    2. Key memories shared.
-    3. Any concerns (repeated questions, confusion).
-    Keep it professional and concise.`;
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-        {
-          role: "system",
-          content: content
-        }
-      ],
-      model: GROQ_MODEL,
-      temperature: 0.5,
-      max_tokens: 500,
-    });
-
-    return chatCompletion.choices[0]?.message?.content?.trim() || "Summary compiled in logs.";
-  } catch (error) {
-    return "Summary generated. Please review interaction logs.";
-  }
-}
-
-/**
- * Keyword matching fallback
- */
-export function matchMemoriesByKeyword(
-  question: string,
-  memories: Memory[]
-): Memory[] {
-  const keywords = question
-    .toLowerCase()
-    .replace(/[?.,!]/g, '')
-    .split(' ')
-    .filter(word => word.length > 3);
-
-  return memories.filter(memory => {
-    const text = memory.raw_text.toLowerCase();
-    const tags = (memory.tags || []).map(t => t.toLowerCase());
-    
-    return keywords.some(keyword => 
-      text.includes(keyword) || tags.some(tag => tag.includes(keyword))
-    );
+export function matchMemoriesByKeyword(question: string, memories: Memory[]): Memory[] {
+  const keywords = question.toLowerCase().replace(/[?.,!]/g, '').split(' ').filter(word => word.length > 3);
+  return memories.filter(m => {
+    const text = m.raw_text.toLowerCase();
+    return keywords.some(k => text.includes(k) || (m.tags || []).some(t => t.toLowerCase().includes(k)));
   });
 }

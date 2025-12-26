@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Trophy, RefreshCw, X, CheckCircle2 } from 'lucide-react';
+import { Brain, Trophy, RefreshCw, X, Timer, TrendingUp, Mic, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSpeech } from '@/hooks/useSpeech';
 
 interface CardItem {
   id: number;
@@ -13,35 +14,37 @@ interface CardItem {
   matchId: number;
 }
 
+type Difficulty = 'easy' | 'medium' | 'hard';
+
 export const MemoryMatchingGame: React.FC<{ elderId: string; onClose: () => void }> = ({ elderId, onClose }) => {
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [cards, setCards] = useState<CardItem[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [solved, setSolved] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
-  const [startTime] = useState(Date.now());
+  const [timeLeft, setTimeLeft] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [startTime, setStartTime] = useState(Date.now());
+  const { speak } = useSpeech();
 
-  useEffect(() => {
-    initializeGame();
-  }, []);
-
-  const initializeGame = () => {
-    const items = [
-      { content: 'Apple', matchId: 1 },
-      { content: '🍎', matchId: 1 },
-      { content: 'Sun', matchId: 2 },
-      { content: '☀️', matchId: 2 },
-      { content: 'Book', matchId: 3 },
-      { content: '📚', matchId: 3 },
-      { content: 'Heart', matchId: 4 },
-      { content: '❤️', matchId: 4 },
-      { content: 'Water', matchId: 5 },
-      { content: '💧', matchId: 5 },
-      { content: 'Tree', matchId: 6 },
-      { content: '🌳', matchId: 6 },
+  const initializeGame = useCallback((level: Difficulty = difficulty) => {
+    const itemsPool = [
+      { content: 'Apple', matchId: 1 }, { content: '🍎', matchId: 1 },
+      { content: 'Sun', matchId: 2 }, { content: '☀️', matchId: 2 },
+      { content: 'Book', matchId: 3 }, { content: '📚', matchId: 3 },
+      { content: 'Heart', matchId: 4 }, { content: '❤️', matchId: 4 },
+      { content: 'Water', matchId: 5 }, { content: '💧', matchId: 5 },
+      { content: 'Tree', matchId: 6 }, { content: '🌳', matchId: 6 },
+      { content: 'Cloud', matchId: 7 }, { content: '☁️', matchId: 7 },
+      { content: 'Star', matchId: 8 }, { content: '⭐', matchId: 8 },
+      { content: 'Fish', matchId: 9 }, { content: '🐟', matchId: 9 },
+      { content: 'Bird', matchId: 10 }, { content: '🐦', matchId: 10 },
     ];
 
-    const shuffled = items
+    const pairCounts = { easy: 4, medium: 6, hard: 10 };
+    const selectedPairs = itemsPool.slice(0, pairCounts[level] * 2);
+    
+    const shuffled = selectedPairs
       .map((item, index) => ({ ...item, id: index }))
       .sort(() => Math.random() - 0.5);
 
@@ -50,10 +53,37 @@ export const MemoryMatchingGame: React.FC<{ elderId: string; onClose: () => void
     setSolved([]);
     setMoves(0);
     setIsGameOver(false);
-  };
+    setStartTime(Date.now());
+    
+    if (level === 'hard') setTimeLeft(60);
+    else if (level === 'medium') setTimeLeft(90);
+    else setTimeLeft(0);
+
+    speak(`Starting ${level} memory game. Find the matching pairs.`);
+  }, [difficulty, speak]);
+
+  useEffect(() => {
+    initializeGame();
+  }, [initializeGame]);
+
+  useEffect(() => {
+    if (timeLeft > 0 && !isGameOver) {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            handleGameOver(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [timeLeft, isGameOver]);
 
   const handleCardClick = (id: number) => {
-    if (flipped.length === 2 || solved.includes(id) || flipped.includes(id)) return;
+    if (flipped.length === 2 || solved.includes(id) || flipped.includes(id) || isGameOver) return;
 
     const newFlipped = [...flipped, id];
     setFlipped(newFlipped);
@@ -64,29 +94,36 @@ export const MemoryMatchingGame: React.FC<{ elderId: string; onClose: () => void
       if (cards[firstId].matchId === cards[secondId].matchId) {
         setSolved([...solved, firstId, secondId]);
         setFlipped([]);
+        speak("Match found!");
         if (solved.length + 2 === cards.length) {
-          handleWin();
+          handleGameOver(true);
         }
       } else {
-        setTimeout(() => setFlipped([]), 1000);
+        setTimeout(() => setFlipped([]), 800);
       }
     }
   };
 
-  const handleWin = async () => {
+  const handleGameOver = async (isWin: boolean) => {
     setIsGameOver(true);
     const duration = Math.floor((Date.now() - startTime) / 1000);
     
+    if (isWin) {
+      speak(`Excellent work! You completed the game in ${moves} moves.`);
+    } else {
+      speak("Time is up! Let's try again.");
+    }
+
     try {
       await supabase.from('cognitive_assessments').insert({
         elder_id: elderId,
         game_type: 'matching',
-        score: Math.max(100 - moves, 10),
+        score: isWin ? Math.max(100 - moves + (difficulty === 'hard' ? 50 : 0), 10) : 0,
         total_questions: cards.length / 2,
         duration_seconds: duration,
-        difficulty_level: 'easy'
+        difficulty_level: difficulty,
+        feedback: isWin ? "Win" : "Time Out"
       });
-      toast.success("Game completed! Score saved.");
     } catch (error) {
       console.error("Error saving score:", error);
     }
@@ -94,36 +131,66 @@ export const MemoryMatchingGame: React.FC<{ elderId: string; onClose: () => void
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl bg-white rounded-[40px] overflow-hidden shadow-2xl relative">
+      <Card className="w-full max-w-5xl bg-slate-50 rounded-[40px] overflow-hidden shadow-2xl relative border-none">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="absolute top-6 right-6 rounded-full h-12 w-12 hover:bg-red-50 hover:text-red-500"
+          className="absolute top-6 right-6 rounded-full h-12 w-12 hover:bg-red-50 hover:text-red-500 z-20"
           onClick={onClose}
         >
           <X className="h-8 w-8" />
         </Button>
 
         <div className="p-8 md:p-12">
+          {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-            <div>
-              <h2 className="text-4xl font-black tracking-tighter flex items-center gap-3">
+            <div className="space-y-2">
+              <h2 className="text-4xl font-black tracking-tight flex items-center gap-3 text-slate-900">
                 <Brain className="h-10 w-10 text-primary" />
-                Memory Match
+                Memory Training
               </h2>
-              <p className="text-muted-foreground font-medium">Find the matching pairs to exercise your brain.</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-primary/10 px-6 py-3 rounded-2xl text-primary font-black uppercase tracking-widest text-sm">
-                Moves: {moves}
+              <div className="flex gap-2">
+                {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
+                  <Button
+                    key={level}
+                    size="sm"
+                    variant={difficulty === level ? 'default' : 'outline'}
+                    className="rounded-full px-4 capitalize font-bold"
+                    onClick={() => {
+                      setDifficulty(level);
+                      initializeGame(level);
+                    }}
+                  >
+                    {level}
+                  </Button>
+                ))}
               </div>
-              <Button onClick={initializeGame} variant="outline" className="rounded-2xl border-2">
-                <RefreshCw className="mr-2 h-4 w-4" /> Reset
+            </div>
+            
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Moves</p>
+                <div className="bg-white px-6 py-2 rounded-2xl border-2 border-slate-100 font-black text-2xl text-primary">
+                  {moves}
+                </div>
+              </div>
+              {timeLeft > 0 && (
+                <div className="text-center">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Time</p>
+                  <div className={`bg-white px-6 py-2 rounded-2xl border-2 font-black text-2xl flex items-center gap-2 ${timeLeft < 10 ? 'text-red-500 border-red-100' : 'text-slate-700 border-slate-100'}`}>
+                    <Timer className="h-5 w-5" />
+                    {timeLeft}s
+                  </div>
+                </div>
+              )}
+              <Button onClick={() => initializeGame()} variant="outline" className="rounded-2xl border-2 h-14 w-14 p-0">
+                <RefreshCw className="h-6 w-6" />
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+          {/* Grid */}
+          <div className={`grid gap-4 md:gap-6 ${difficulty === 'hard' ? 'grid-cols-4 md:grid-cols-5' : 'grid-cols-3 md:grid-cols-4'}`}>
             {cards.map((card) => (
               <motion.div
                 key={card.id}
@@ -139,7 +206,7 @@ export const MemoryMatchingGame: React.FC<{ elderId: string; onClose: () => void
                       initial={{ rotateY: 90, opacity: 0 }}
                       animate={{ rotateY: 0, opacity: 1 }}
                       exit={{ rotateY: 90, opacity: 0 }}
-                      className={`absolute inset-0 rounded-[24px] flex items-center justify-center text-4xl shadow-inner border-4 ${
+                      className={`absolute inset-0 rounded-[24px] flex items-center justify-center text-5xl shadow-sm border-4 transition-colors ${
                         solved.includes(card.id) ? 'bg-green-50 border-green-200' : 'bg-white border-primary/20'
                       }`}
                     >
@@ -151,9 +218,9 @@ export const MemoryMatchingGame: React.FC<{ elderId: string; onClose: () => void
                       initial={{ rotateY: 90, opacity: 0 }}
                       animate={{ rotateY: 0, opacity: 1 }}
                       exit={{ rotateY: 90, opacity: 0 }}
-                      className="absolute inset-0 bg-gradient-to-br from-primary to-indigo-600 rounded-[24px] flex items-center justify-center shadow-lg border-4 border-white"
+                      className="absolute inset-0 bg-white rounded-[24px] flex items-center justify-center shadow-sm border-4 border-slate-100 group hover:border-primary/30 transition-all"
                     >
-                      <Brain className="h-12 w-12 text-white/40" />
+                      <Brain className="h-12 w-12 text-slate-200 group-hover:text-primary/20" />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -161,25 +228,107 @@ export const MemoryMatchingGame: React.FC<{ elderId: string; onClose: () => void
             ))}
           </div>
 
+          {/* Game Over Overlay */}
           <AnimatePresence>
             {isGameOver && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center z-30 p-12 text-center"
               >
-                <Trophy className="h-24 w-24 text-yellow-500 mb-6 animate-bounce" />
-                <h3 className="text-5xl font-black tracking-tighter mb-2">Great Work!</h3>
-                <p className="text-2xl text-muted-foreground mb-8">You found all pairs in {moves} moves.</p>
-                <div className="flex gap-4">
-                  <Button onClick={initializeGame} size="lg" className="h-16 px-10 rounded-2xl text-xl font-bold">Play Again</Button>
-                  <Button onClick={onClose} variant="outline" size="lg" className="h-16 px-10 rounded-2xl text-xl font-bold border-2">Close</Button>
-                </div>
+                <motion.div
+                  initial={{ scale: 0.5, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  className="bg-white p-12 rounded-[40px] shadow-2xl max-w-lg w-full"
+                >
+                  {solved.length === cards.length ? (
+                    <>
+                      <div className="flex justify-center mb-6">
+                        <div className="bg-yellow-100 p-6 rounded-full relative">
+                          <Trophy className="h-20 w-20 text-yellow-500" />
+                          <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className="absolute -top-2 -right-2 bg-primary text-white p-3 rounded-full"
+                          >
+                            <Star className="h-6 w-6 fill-current" />
+                          </motion.div>
+                        </div>
+                      </div>
+                      <h3 className="text-4xl font-black text-slate-900 mb-2">Great Memory!</h3>
+                      <p className="text-slate-500 font-medium text-lg mb-8">
+                        You're getting sharper every day. Completed in {moves} moves.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-red-50 p-6 rounded-full w-fit mx-auto mb-6">
+                        <Timer className="h-20 w-20 text-red-500" />
+                      </div>
+                      <h3 className="text-4xl font-black text-slate-900 mb-2">Time's Up!</h3>
+                      <p className="text-slate-500 font-medium text-lg mb-8">
+                        Don't worry, practice makes perfect. Want to try again?
+                      </p>
+                    </>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button onClick={() => initializeGame()} size="lg" className="h-16 rounded-2xl text-xl font-bold">
+                      Play Again
+                    </Button>
+                    <Button onClick={onClose} variant="outline" size="lg" className="h-16 rounded-2xl text-xl font-bold border-2">
+                      Exit
+                    </Button>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </Card>
     </div>
+  );
+};
+
+export const CognitiveEngagementAnalytics: React.FC<{ elderId: string }> = ({ elderId }) => {
+  const [stats, setStats] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await supabase
+        .from('cognitive_assessments')
+        .select('*')
+        .eq('elder_id', elderId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setStats(data);
+    };
+    fetchStats();
+  }, [elderId]);
+
+  if (stats.length === 0) return null;
+
+  const avgScore = Math.round(stats.reduce((acc, s) => acc + (s.score || 0), 0) / stats.length);
+
+  return (
+    <Card className="p-6 rounded-[32px] border-none shadow-sm bg-gradient-to-br from-indigo-500 to-primary text-white">
+      <div className="flex items-center justify-between mb-4">
+        <TrendingUp className="h-8 w-8 opacity-80" />
+        <div className="text-right">
+          <p className="text-xs font-bold uppercase tracking-widest opacity-80">Brain Score</p>
+          <p className="text-3xl font-black">{avgScore}</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <p className="font-bold text-sm">Recent Activity</p>
+        <div className="flex gap-2">
+          {stats.slice(0, 5).map((s, i) => (
+            <div key={i} className="flex-1 h-12 bg-white/20 rounded-xl flex items-center justify-center font-black">
+              {s.score}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
   );
 };

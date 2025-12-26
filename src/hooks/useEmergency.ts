@@ -2,16 +2,75 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface PendingAlert {
+  id: string;
+  type: 'panic' | 'fall' | 'health';
+  timestamp: string;
+  location: { lat: number; lng: number } | null;
+}
+
 export const useEmergency = (elderId: string | undefined) => {
   const [isEmergency, setIsEmergency] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Sync pending alerts when back online
+  const syncPendingAlerts = useCallback(async () => {
+    if (!elderId || !navigator.onLine) return;
+
+    const pending = localStorage.getItem('pending_emergency_alerts');
+    if (!pending) return;
+
+    const alerts: PendingAlert[] = JSON.parse(pending);
+    if (alerts.length === 0) return;
+
+    console.log(`Syncing ${alerts.length} pending emergency alerts...`);
+    
+    for (const alert of alerts) {
+      try {
+        const { error } = await supabase.from('alerts').insert({
+          elder_id: elderId,
+          type: alert.type === 'panic' ? 'emergency' : alert.type,
+          message: `${alert.type.toUpperCase()} ALERT (Synced): Emergency triggered while offline.`,
+          status: 'active',
+          metadata: {
+            location: alert.location,
+            triggered_at: alert.timestamp,
+            is_offline_sync: true
+          }
+        });
+
+        if (error) throw error;
+      } catch (err) {
+        console.error("Failed to sync alert:", err);
+      }
+    }
+
+    localStorage.removeItem('pending_emergency_alerts');
+    toast.success("Offline emergency alerts synchronized with server.");
+  }, [elderId]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncPendingAlerts();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [syncPendingAlerts]);
 
   const triggerEmergency = useCallback(async (type: 'panic' | 'fall' | 'health' = 'panic') => {
     if (!elderId) return;
 
     setIsEmergency(true);
     
-    // Get current location
+    // High Precision Location
     let currentLocation = location;
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -23,14 +82,28 @@ export const useEmergency = (elderId: string | undefined) => {
           setLocation(newLoc);
           currentLocation = newLoc;
         },
-        (error) => {
-          console.error("Error getting location:", error);
-        }
+        (error) => console.error("Location error:", error),
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     }
 
+    const alertData = {
+      id: crypto.randomUUID(),
+      type,
+      timestamp: new Date().toISOString(),
+      location: currentLocation
+    };
+
+    if (!navigator.onLine) {
+      const pending = JSON.parse(localStorage.getItem('pending_emergency_alerts') || '[]');
+      localStorage.setItem('pending_emergency_alerts', JSON.stringify([...pending, alertData]));
+      toast.warning("You are offline. Emergency alert saved locally and will sync once connection is restored.", {
+        duration: 10000
+      });
+      return;
+    }
+
     try {
-      // 1. Create alert in Supabase
       const { error: alertError } = await supabase.from('alerts').insert({
         elder_id: elderId,
         type: type === 'panic' ? 'emergency' : type,
@@ -38,16 +111,16 @@ export const useEmergency = (elderId: string | undefined) => {
         status: 'active',
         metadata: {
           location: currentLocation,
-          triggered_at: new Date().toISOString()
+          triggered_at: alertData.timestamp
         }
       });
 
       if (alertError) throw alertError;
 
-      // 2. Update elder's current location in profile
       if (currentLocation) {
         await supabase.from('profiles').update({
-          current_location: currentLocation
+          current_location: currentLocation,
+          last_health_check: new Date().toISOString()
         }).eq('id', elderId);
       }
 
@@ -58,14 +131,20 @@ export const useEmergency = (elderId: string | undefined) => {
 
     } catch (error) {
       console.error("Error triggering emergency:", error);
-      toast.error("Failed to send emergency alert. Please call emergency services directly.");
+      // Fallback to local storage on failure
+      const pending = JSON.parse(localStorage.getItem('pending_emergency_alerts') || '[]');
+      localStorage.setItem('pending_emergency_alerts', JSON.stringify([...pending, alertData]));
+      toast.error("Failed to reach server. Alert saved locally.");
     }
   }, [elderId, location]);
 
-  // Fall Detection Logic
+  // Enhanced Fall Detection Logic
   useEffect(() => {
-    let lastAcceleration = { x: 0, y: 0, z: 0 };
-    const FALL_THRESHOLD = 30; // High acceleration followed by relative stillness
+    let impactDetected = false;
+    let stillnessCounter = 0;
+    const IMPACT_THRESHOLD = 25; // m/s^2
+    const STILLNESS_THRESHOLD = 5; // Low movement for 2 seconds
+    const CHECK_INTERVAL = 200; // ms
 
     const handleMotion = (event: DeviceMotionEvent) => {
       const acc = event.accelerationIncludingGravity;
@@ -77,10 +156,25 @@ export const useEmergency = (elderId: string | undefined) => {
         (acc.z || 0) ** 2
       );
 
-      if (totalAcc > FALL_THRESHOLD) {
-        console.warn("Potential fall detected! Acc:", totalAcc);
-        // In a real app, we'd wait for a few seconds of stillness to confirm
-        triggerEmergency('fall');
+      if (totalAcc > IMPACT_THRESHOLD) {
+        impactDetected = true;
+        stillnessCounter = 0;
+        console.warn("High impact detected:", totalAcc);
+      } else if (impactDetected) {
+        // After impact, check for stillness
+        if (totalAcc < 12 && totalAcc > 8) { // Gravity is ~9.8, so totalAcc around 10 means stillness
+          stillnessCounter++;
+          if (stillnessCounter > (2000 / CHECK_INTERVAL)) {
+            console.error("Fall confirmed: Impact followed by stillness.");
+            triggerEmergency('fall');
+            impactDetected = false;
+            stillnessCounter = 0;
+          }
+        } else if (totalAcc > 15) {
+          // Significant movement detected after impact, maybe not a fall or user got up
+          impactDetected = false;
+          stillnessCounter = 0;
+        }
       }
     };
 
@@ -98,6 +192,7 @@ export const useEmergency = (elderId: string | undefined) => {
   return {
     isEmergency,
     triggerEmergency,
-    location
+    location,
+    isOnline
   };
 };
