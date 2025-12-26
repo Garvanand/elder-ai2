@@ -45,15 +45,29 @@ export function PeopleScanner({ elderId, onClose }: PeopleScannerProps) {
     };
   }, []);
 
+  const [mode, setMode] = useState<'scan' | 'register'>('scan');
+  const [registerName, setRegisterName] = useState('');
+  const [registerRelationship, setRegisterRelationship] = useState('');
+  const [capturedDescriptor, setCapturedDescriptor] = useState<number[] | null>(null);
+
   const handleScan = async () => {
     if (!videoRef.current || scanning) return;
     setScanning(true);
     setRecognizedPerson(null);
 
     try {
-      const descriptor = await getFaceDescriptor(videoRef.current);
-      if (!descriptor) {
+      const descriptorArray = await getFaceDescriptor(videoRef.current);
+      if (!descriptorArray) {
         toast({ title: 'No person detected', description: 'Please ensure someone is in front of the camera.' });
+        setScanning(false);
+        return;
+      }
+      
+      const descriptor = Array.from(descriptorArray);
+
+      if (mode === 'register') {
+        setCapturedDescriptor(descriptor);
+        toast({ title: 'Face Captured', description: 'Now please enter the name and relationship.' });
         setScanning(false);
         return;
       }
@@ -66,21 +80,51 @@ export function PeopleScanner({ elderId, onClose }: PeopleScannerProps) {
 
       if (profiles) {
         for (const profile of profiles) {
-          const isMatch = compareFaceDescriptors(descriptor, profile.face_descriptor as number[]);
+          const isMatch = compareFaceDescriptors(new Float32Array(descriptor), profile.face_descriptor as number[]);
           if (isMatch) {
             setRecognizedPerson({ name: profile.name, relationship: profile.relationship });
-            toast({ title: `Link Established: ${profile.name}`, description: `Identified as your ${profile.relationship}.` });
+            toast({ title: `Found: ${profile.name}`, description: `This is your ${profile.relationship}.` });
             break;
           }
         }
       }
 
-      if (!recognizedPerson && !recognizedPerson) {
-        // We'll check again after the loop if nothing was found
+      if (!recognizedPerson) {
+        toast({ title: 'Unknown Person', description: 'I do not recognize this face. You can register them below.' });
       }
       
     } catch (err) {
       console.error(err);
+      toast({ title: 'Scan Failed', description: 'Could not process the face scan.', variant: 'destructive' });
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!capturedDescriptor || !registerName || !user) return;
+    
+    setScanning(true);
+    try {
+      const { error } = await supabase
+        .from('family_face_profiles')
+        .insert({
+          elder_id: elderId,
+          name: registerName,
+          relationship: registerRelationship,
+          face_descriptor: capturedDescriptor,
+        });
+
+      if (error) throw error;
+
+      toast({ title: 'Person Registered', description: `${registerName} has been added to your circle.` });
+      setMode('scan');
+      setRegisterName('');
+      setRegisterRelationship('');
+      setCapturedDescriptor(null);
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Registration Failed', description: 'Could not save the identity.', variant: 'destructive' });
     } finally {
       setScanning(false);
     }
@@ -88,26 +132,28 @@ export function PeopleScanner({ elderId, onClose }: PeopleScannerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-6">
-      <Card className="w-full max-w-3xl bg-slate-900 border-white/10 text-white rounded-[48px] overflow-hidden shadow-2xl">
+      <Card className="w-full max-w-3xl bg-white text-slate-900 rounded-[48px] overflow-hidden shadow-2xl">
         <CardContent className="p-12 space-y-8">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-primary">Neural Proximity Scan</p>
-              <h2 className="text-4xl font-black tracking-tighter uppercase">Identify Friend</h2>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Identity Check</p>
+              <h2 className="text-4xl font-black tracking-tighter uppercase">
+                {mode === 'scan' ? 'Who is this?' : 'Register Friend'}
+              </h2>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-white/10">
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-slate-100">
               <Users className="w-8 h-8 opacity-60" />
             </Button>
           </div>
 
-          <div className="relative aspect-video bg-black rounded-[40px] overflow-hidden border border-white/10">
+          <div className="relative aspect-video bg-slate-100 rounded-[40px] overflow-hidden border-4 border-slate-100 shadow-inner">
             {initializing ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
-                <p className="text-xs font-bold uppercase tracking-widest opacity-40">Warming Sensors...</p>
+                <p className="text-xs font-bold uppercase tracking-widest opacity-40">Opening Camera...</p>
               </div>
             ) : (
-              <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale brightness-125" />
+              <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
             )}
 
             <AnimatePresence>
@@ -116,38 +162,82 @@ export function PeopleScanner({ elderId, onClose }: PeopleScannerProps) {
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 flex items-center justify-center bg-primary/20 backdrop-blur-sm"
+                  className="absolute inset-0 flex items-center justify-center bg-primary/10 backdrop-blur-sm"
                 >
-                  <Search className="w-20 h-20 text-white animate-pulse" />
+                  <Search className="w-20 h-20 text-primary animate-pulse" />
                 </motion.div>
               )}
               {recognizedPerson && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }} 
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute inset-0 flex items-center justify-center bg-emerald-500/20 backdrop-blur-md"
+                  className="absolute inset-0 flex items-center justify-center bg-green-500/10 backdrop-blur-md"
                 >
                   <div className="text-center space-y-4">
-                    <ShieldCheck className="w-24 h-24 text-emerald-400 mx-auto animate-bounce" />
-                    <p className="text-4xl font-black uppercase tracking-tighter">{recognizedPerson.name}</p>
-                    <p className="text-lg font-bold text-emerald-400/80 uppercase tracking-[0.2em]">{recognizedPerson.relationship}</p>
+                    <ShieldCheck className="w-24 h-24 text-green-600 mx-auto" />
+                    <p className="text-5xl font-black uppercase tracking-tighter">{recognizedPerson.name}</p>
+                    <p className="text-xl font-bold text-green-700 uppercase tracking-widest">{recognizedPerson.relationship}</p>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            <Button 
-              onClick={handleScan}
-              disabled={initializing || scanning}
-              className="h-24 rounded-[32px] bg-primary hover:bg-primary/90 text-2xl font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20"
-            >
-              {scanning ? 'Analyzing Signature...' : 'Execute Identify Scan'}
-            </Button>
-            <Button variant="ghost" onClick={onClose} className="text-white/60 uppercase font-black tracking-widest">
-              Deactivate Scanner
-            </Button>
+          <div className="space-y-6">
+            {mode === 'register' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest ml-4">Name</label>
+                    <input 
+                      className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary transition-all text-lg font-bold"
+                      placeholder="e.g. Garv"
+                      value={registerName}
+                      onChange={(e) => setRegisterName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest ml-4">Relationship</label>
+                    <input 
+                      className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary transition-all text-lg font-bold"
+                      placeholder="e.g. Grandson"
+                      value={registerRelationship}
+                      onChange={(e) => setRegisterRelationship(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-1 gap-4">
+              {mode === 'scan' ? (
+                <>
+                  <Button 
+                    onClick={handleScan}
+                    disabled={initializing || scanning}
+                    className="h-24 rounded-[32px] bg-primary hover:bg-primary/90 text-2xl font-black uppercase tracking-widest shadow-xl"
+                  >
+                    {scanning ? 'Looking...' : 'Identify Person'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setMode('register')} className="h-16 rounded-2xl font-bold uppercase tracking-widest">
+                    Add a New Person
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    onClick={capturedDescriptor ? handleRegister : handleScan}
+                    disabled={initializing || scanning || (capturedDescriptor && !registerName)}
+                    className="h-24 rounded-[32px] bg-primary hover:bg-primary/90 text-2xl font-black uppercase tracking-widest shadow-xl"
+                  >
+                    {!capturedDescriptor ? 'Capture Face' : 'Save Identity'}
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMode('scan'); setCapturedDescriptor(null); }} className="h-12 font-bold uppercase tracking-widest">
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
