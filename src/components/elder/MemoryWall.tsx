@@ -17,20 +17,20 @@ export function MemoryWall({ elderId, onTriggerConversation }: MemoryWallProps) 
   const [loading, setLoading] = useState(true);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
 
-  useEffect(() => {
-    async function fetchMemories() {
-      const { data, error } = await supabase
-        .from('memories')
-        .select('*')
-        .eq('elder_id', elderId)
-        .not('image_url', 'is', null)
-        .order('created_at', { ascending: false });
+    useEffect(() => {
+      async function fetchMemories() {
+        const { data, error } = await supabase
+          .from('memories')
+          .select('*')
+          .eq('elder_id', elderId)
+          .order('created_at', { ascending: false });
+  
+        if (data) setMemories(data as Memory[]);
+        setLoading(false);
+      }
+      fetchMemories();
+    }, [elderId]);
 
-      if (data) setMemories(data as Memory[]);
-      setLoading(false);
-    }
-    fetchMemories();
-  }, [elderId]);
 
     if (loading) return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
@@ -54,26 +54,35 @@ export function MemoryWall({ elderId, onTriggerConversation }: MemoryWallProps) 
       <div className="space-y-12">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           {memories.map((memory, index) => (
-            <motion.div
-              key={memory.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.05, type: 'spring', stiffness: 200 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => setSelectedMemory(memory)}
-              className="relative group"
-            >
-              <Card className="cursor-pointer overflow-hidden rounded-[40px] border-[6px] border-white shadow-2xl relative z-10">
-                <div className="aspect-square relative">
-                  <img 
-                    src={memory.image_url!} 
-                    alt="Memory" 
-                    className="w-full h-full object-cover transition-all duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </Card>
-            </motion.div>
+              <motion.div
+                key={memory.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.05, type: 'spring', stiffness: 200 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => setSelectedMemory(memory)}
+                className="relative group"
+              >
+                <Card className="cursor-pointer overflow-hidden rounded-[40px] border-[6px] border-white shadow-2xl relative z-10 bg-white">
+                  <div className="aspect-square relative">
+                    {memory.image_url ? (
+                      <img 
+                        src={memory.image_url} 
+                        alt="Memory" 
+                        className="w-full h-full object-cover transition-all duration-700"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center p-6 text-center">
+                        <p className="text-sm font-bold italic text-primary/60 line-clamp-4">
+                          "{memory.raw_text}"
+                        </p>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Card>
+              </motion.div>
+
           ))}
         </div>
 

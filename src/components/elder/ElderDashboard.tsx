@@ -356,13 +356,14 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                 </h2>
                 <div className="grid grid-cols-1 gap-4">
                   {[
-                        { label: 'Record Memory', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Save a new story or photo' },
-                        { label: 'Photo Album', icon: ImageIcon, view: 'memoryWall', color: 'bg-accent', secondary: 'Look at your saved photos' },
-                        { label: 'Identify Friend', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Who is this person?' },
-                        { label: 'Ask a Question', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Search your memories' },
-                        { label: 'Memory Game', icon: Gamepad2, view: 'matchingGame', color: 'bg-orange-500', secondary: 'Play a quick game' },
-                        { label: 'My Life Story', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-purple-600', secondary: 'See your life journey' },
-                        { label: 'Weekly Review', icon: Brain, view: 'recap', color: 'bg-emerald-600', secondary: 'Summarize your week' }
+                          { label: 'Save a Story', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record a new memory or photo' },
+                          { label: 'Family Album', icon: ImageIcon, view: 'memoryWall', color: 'bg-amber-500', secondary: 'Look at your saved photos' },
+                          { label: 'Who is this?', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify a friend or family member' },
+                          { label: 'Find a Memory', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Search your memories' },
+                          { label: 'Brain Games', icon: Gamepad2, view: 'matchingGame', color: 'bg-emerald-600', secondary: 'Play a memory matching game' },
+                          { label: 'My Journey', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-purple-600', secondary: 'See your life story over time' },
+                          { label: 'Weekly Summary', icon: Brain, view: 'recap', color: 'bg-blue-600', secondary: 'See what happened this week' }
+
 
                   ].map((btn, i) => (
                     <motion.button

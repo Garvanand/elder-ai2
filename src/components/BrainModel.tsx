@@ -1,82 +1,107 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Points, PointMaterial, Float, Line, Sphere, MeshDistortMaterial } from '@react-three/drei';
+import { Points, PointMaterial, Float, Text, Sphere, MeshDistortMaterial, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
-function NeuralBrain() {
-  const pointsRef = useRef<THREE.Points>(null!);
-  const [activeNodes, setActiveNodes] = useState<number[]>([]);
-
-  // Generate brain-shaped sphere points
-  const points = useMemo(() => {
-    const p = new Float32Array(2000 * 3);
-    for (let i = 0; i < 2000; i++) {
-      const theta = 2 * Math.PI * Math.random();
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = 1.5 * Math.pow(Math.random(), 1/3); // Volume distribution
-      
-      // Distort into more of a brain shape (ellipsoid)
-      const x = r * Math.sin(phi) * Math.cos(theta) * 1.2;
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi) * 0.8;
-      
-      p[i * 3] = x;
-      p[i * 3 + 1] = y;
-      p[i * 3 + 2] = z;
-    }
-    return p;
-  }, []);
+function MemoryStar({ position, memory, onHover }: { position: [number, number, number], memory: any, onHover: (text: string | null) => void }) {
+  const meshRef = useRef<THREE.Mesh>(null!);
+  const [hovered, setHovered] = useState(false);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    pointsRef.current.rotation.y = time * 0.1;
-    pointsRef.current.rotation.z = time * 0.05;
+    meshRef.current.position.y = position[1] + Math.sin(time + position[0]) * 0.1;
   });
 
   return (
+    <mesh
+      ref={meshRef}
+      position={position}
+      onPointerOver={() => { setHovered(true); onHover(memory.raw_text); }}
+      onPointerOut={() => { setHovered(false); onHover(null); }}
+    >
+      <sphereGeometry args={[hovered ? 0.15 : 0.08, 16, 16]} />
+      <meshStandardMaterial 
+        color={memory.image_url ? "#fbbf24" : "#0ea5e9"} 
+        emissive={memory.image_url ? "#fbbf24" : "#0ea5e9"} 
+        emissiveIntensity={hovered ? 2 : 0.5} 
+      />
+    </mesh>
+  );
+}
+
+function Constellation() {
+  const { user } = useAuth();
+  const [memories, setMemories] = useState<any[]>([]);
+  const [hoveredText, setHoveredText] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    async function fetchMemories() {
+      const { data } = await supabase
+        .from('memories')
+        .select('*')
+        .eq('elder_id', user.id)
+        .limit(20);
+      if (data) setMemories(data);
+    }
+    fetchMemories();
+  }, [user]);
+
+  const starPositions = useMemo(() => {
+    return memories.map(() => [
+      (Math.random() - 0.5) * 6,
+      (Math.random() - 0.5) * 4,
+      (Math.random() - 0.5) * 2
+    ] as [number, number, number]);
+  }, [memories]);
+
+  return (
     <group>
-      {/* Central Core */}
-      <Sphere args={[0.5, 32, 32]}>
-        <MeshDistortMaterial
-          color="#0ea5e9"
-          speed={2}
-          distort={0.4}
-          radius={0.5}
-        />
-      </Sphere>
-
-      {/* Neural Points */}
-      <Points ref={pointsRef} positions={points} stride={3} frustumCulled={false}>
-        <PointMaterial
-          transparent
-          color="#0ea5e9"
-          size={0.02}
-          sizeAttenuation={true}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </Points>
-
-      {/* Simulated Neural Connections */}
       <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-        <group rotation={[0, 0, 0]}>
-           {/* We can add glowing lines here */}
-        </group>
+        {memories.map((memory, i) => (
+          <MemoryStar 
+            key={memory.id} 
+            position={starPositions[i]} 
+            memory={memory} 
+            onHover={setHoveredText} 
+          />
+        ))}
       </Float>
+
+      {hoveredText && (
+        <Html center position={[0, -2, 0]}>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-primary/20 whitespace-nowrap"
+          >
+            <p className="text-sm font-bold text-primary italic">"{hoveredText.slice(0, 40)}..."</p>
+          </motion.div>
+        </Html>
+      )}
+
+      {/* Ambient background particles */}
+      <Points positions={new Float32Array(500 * 3).map(() => (Math.random() - 0.5) * 10)} stride={3}>
+        <PointMaterial transparent color="#ffffff" size={0.02} sizeAttenuation={true} depthWrite={false} />
+      </Points>
     </group>
   );
 }
 
 export function BrainModelContainer() {
   return (
-    <div className="w-full h-[400px] relative">
+    <div className="w-full h-full relative min-h-[400px]">
       <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-        <ambientLight intensity={0.5} />
+        <ambientLight intensity={0.4} />
         <pointLight position={[10, 10, 10]} intensity={1} color="#0ea5e9" />
-        <NeuralBrain />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#fbbf24" />
+        <Constellation />
       </Canvas>
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="w-full h-full bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+      <div className="absolute top-4 left-4 pointer-events-none">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/40">Memory Constellation</p>
       </div>
     </div>
   );

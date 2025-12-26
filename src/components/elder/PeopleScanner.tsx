@@ -101,19 +101,19 @@ export function PeopleScanner({ elderId, onClose }: PeopleScannerProps) {
     }
   };
 
-  const handleRegister = async () => {
-    if (!capturedDescriptor || !registerName || !user) return;
-    
-    setScanning(true);
-    try {
-      const { error } = await supabase
-        .from('family_face_profiles')
-        .insert({
-          elder_id: elderId,
-          name: registerName,
-          relationship: registerRelationship,
-          face_descriptor: capturedDescriptor,
-        });
+    const handleRegister = async () => {
+      if (!capturedDescriptor || !registerName) return;
+      
+      setScanning(true);
+      try {
+        const { error } = await supabase
+          .from('family_face_profiles')
+          .insert({
+            elder_id: elderId,
+            name: registerName,
+            relationship: registerRelationship,
+            face_descriptor: capturedDescriptor,
+          });
 
       if (error) throw error;
 
