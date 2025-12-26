@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users } from 'lucide-react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users, AlertCircle, Gamepad2, CalendarDays, Settings, Type, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +16,11 @@ import { BrainModelContainer } from '@/components/BrainModel';
 import { cn } from '@/lib/utils';
 import { PeopleScanner } from './PeopleScanner';
 import { generateAdaptiveQuestion } from '@/lib/ai';
+import { PanicButton } from './PanicButton';
+import { MemoryMatchingGame } from './CognitiveGames';
+import { MemoryTimeline } from './MemoryTimeline';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -26,7 +31,9 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
     const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
-    const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner'>('home');
+    const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner' | 'matchingGame' | 'lifeTimeline' | 'settings'>('home');
+    const [fontSize, setFontSize] = useState<'normal' | 'large' | 'extra-large'>('large');
+    const [highContrast, setHighContrast] = useState(false);
     const [memoryText, setMemoryText] = useState('');
     const [questionText, setQuestionText] = useState('');
     const [adaptiveQuestion, setAdaptiveQuestion] = useState('');
@@ -161,21 +168,41 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     }
   };
 
-  const breadcrumbs = (
-    <div className="flex items-center gap-2 mb-8 text-sm font-black uppercase tracking-widest text-muted-foreground/60 overflow-x-auto whitespace-nowrap pb-2">
-      <button onClick={() => setView('home')} className="hover:text-primary transition-colors">Core</button>
-      {view !== 'home' && (
-        <>
-          <ArrowRight className="w-3 h-3" />
-          <span className="text-primary">{view === 'memoryWall' ? 'Visual Wall' : view === 'addMemory' ? 'Neural Capture' : view === 'askQuestion' ? 'Information Retrieval' : 'Temporal Recap'}</span>
-        </>
-      )}
-    </div>
-  );
+    const breadcrumbs = (
+      <div className="flex items-center gap-2 mb-8 text-sm font-black uppercase tracking-widest text-muted-foreground/60 overflow-x-auto whitespace-nowrap pb-2">
+        <button onClick={() => setView('home')} className="hover:text-primary transition-colors">Core</button>
+        {view !== 'home' && (
+          <>
+            <ArrowRight className="w-3 h-3" />
+            <span className="text-primary">
+              {view === 'memoryWall' ? 'Visual Wall' : 
+               view === 'addMemory' ? 'Neural Capture' : 
+               view === 'askQuestion' ? 'Information Retrieval' : 
+               view === 'matchingGame' ? 'Brain Training' :
+               view === 'lifeTimeline' ? 'Life Timeline' :
+               view === 'settings' ? 'System Settings' :
+               'Temporal Recap'}
+            </span>
+          </>
+        )}
+        <div className="flex-1" />
+        <button onClick={() => setView('settings')} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <Settings className="w-5 h-5" />
+        </button>
+      </div>
+    );
 
-  return (
-    <div className="min-h-screen p-6 relative z-0 max-w-4xl mx-auto pt-24">
-      {breadcrumbs}
+
+    return (
+      <div className={cn(
+        "min-h-screen p-6 relative z-0 max-w-4xl mx-auto pt-24 transition-all",
+        fontSize === 'large' ? 'text-lg' : fontSize === 'extra-large' ? 'text-2xl' : 'text-base',
+        highContrast ? 'contrast-150 grayscale-0' : ''
+      )}>
+        {breadcrumbs}
+        
+        <PanicButton elderId={user?.id} />
+
 
       <AnimatePresence mode="wait">
         {view === 'home' && (
@@ -276,8 +303,11 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                 </h2>
                 <div className="grid grid-cols-1 gap-4">
                   {[
-                      { label: 'Neural Capture', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record new temporal data' },
-                      { label: 'Visual Wall', icon: ImageIcon, view: 'memoryWall', color: 'bg-accent', secondary: 'Review interactive archives' },
+                        { label: 'Neural Capture', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record new temporal data' },
+                        { label: 'Brain Training', icon: Gamepad2, view: 'matchingGame', color: 'bg-orange-500', secondary: 'Engage cognitive modules' },
+                        { label: 'Life Timeline', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-purple-600', secondary: 'Visualize life events' },
+                        { label: 'Visual Wall', icon: ImageIcon, view: 'memoryWall', color: 'bg-accent', secondary: 'Review interactive archives' },
+
                       { label: 'Identify Friend', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify individuals' },
                       { label: 'Retrieval Engine', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Recall specific datasets' },
                       { label: 'Life Synthesis', icon: Brain, view: 'recap', color: 'bg-emerald-600', secondary: 'Generate weekly summary' }
@@ -431,52 +461,110 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
           </motion.div>
         )}
 
-        {view === 'recap' && (
-          <motion.div key="recap" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="pt-12">
-             <Card className="rounded-[80px] bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-3xl border border-white p-20 shadow-2xl">
-              <div className="max-w-2xl mx-auto space-y-12">
-                <div className="text-center space-y-6">
-                  <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
-                    <Brain className="w-12 h-12 text-white" />
-                  </div>
-                  <h2 className="text-6xl font-black tracking-tighter">Life Synthesis Report</h2>
-                  <p className="text-xl font-bold uppercase tracking-widest text-primary/60 italic">Temporal analysis for current cycle</p>
-                </div>
-
-                {loading ? (
-                  <div className="flex flex-col items-center py-20 space-y-8">
-                    <div className="w-20 h-20 border-8 border-primary/20 border-t-primary rounded-full animate-spin shadow-inner" />
-                    <p className="text-3xl text-muted-foreground font-black uppercase tracking-tighter animate-pulse">Scanning Memory Spires...</p>
-                  </div>
-                ) : (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="p-12 bg-white/60 backdrop-blur-2xl rounded-[60px] border border-white shadow-2xl relative"
-                  >
-                    <div className="absolute top-8 right-8">
-                      {supported.tts && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="w-16 h-16 rounded-full bg-primary/10 text-primary shadow-lg"
-                          onClick={() => isSpeaking ? stopSpeaking() : speak(recap)}
-                        >
-                          {isSpeaking ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
-                        </Button>
-                      )}
+          {view === 'recap' && (
+            <motion.div key="recap" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="pt-12">
+               <Card className="rounded-[80px] bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-3xl border border-white p-20 shadow-2xl">
+                <div className="max-w-2xl mx-auto space-y-12">
+                  <div className="text-center space-y-6">
+                    <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                      <Brain className="w-12 h-12 text-white" />
                     </div>
-                    <p className="text-4xl font-black leading-tight tracking-tight italic bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60">
-                      “{recap}”
-                    </p>
-                  </motion.div>
-                )}
-                
-                <Button variant="outline" className="w-full h-20 rounded-[32px] text-xl font-black uppercase tracking-widest border-2" onClick={() => setView('home')}>Close Portal</Button>
-              </div>
-            </Card>
-          </motion.div>
-        )}
+                    <h2 className="text-6xl font-black tracking-tighter">Life Synthesis Report</h2>
+                    <p className="text-xl font-bold uppercase tracking-widest text-primary/60 italic">Temporal analysis for current cycle</p>
+                  </div>
+
+                  {loading ? (
+                    <div className="flex flex-col items-center py-20 space-y-8">
+                      <div className="w-20 h-20 border-8 border-primary/20 border-t-primary rounded-full animate-spin shadow-inner" />
+                      <p className="text-3xl text-muted-foreground font-black uppercase tracking-tighter animate-pulse">Scanning Memory Spires...</p>
+                    </div>
+                  ) : (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="p-12 bg-white/60 backdrop-blur-2xl rounded-[60px] border border-white shadow-2xl relative"
+                    >
+                      <div className="absolute top-8 right-8">
+                        {supported.tts && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-16 h-16 rounded-full bg-primary/10 text-primary shadow-lg"
+                            onClick={() => isSpeaking ? stopSpeaking() : speak(recap)}
+                          >
+                            {isSpeaking ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-4xl font-black leading-tight tracking-tight italic bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60">
+                        “{recap}”
+                      </p>
+                    </motion.div>
+                  )}
+                  
+                  <Button variant="outline" className="w-full h-20 rounded-[32px] text-xl font-black uppercase tracking-widest border-2" onClick={() => setView('home')}>Close Portal</Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+          {view === 'matchingGame' && (
+            <MemoryMatchingGame elderId={user!.id} onClose={() => setView('home')} />
+          )}
+          {view === 'lifeTimeline' && (
+            <MemoryTimeline elderId={user!.id} onClose={() => setView('home')} />
+          )}
+
+          {view === 'settings' && (
+            <motion.div key="settings" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="pt-12">
+              <Card className="rounded-[80px] bg-white/40 backdrop-blur-3xl border border-white p-16 shadow-2xl">
+                <div className="max-w-xl mx-auto space-y-12">
+                  <div className="text-center">
+                    <h2 className="text-5xl font-black tracking-tighter mb-4">Accessibility</h2>
+                    <p className="text-xl text-muted-foreground font-medium italic">Adjust the system to your comfort</p>
+                  </div>
+
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <Label className="text-xl font-black flex items-center gap-3">
+                        <Type className="h-6 w-6 text-primary" /> Font Size
+                      </Label>
+                      <div className="grid grid-cols-3 gap-4">
+                        {(['normal', 'large', 'extra-large'] as const).map((size) => (
+                          <Button
+                            key={size}
+                            variant={fontSize === size ? 'default' : 'outline'}
+                            className="h-16 rounded-2xl font-bold capitalize text-lg"
+                            onClick={() => setFontSize(size)}
+                          >
+                            {size === 'extra-large' ? 'Huge' : size}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-6 bg-white/40 rounded-[32px] border border-white">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-indigo-500 flex items-center justify-center text-white">
+                          <Palette className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-xl font-black">High Contrast</p>
+                          <p className="text-sm text-muted-foreground italic">Enhance visibility for easier reading</p>
+                        </div>
+                      </div>
+                      <Switch 
+                        checked={highContrast} 
+                        onCheckedChange={setHighContrast}
+                        className="scale-150"
+                      />
+                    </div>
+                  </div>
+
+                  <Button variant="outline" className="w-full h-20 rounded-[32px] text-xl font-black uppercase tracking-widest border-2" onClick={() => setView('home')}>Save & Close</Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
           {view === 'peopleScanner' && (
             <PeopleScanner elderId={user!.id} onClose={() => setView('home')} />
           )}

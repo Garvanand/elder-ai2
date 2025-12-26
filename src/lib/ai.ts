@@ -24,6 +24,79 @@ const getGroqApiKey = (): string | null => {
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 /**
+ * Predict elder's mood and perform sentiment analysis based on recent interactions
+ */
+export async function predictMoodAndAnalyzeSentiment(elderId: string): Promise<{
+  mood: string;
+  sentiment_score: number;
+  explanation: string;
+  recommendations: string[];
+}> {
+  const apiKey = getGroqApiKey();
+  if (!apiKey) throw new Error("Groq API key missing");
+
+  // Fetch recent memories and questions
+  const { data: recentMemories } = await supabase
+    .from('memories')
+    .select('raw_text, emotional_tone, created_at')
+    .eq('elder_id', elderId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const { data: recentQuestions } = await supabase
+    .from('questions')
+    .select('question_text, created_at')
+    .eq('elder_id', elderId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+
+  const context = `
+    Recent Memories: ${recentMemories?.map(m => `${m.raw_text} (Tone: ${m.emotional_tone})`).join(' | ')}
+    Recent Questions: ${recentQuestions?.map(q => q.question_text).join(' | ')}
+  `;
+
+  const prompt = `Analyze the emotional state and mood of an elderly person based on these recent interactions:
+  ${context}
+
+  Return ONLY a JSON object:
+  {
+    "mood": "happy|calm|anxious|sad|confused|agitated",
+    "sentiment_score": -1.0 to 1.0,
+    "explanation": "Brief reasoning for this mood prediction",
+    "recommendations": ["2-3 personalized activity suggestions to improve or maintain this mood"]
+  }`;
+
+  const completion = await groq.chat.completions.create({
+    messages: [{ role: "user", content: prompt }],
+    model: GROQ_MODEL,
+    temperature: 0.3,
+    response_format: { type: "json_object" }
+  });
+
+  const result = JSON.parse(completion.choices[0].message.content || "{}");
+  
+  // Save to behavioral_signals if mood is concerning
+  if (['anxious', 'sad', 'confused', 'agitated'].includes(result.mood)) {
+    await supabase.from('behavioral_signals').insert({
+      elder_id: elderId,
+      signal_type: 'mood_alert',
+      severity: result.mood === 'agitated' ? 'high' : 'medium',
+      description: `Potential ${result.mood} state detected: ${result.explanation}`,
+      metadata: result
+    });
+  }
+
+  return {
+    mood: result.mood || 'calm',
+    sentiment_score: result.sentiment_score || 0,
+    explanation: result.explanation || 'No significant emotional shifts detected.',
+    recommendations: result.recommendations || []
+  };
+}
+
+/**
  * Answer a question using the elder's memories as context
  */
 export async function answerQuestion(

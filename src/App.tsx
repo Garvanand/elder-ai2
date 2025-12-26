@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Elder from "./pages/Elder";
 import Caregiver from "./pages/Caregiver";
+import Clinician from "./pages/Clinician";
 import Family from "./pages/Family";
 import NotFound from "./pages/NotFound";
 
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/elder" element={<Elder />} />
               <Route path="/caregiver" element={<Caregiver />} />
+              <Route path="/clinician" element={<Clinician />} />
               <Route path="/family" element={<Family />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
