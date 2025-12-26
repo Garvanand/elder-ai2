@@ -255,8 +255,8 @@ const Index = () => {
                       <img src="https://i.pravatar.cc/150?u=sarah" alt="sarah" />
                     </div>
                     <div>
-                      <p className="font-black text-xl tracking-tighter uppercase">Dr. Helena Vance</p>
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Lead Research & Caregiver</p>
+                      <p className="font-black text-xl tracking-tighter uppercase">Garv Anand</p>
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Project Head</p>
                     </div>
                   </div>
                 </div>
