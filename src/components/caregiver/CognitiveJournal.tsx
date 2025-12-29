@@ -4,9 +4,10 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area, BarChart, Bar, Legend
 } from 'recharts';
-import { Brain, Heart, TrendingUp, Sparkles, Activity, ShieldCheck, Zap } from 'lucide-react';
+import { Brain, Heart, TrendingUp, Sparkles, Activity, CheckCircle, Calendar } from 'lucide-react';
 import { format, subDays, isSameDay, startOfDay } from 'date-fns';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface CognitiveJournalProps {
   memories: Memory[];
@@ -14,7 +15,6 @@ interface CognitiveJournalProps {
 }
 
 export function CognitiveJournal({ memories, signals }: CognitiveJournalProps) {
-  // Process mood data from emotional_tone
   const last7Days = Array.from({ length: 7 }, (_, i) => subDays(new Date(), i)).reverse();
   
   const moodScoreMap: Record<string, number> = {
@@ -30,14 +30,13 @@ export function CognitiveJournal({ memories, signals }: CognitiveJournalProps) {
     const dayMemories = memories.filter(m => isSameDay(new Date(m.created_at), day));
     const daySignals = signals.filter(s => isSameDay(new Date(s.created_at), day));
     
-    // Average mood from memories
     const validTones = dayMemories
       .map(m => m.emotional_tone?.toLowerCase() || '')
       .filter(t => moodScoreMap[t]);
     
     const avgMood = validTones.length > 0 
       ? validTones.reduce((acc, t) => acc + moodScoreMap[t], 0) / validTones.length
-      : 3; // Default to neutral
+      : 3;
 
     return {
       date: format(day, 'MMM dd'),
@@ -48,16 +47,20 @@ export function CognitiveJournal({ memories, signals }: CognitiveJournalProps) {
   });
 
   const narrativeSummary = memories.length > 0 
-    ? `Latest Neural Link: ${memories[0].raw_text.substring(0, 100)}...`
-    : "No temporal data clusters detected.";
+    ? `"${memories[0].raw_text.substring(0, 120)}..."`
+    : "No stories shared yet today.";
+
+  const totalMemories = memories.length;
+  const happyMoments = memories.filter(m => m.emotional_tone === 'happy' || m.emotional_tone === 'positive').length;
+  const moodPercentage = totalMemories > 0 ? Math.round((happyMoments / totalMemories) * 100) : 0;
 
   return (
-    <div className="space-y-10">
-      <div className="grid md:grid-cols-3 gap-6">
+    <div className="space-y-8">
+      <div className="grid md:grid-cols-3 gap-4">
         {[
-          { label: 'Cognitive Score', value: '84/100', icon: Brain, color: 'text-primary', bg: 'bg-primary/5', detail: 'Stable across current cycle' },
-          { label: 'Emotional Sync', value: 'OPTIMAL', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-500/5', detail: 'Consistent high-fidelity mood' },
-          { label: 'Neural Recall', value: '+12%', icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/5', detail: 'Above baseline performance' }
+          { label: 'Overall Wellbeing', value: moodPercentage > 60 ? 'Good' : moodPercentage > 40 ? 'Okay' : 'Needs Care', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50', desc: `${moodPercentage}% positive moments` },
+          { label: 'Memory Activity', value: totalMemories, icon: Brain, color: 'text-indigo-500', bg: 'bg-indigo-50', desc: 'Stories shared this week' },
+          { label: 'Engagement', value: chartData.reduce((a, d) => a + d.memories, 0) > 10 ? 'Active' : 'Moderate', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50', desc: 'Based on daily activity' }
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -65,51 +68,54 @@ export function CognitiveJournal({ memories, signals }: CognitiveJournalProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <Card className="bg-white/40 backdrop-blur-md border-white/60 shadow-xl rounded-[32px] overflow-hidden group">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-5 mb-4">
-                  <div className={cn("p-3 rounded-2xl shadow-inner", stat.bg)}>
-                    <stat.icon className={cn("h-6 w-6", stat.color)} />
+            <Card className="bg-white border-0 shadow-md rounded-2xl overflow-hidden">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className={cn("p-2.5 rounded-xl", stat.bg)}>
+                    <stat.icon className={cn("h-5 w-5", stat.color)} />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{stat.label}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{stat.label}</p>
                 </div>
-                <div className="text-4xl font-black tracking-tighter text-foreground">{stat.value}</div>
-                <p className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-tighter">{stat.detail}</p>
+                <div className="text-3xl font-bold text-slate-900">{stat.value}</div>
+                <p className="text-sm text-slate-500 mt-1">{stat.desc}</p>
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-10">
+      <div className="grid lg:grid-cols-2 gap-6">
         <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
-          <Card className="rounded-[40px] border-white/60 bg-white/40 backdrop-blur-md shadow-2xl overflow-hidden h-full">
-            <CardHeader className="p-10 pb-2">
-              <div className="flex items-center gap-4 mb-2">
-                <Activity className="w-5 h-5 text-primary" />
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Temporal Flow Analysis</p>
+          <Card className="rounded-2xl border-0 bg-white shadow-md overflow-hidden h-full">
+            <CardHeader className="p-5 pb-2">
+              <div className="flex items-center gap-2 text-indigo-600 mb-1">
+                <Heart className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">Mood Tracker</span>
               </div>
-              <CardTitle className="text-3xl font-black tracking-tighter uppercase">Emotional Readiness</CardTitle>
+              <CardTitle className="text-xl font-bold text-slate-900">How They're Feeling</CardTitle>
+              <CardDescription>Emotional wellbeing over the past week</CardDescription>
             </CardHeader>
-            <CardContent className="p-10 pt-2">
-              <div className="h-[350px] w-full">
+            <CardContent className="p-5 pt-2">
+              <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
-                      <linearGradient id="glowMood" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#64748b'}} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#64748b'}} />
                     <YAxis domain={[0, 5]} hide />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '24px', border: '1px solid rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
-                      labelStyle={{ fontWeight: 900, color: 'hsl(var(--primary))' }}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      formatter={(value: number) => {
+                        const labels = ['', 'Low', 'Confused', 'Neutral', 'Good', 'Great'];
+                        return [labels[Math.round(value)] || 'Neutral', 'Mood'];
+                      }}
                     />
-                    <Area type="monotone" dataKey="mood" stroke="hsl(var(--primary))" strokeWidth={4} fillOpacity={1} fill="url(#glowMood)" name="Bio-Sync Score" />
-                    <Area type="monotone" dataKey="memories" stroke="hsl(var(--accent))" strokeWidth={2} fill="transparent" name="Data Density" />
+                    <Area type="monotone" dataKey="mood" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#moodGradient)" name="Mood Score" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -118,27 +124,30 @@ export function CognitiveJournal({ memories, signals }: CognitiveJournalProps) {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-          <Card className="rounded-[40px] border-white/60 bg-white/40 backdrop-blur-md shadow-2xl overflow-hidden h-full">
-            <CardHeader className="p-10 pb-2">
-              <div className="flex items-center gap-4 mb-2">
-                <ShieldCheck className="w-5 h-5 text-rose-500" />
-                <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]">Integrity Protocol Check</p>
+          <Card className="rounded-2xl border-0 bg-white shadow-md overflow-hidden h-full">
+            <CardHeader className="p-5 pb-2">
+              <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                <Calendar className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">Daily Activity</span>
               </div>
-              <CardTitle className="text-3xl font-black tracking-tighter uppercase">Retrieval Accuracy</CardTitle>
+              <CardTitle className="text-xl font-bold text-slate-900">Stories & Interactions</CardTitle>
+              <CardDescription>Number of memories shared each day</CardDescription>
             </CardHeader>
-            <CardContent className="p-10 pt-2">
-              <div className="h-[350px] w-full">
+            <CardContent className="p-5 pt-2">
+              <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#64748b'}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#64748b'}} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#64748b'}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#64748b'}} />
                     <Tooltip 
                       cursor={{fill: 'rgba(0,0,0,0.02)'}}
-                      contentStyle={{ borderRadius: '24px', border: '1px solid rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)' }}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     />
-                    <Bar dataKey="confusion" fill="#f43f5e" radius={[12, 12, 0, 0]} name="Signal Drift" />
-                    <Bar dataKey="memories" fill="#14b8a6" radius={[12, 12, 0, 0]} name="Sync Lock" />
+                    <Bar dataKey="memories" fill="#10b981" radius={[6, 6, 0, 0]} name="Memories Shared" />
+                    {signals.length > 0 && (
+                      <Bar dataKey="confusion" fill="#f59e0b" radius={[6, 6, 0, 0]} name="Confusion Moments" />
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -148,51 +157,50 @@ export function CognitiveJournal({ memories, signals }: CognitiveJournalProps) {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-        <Card className="rounded-[48px] border-white/60 bg-gradient-to-br from-white/60 to-white/30 backdrop-blur-2xl shadow-2xl p-12 relative overflow-hidden group">
-          <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-          <div className="absolute top-10 right-10">
-            <Sparkles className="w-12 h-12 text-primary opacity-20 animate-pulse" />
+        <Card className="rounded-2xl border-0 bg-gradient-to-br from-indigo-50 to-violet-50 shadow-md p-6 relative overflow-hidden">
+          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-100 rounded-full blur-3xl opacity-50" />
+          <div className="absolute top-6 right-6">
+            <Sparkles className="w-8 h-8 text-indigo-300" />
           </div>
           
-          <CardHeader className="p-0 mb-8 px-2">
-            <div className="flex items-center gap-4 mb-4">
-              <Zap className="w-6 h-6 text-primary" />
-              <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Synthetic Logic Layer</p>
+          <CardHeader className="p-0 mb-6">
+            <div className="flex items-center gap-2 text-indigo-600 mb-2">
+              <Brain className="w-5 h-5" />
+              <span className="text-xs font-semibold uppercase tracking-wide">Latest Memory</span>
             </div>
-            <CardTitle className="text-4xl font-black tracking-tighter uppercase">Holographic Insight</CardTitle>
+            <CardTitle className="text-2xl font-bold text-slate-900">Recent Story</CardTitle>
+            <CardDescription>The most recent thing they shared</CardDescription>
           </CardHeader>
-          <CardContent className="p-0 space-y-10">
-            <div className="bg-white/40 p-10 rounded-[40px] border border-white shadow-inner flex flex-col gap-6">
-              <p className="text-2xl font-bold leading-snug italic text-foreground/80 pr-12">
-                “{narrativeSummary}”
+          
+          <CardContent className="p-0 space-y-6">
+            <div className="bg-white/70 p-6 rounded-xl border border-white/80">
+              <p className="text-lg text-slate-700 leading-relaxed italic">
+                {narrativeSummary}
               </p>
-              <div className="h-px w-full bg-gradient-to-r from-primary/20 via-transparent to-transparent" />
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-primary" />
-                  </div>
-                  <h4 className="font-black text-xs uppercase tracking-widest text-primary">Intelligence Core Observation</h4>
+            </div>
+            
+            {memories.length > 0 && memories[0].emotional_tone && (
+              <div className="flex gap-3">
+                <div className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border",
+                  memories[0].emotional_tone === 'happy' || memories[0].emotional_tone === 'positive' 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                    : memories[0].emotional_tone === 'sad' || memories[0].emotional_tone === 'anxious'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                )}>
+                  <Heart className="w-4 h-4" />
+                  Feeling: {memories[0].emotional_tone}
                 </div>
-                <p className="text-xl font-medium leading-relaxed text-muted-foreground/80 pl-2 border-l-4 border-primary/10">
-                  Biological telemetry indicates significant neural enthusiasm during discussion of historically relevant items (e.g., childhood pets). 
-                  Synaptic fidelity remained 15% above cyclic baseline for 45 minutes of active ingestion. No drift detected.
-                </p>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 text-sm font-medium">
+                  <CheckCircle className="w-4 h-4" />
+                  {format(new Date(memories[0].created_at), 'MMM d, h:mm a')}
+                </div>
               </div>
-            </div>
-
-            <div className="flex gap-4 px-2">
-              <div className="flex items-center gap-3 bg-green-500/10 px-4 py-2 rounded-2xl text-green-700 text-[10px] font-black uppercase tracking-widest border border-green-500/20">
-                <ShieldCheck className="w-3 h-3" /> Integrity Locked
-              </div>
-              <div className="flex items-center gap-3 bg-primary/10 px-4 py-2 rounded-2xl text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
-                <Zap className="w-3 h-3" /> Real-time Compute
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
     </div>
   );
 }
-
