@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users, AlertCircle, Gamepad2, CalendarDays, Settings, Type, Palette } from 'lucide-react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users, AlertCircle, Gamepad2, CalendarDays, Settings, Type, Palette, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDemo } from '@/contexts/DemoContext';
+import { useTour } from '@/contexts/TourContext';
+import { TourTriggerButton } from '@/components/TourOverlay';
 import { useToast } from '@/hooks/use-toast';
 import { useSpeech } from '@/hooks/useSpeech';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +32,7 @@ interface ElderDashboardProps {
 
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
   const { user, profile, signOut } = useAuth();
+  const { isGuestMode, demoProfile, demoReminders, addDemoMemory, addDemoQuestion } = useDemo();
   const { toast } = useToast();
     const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
     const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner' | 'matchingGame' | 'lifeTimeline' | 'settings'>('home');
@@ -45,6 +49,9 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+
+  const activeProfile = isGuestMode ? demoProfile : profile;
+  const activeUserId = isGuestMode ? 'demo-elder-001' : user?.id;
 
   const handleTriggerConversation = (memory: Memory) => {
     setQuestionText(`Tell me more about ${memory.raw_text}`);
@@ -72,10 +79,14 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   }, [fontSize, highContrast]);
 
   useEffect(() => {
+    if (isGuestMode) {
+      setReminders(demoReminders);
+      return;
+    }
     if (user) {
       fetchReminders();
     }
-  }, [user]);
+  }, [user, isGuestMode, demoReminders]);
 
   const fetchReminders = async () => {
     if (!user) return;
@@ -268,15 +279,15 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
             className="space-y-12"
           >
             {/* User Greeting Card */}
-            <div className="relative p-10 rounded-[48px] bg-white/60 backdrop-blur-3xl border border-white shadow-2xl overflow-hidden group">
+            <div data-tour="elder-greeting" className="relative p-10 rounded-[48px] bg-white/60 backdrop-blur-3xl border border-white shadow-2xl overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Brain className="w-40 h-40 text-primary" />
               </div>
                 <div className="relative z-10 space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">
-                    <ShieldCheck className="w-3 h-3" /> Secure Account
+                    <ShieldCheck className="w-3 h-3" /> {isGuestMode ? 'Demo Mode' : 'Secure Account'}
                   </div>
-                  <h1 className="text-5xl font-bold tracking-tight">Hello, {profile?.full_name?.split(' ')[0]}</h1>
+                  <h1 className="text-5xl font-bold tracking-tight">Hello, {activeProfile?.full_name?.split(' ')[0] || 'Friend'}</h1>
                   <p className="text-xl text-muted-foreground font-medium italic">"Every memory is a gift to cherish."</p>
                 </div>
                 
@@ -288,7 +299,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* Daily Checklist */}
-              <div className="space-y-6">
+              <div data-tour="daily-activities" className="space-y-6">
                 <h2 className="text-2xl font-bold flex items-center gap-3 ml-2">
                   <ListTodo className="w-6 h-6 text-primary" />
                   Today's Activities
@@ -356,13 +367,13 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                 </h2>
                 <div className="grid grid-cols-1 gap-4">
                   {[
-                          { label: 'Save a Story', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record a new memory or photo' },
-                          { label: 'Family Album', icon: ImageIcon, view: 'memoryWall', color: 'bg-amber-500', secondary: 'Look at your saved photos' },
-                          { label: 'Who is this?', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify a friend or family member' },
-                          { label: 'Find a Memory', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Search your memories' },
-                          { label: 'Brain Games', icon: Gamepad2, view: 'matchingGame', color: 'bg-emerald-600', secondary: 'Play a memory matching game' },
-                          { label: 'My Journey', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-purple-600', secondary: 'See your life story over time' },
-                          { label: 'Weekly Summary', icon: Brain, view: 'recap', color: 'bg-blue-600', secondary: 'See what happened this week' }
+                          { label: 'Save a Story', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record a new memory or photo', tour: 'save-memory' },
+                          { label: 'Family Album', icon: ImageIcon, view: 'memoryWall', color: 'bg-amber-500', secondary: 'Look at your saved photos', tour: 'photo-album' },
+                          { label: 'Who is this?', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify a friend or family member', tour: 'identify-friend' },
+                          { label: 'Find a Memory', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Search your memories', tour: 'find-memory' },
+                          { label: 'Brain Games', icon: Gamepad2, view: 'matchingGame', color: 'bg-emerald-600', secondary: 'Play a memory matching game', tour: 'brain-games' },
+                          { label: 'My Journey', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-purple-600', secondary: 'See your life story over time', tour: 'life-timeline' },
+                          { label: 'Weekly Summary', icon: Brain, view: 'recap', color: 'bg-blue-600', secondary: 'See what happened this week', tour: 'weekly-summary' }
 
 
                   ].map((btn, i) => (
@@ -370,6 +381,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                       whileHover={{ scale: 1.02, x: 5 }}
                       whileTap={{ scale: 0.98 }}
                       key={btn.label}
+                      data-tour={btn.tour}
                       onClick={() => btn.view === 'recap' ? handleShowRecap() : setView(btn.view as any)}
                       className="group flex items-center gap-6 p-6 rounded-[32px] bg-white/60 backdrop-blur-xl border border-white shadow-2xl hover:bg-white/80 transition-all text-left"
                     >
@@ -425,7 +437,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
           <motion.div key="memoryWall" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
             <div className="space-y-8">
               <h1 className="text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Photo Album</h1>
-              <MemoryWall elderId={user!.id} onTriggerConversation={handleTriggerConversation} />
+              <MemoryWall elderId={activeUserId!} onTriggerConversation={handleTriggerConversation} />
             </div>
           </motion.div>
         )}
@@ -602,10 +614,10 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
             </motion.div>
           )}
           {view === 'matchingGame' && (
-            <MemoryMatchingGame elderId={user!.id} onClose={() => setView('home')} />
+            <MemoryMatchingGame elderId={activeUserId!} onClose={() => setView('home')} />
           )}
           {view === 'lifeTimeline' && (
-            <MemoryTimeline elderId={user!.id} onClose={() => setView('home')} />
+            <MemoryTimeline elderId={activeUserId!} onClose={() => setView('home')} />
           )}
 
           {view === 'settings' && (
@@ -660,10 +672,11 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
             </motion.div>
           )}
           {view === 'peopleScanner' && (
-            <PeopleScanner elderId={user!.id} onClose={() => setView('home')} />
+            <PeopleScanner elderId={activeUserId!} onClose={() => setView('home')} />
           )}
         </AnimatePresence>
 
+        {!isGuestMode && <TourTriggerButton tourId="elder-tour" />}
     </div>
   );
 }

@@ -182,7 +182,7 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+      <div data-tour="caregiver-header" className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -208,7 +208,7 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div data-tour="caregiver-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { icon: BookOpen, label: 'Memories Saved', value: memories.length, color: 'text-primary', bg: 'bg-primary/10', desc: 'Stories & moments' },
           { icon: MessageCircle, label: 'Questions Asked', value: questions.length, color: 'text-violet-600', bg: 'bg-violet-50', desc: 'Things they wondered' },

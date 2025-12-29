@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDemo } from '@/contexts/DemoContext';
 import ElderDashboard from '@/components/elder/ElderDashboard';
 import CaregiverDashboard from '@/components/caregiver/CaregiverDashboard';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function ElderPage() {
   const { user, profile, loading: authLoading } = useAuth();
+  const { isGuestMode, demoPortal, demoMemories, demoQuestions, demoSignals, demoProfile } = useDemo();
   const navigate = useNavigate();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -16,10 +18,18 @@ export default function ElderPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (isGuestMode && demoPortal === 'elder') {
+      setMemories(demoMemories);
+      setQuestions(demoQuestions);
+      setSignals(demoSignals);
+      setLoading(false);
+      return;
+    }
+    
+    if (!authLoading && !user && !isGuestMode) {
       navigate('/auth');
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, isGuestMode, demoPortal, demoMemories, demoQuestions, demoSignals]);
 
   const fetchData = async (silent = false) => {
     if (!user) return;
@@ -112,18 +122,24 @@ export default function ElderPage() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user && !isGuestMode) {
+    return null;
+  }
+  
+  if (!profile && !isGuestMode) {
     return null;
   }
 
-  // Render appropriate dashboard based on user role
-  if (profile.role === 'caregiver') {
+  const activeProfile = isGuestMode ? demoProfile : profile;
+  const activeUser = isGuestMode ? { id: 'demo-elder-001' } : user;
+
+  if (activeProfile?.role === 'caregiver') {
     return (
       <CaregiverDashboard
         memories={memories}
         questions={questions}
         signals={signals}
-        onRefresh={fetchData}
+        onRefresh={isGuestMode ? () => {} : fetchData}
       />
     );
   }
@@ -131,7 +147,7 @@ export default function ElderPage() {
   return (
     <ElderDashboard
       recentQuestions={questions}
-      onRefresh={fetchData}
+      onRefresh={isGuestMode ? () => {} : fetchData}
     />
   );
 }

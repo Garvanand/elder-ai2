@@ -1,16 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Heart, Users, Shield, ArrowRight, Sparkles, CheckCircle2, Activity, MessageSquare, Globe, Zap, Database } from 'lucide-react';
+import { Brain, Heart, Users, Shield, ArrowRight, Sparkles, CheckCircle2, Activity, MessageSquare, Globe, Zap, Database, Play, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDemo } from '@/contexts/DemoContext';
+import { GuestModeModal } from '@/components/GuestModeModal';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
+  const { isGuestMode } = useDemo();
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
   const scale = useTransform(scrollYProgress, [0, 1], [1, 0.8]);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   useEffect(() => {
     if (!loading && user && profile) {
@@ -89,22 +93,26 @@ const Index = () => {
                 The first decentralized, emotionally aware platform architected to preserve humanity through technology.
               </p>
               <div className="flex flex-col sm:flex-row gap-6 pt-4">
-                <Link to="/auth">
+                  <Link to="/auth">
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Button size="lg" className="h-20 px-12 text-xl font-black rounded-3xl w-full sm:w-auto shadow-[0_20px_50px_rgba(var(--primary-rgb),0.3)] bg-primary group uppercase tracking-widest">
+                        Enter Collective
+                        <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
+                      </Button>
+                    </motion.div>
+                  </Link>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button size="lg" className="h-20 px-12 text-xl font-black rounded-3xl w-full sm:w-auto shadow-[0_20px_50px_rgba(var(--primary-rgb),0.3)] bg-primary group uppercase tracking-widest">
-                      Enter Collective
-                      <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
+                    <Button 
+                      variant="outline" 
+                      size="lg" 
+                      onClick={() => setShowGuestModal(true)}
+                      className="h-20 px-12 text-xl font-black rounded-3xl w-full sm:w-auto border-2 border-amber-400/60 bg-amber-50/80 backdrop-blur-md hover:bg-amber-100 text-amber-700 uppercase tracking-widest group"
+                    >
+                      <Eye className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
+                      Try Demo
                     </Button>
                   </motion.div>
-                </Link>
-                <Link to="/auth">
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button variant="outline" size="lg" className="h-20 px-12 text-xl font-black rounded-3xl w-full sm:w-auto border-2 border-white/60 bg-white/20 backdrop-blur-md hover:bg-white/40 uppercase tracking-widest">
-                      Monitor Hub
-                    </Button>
-                  </motion.div>
-                </Link>
-              </div>
+                </div>
               
               <div className="flex items-center gap-8 pt-6">
                 <div className="flex -space-x-4">
@@ -315,6 +323,8 @@ const Index = () => {
           <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest opacity-50">© 2025 Neural Core v1.0.4</p>
         </div>
       </footer>
+
+      <GuestModeModal isOpen={showGuestModal} onClose={() => setShowGuestModal(false)} />
     </div>
   );
 };

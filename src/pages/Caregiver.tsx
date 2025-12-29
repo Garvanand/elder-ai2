@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDemo } from '@/contexts/DemoContext';
 import CaregiverDashboard from '@/components/caregiver/CaregiverDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import type { Memory, Question } from '@/types';
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input';
 
 export default function CaregiverPage() {
   const { user, profile, loading: authLoading } = useAuth();
+  const { isGuestMode, demoPortal, demoMemories, demoQuestions, demoSignals, demoProfile } = useDemo();
   const navigate = useNavigate();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -21,13 +23,22 @@ export default function CaregiverPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (isGuestMode && demoPortal === 'caregiver') {
+      setMemories(demoMemories);
+      setQuestions(demoQuestions);
+      setSignals(demoSignals);
+      setElderId('demo-elder-001');
+      setLoading(false);
+      return;
+    }
+    
+    if (!authLoading && !user && !isGuestMode) {
       navigate('/auth');
     }
-    if (!authLoading && profile && profile.role !== 'caregiver') {
+    if (!authLoading && profile && profile.role !== 'caregiver' && !isGuestMode) {
       navigate('/elder');
     }
-  }, [user, profile, authLoading, navigate]);
+  }, [user, profile, authLoading, navigate, isGuestMode, demoPortal, demoMemories, demoQuestions, demoSignals]);
 
   const fetchData = async () => {
     if (!user) {
@@ -128,10 +139,11 @@ export default function CaregiverPage() {
   };
 
   useEffect(() => {
+    if (isGuestMode) return;
     if (user && profile) {
       fetchData();
     }
-  }, [user, profile]);
+  }, [user, profile, isGuestMode]);
 
   if (authLoading || loading) {
     return (
@@ -144,9 +156,36 @@ export default function CaregiverPage() {
     );
   }
 
-  if (!user || !profile || profile.role !== 'caregiver') {
+  if (!user && !isGuestMode) {
     return null;
   }
+  
+  if (!profile && !isGuestMode) {
+    return null;
+  }
+  
+  if (profile && profile.role !== 'caregiver' && !isGuestMode) {
+    return null;
+  }
+  
+  const activeProfile = isGuestMode ? demoProfile : profile;
+
+    if (isGuestMode && elderId) {
+      return (
+        <div className="min-h-screen bg-background relative overflow-hidden">
+          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl" />
+          <div className="relative z-10">
+            <CaregiverDashboard
+              memories={memories}
+              questions={questions}
+              signals={signals}
+              onRefresh={() => {}}
+            />
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="min-h-screen bg-background relative overflow-hidden">
@@ -235,7 +274,7 @@ export default function CaregiverPage() {
               memories={memories}
               questions={questions}
               signals={signals}
-              onRefresh={fetchData}
+              onRefresh={isGuestMode ? () => {} : fetchData}
             />
           </div>
         )}
