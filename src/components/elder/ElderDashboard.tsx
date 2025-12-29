@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users, AlertCircle, Gamepad2, CalendarDays, Settings, Type, Palette, HelpCircle } from 'lucide-react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users, AlertCircle, Gamepad2, CalendarDays, Settings, Type, Palette, HelpCircle, Video, Stethoscope, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +12,7 @@ import { useSpeech } from '@/hooks/useSpeech';
 import { supabase } from '@/integrations/supabase/client';
 import { extractMemoryIntelligence, answerQuestion, generateWeeklyRecap } from '@/lib/ai';
 import type { Question, Routine, Reminder, Memory } from '@/types';
-import { format } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { MemoryWall } from './MemoryWall';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BrainModelContainer } from '@/components/BrainModel';
@@ -24,6 +24,8 @@ import { MemoryMatchingGame } from './CognitiveGames';
 import { MemoryTimeline } from './MemoryTimeline';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { VideoRoom, ConsultationScheduler, UpcomingConsultations } from '@/components/teleconsultation';
+import { toast as sonnerToast } from 'sonner';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -35,14 +37,18 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const { isGuestMode, demoProfile, demoReminders, addDemoMemory, addDemoQuestion } = useDemo();
   const { toast } = useToast();
     const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
-    const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner' | 'matchingGame' | 'lifeTimeline' | 'settings'>('home');
-    const [fontSize, setFontSize] = useState<'normal' | 'large' | 'extra-large'>('large');
-    const [highContrast, setHighContrast] = useState(false);
-    const [memoryText, setMemoryText] = useState('');
-    const [memoryImage, setMemoryImage] = useState<File | null>(null);
-    const [memoryImageUrl, setMemoryImageUrl] = useState<string | null>(null);
-    const [questionText, setQuestionText] = useState('');
-    const [adaptiveQuestion, setAdaptiveQuestion] = useState('');
+  const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner' | 'matchingGame' | 'lifeTimeline' | 'settings' | 'videoCall'>('home');
+  const [fontSize, setFontSize] = useState<'normal' | 'large' | 'extra-large'>('large');
+  const [highContrast, setHighContrast] = useState(false);
+  const [memoryText, setMemoryText] = useState('');
+  const [memoryImage, setMemoryImage] = useState<File | null>(null);
+  const [memoryImageUrl, setMemoryImageUrl] = useState<string | null>(null);
+  const [questionText, setQuestionText] = useState('');
+  const [adaptiveQuestion, setAdaptiveQuestion] = useState('');
+  const [showVideoRoom, setShowVideoRoom] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [activeConsultation, setActiveConsultation] = useState<any>(null);
+  const [upcomingConsultation, setUpcomingConsultation] = useState<any>(null);
 
   const [answer, setAnswer] = useState('');
   const [recap, setRecap] = useState('');
@@ -85,8 +91,47 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     }
     if (user) {
       fetchReminders();
+      fetchUpcomingConsultation();
     }
   }, [user, isGuestMode, demoReminders]);
+
+  const fetchUpcomingConsultation = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('teleconsultations')
+        .select('*')
+        .eq('elder_id', user.id)
+        .in('status', ['scheduled', 'in_progress'])
+        .gte('scheduled_at', new Date().toISOString())
+        .order('scheduled_at', { ascending: true })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        setUpcomingConsultation(data);
+        const scheduledTime = new Date(data.scheduled_at);
+        const minutesBefore = differenceInMinutes(scheduledTime, new Date());
+        if (minutesBefore <= 5 && minutesBefore > 0) {
+          sonnerToast.info('Your video consultation starts soon!', {
+            description: `In ${minutesBefore} minutes with Dr. ${data.metadata?.clinician_name}`,
+            duration: 10000
+          });
+        }
+      }
+    } catch (err) {
+    }
+  };
+
+  const handleJoinVideoCall = (consultation?: any) => {
+    const consult = consultation || upcomingConsultation;
+    if (consult) {
+      setActiveConsultation(consult);
+      setShowVideoRoom(true);
+    } else {
+      sonnerToast.error('No scheduled consultation found');
+    }
+  };
 
   const fetchReminders = async () => {
     if (!user) return;
@@ -365,26 +410,34 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                   <Zap className="w-6 h-6 text-primary" />
                   Common Tasks
                 </h2>
-                <div className="grid grid-cols-1 gap-4">
-                  {[
-                          { label: 'Save a Story', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record a new memory or photo', tour: 'save-memory' },
-                          { label: 'Family Album', icon: ImageIcon, view: 'memoryWall', color: 'bg-amber-500', secondary: 'Look at your saved photos', tour: 'photo-album' },
-                          { label: 'Who is this?', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify a friend or family member', tour: 'identify-friend' },
-                          { label: 'Find a Memory', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Search your memories', tour: 'find-memory' },
-                          { label: 'Brain Games', icon: Gamepad2, view: 'matchingGame', color: 'bg-emerald-600', secondary: 'Play a memory matching game', tour: 'brain-games' },
-                          { label: 'My Journey', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-purple-600', secondary: 'See your life story over time', tour: 'life-timeline' },
-                          { label: 'Weekly Summary', icon: Brain, view: 'recap', color: 'bg-blue-600', secondary: 'See what happened this week', tour: 'weekly-summary' }
+                  <div className="grid grid-cols-1 gap-4">
+                    {[
+                            { label: 'Save a Story', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record a new memory or photo', tour: 'save-memory' },
+                            { label: 'Family Album', icon: ImageIcon, view: 'memoryWall', color: 'bg-amber-500', secondary: 'Look at your saved photos', tour: 'photo-album' },
+                            { label: 'Video Call', icon: Video, view: 'videoCall', color: 'bg-emerald-600', secondary: upcomingConsultation ? 'Join your scheduled call' : 'Talk face-to-face', tour: 'video-call' },
+                            { label: 'Who is this?', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify a friend or family member', tour: 'identify-friend' },
+                            { label: 'Find a Memory', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Search your memories', tour: 'find-memory' },
+                            { label: 'Brain Games', icon: Gamepad2, view: 'matchingGame', color: 'bg-purple-600', secondary: 'Play a memory matching game', tour: 'brain-games' },
+                            { label: 'My Journey', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-blue-600', secondary: 'See your life story over time', tour: 'life-timeline' },
+                            { label: 'Weekly Summary', icon: Brain, view: 'recap', color: 'bg-slate-600', secondary: 'See what happened this week', tour: 'weekly-summary' }
 
 
-                  ].map((btn, i) => (
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 5 }}
-                      whileTap={{ scale: 0.98 }}
-                      key={btn.label}
-                      data-tour={btn.tour}
-                      onClick={() => btn.view === 'recap' ? handleShowRecap() : setView(btn.view as any)}
-                      className="group flex items-center gap-6 p-6 rounded-[32px] bg-white/60 backdrop-blur-xl border border-white shadow-2xl hover:bg-white/80 transition-all text-left"
-                    >
+                    ].map((btn, i) => (
+                      <motion.button
+                        whileHover={{ scale: 1.02, x: 5 }}
+                        whileTap={{ scale: 0.98 }}
+                        key={btn.label}
+                        data-tour={btn.tour}
+                        onClick={() => {
+                          if (btn.view === 'recap') handleShowRecap();
+                          else if (btn.view === 'videoCall') {
+                            if (upcomingConsultation) handleJoinVideoCall();
+                            else setShowScheduler(true);
+                          }
+                          else setView(btn.view as any);
+                        }}
+                        className="group flex items-center gap-6 p-6 rounded-[32px] bg-white/60 backdrop-blur-xl border border-white shadow-2xl hover:bg-white/80 transition-all text-left"
+                      >
                       <div className={cn("w-16 h-16 rounded-[24px] flex items-center justify-center text-white shadow-lg", btn.color)}>
                         <btn.icon className="w-8 h-8 group-hover:scale-110 transition-transform" />
                       </div>
@@ -677,6 +730,37 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
         </AnimatePresence>
 
         {!isGuestMode && <TourTriggerButton tourId="elder-tour" />}
+
+        {showVideoRoom && activeConsultation && (
+          <VideoRoom
+            roomName={activeConsultation.room_name}
+            userName={activeProfile?.full_name || 'Patient'}
+            userRole="elder"
+            consultationId={activeConsultation.id}
+            onClose={() => {
+              setShowVideoRoom(false);
+              setActiveConsultation(null);
+            }}
+            onCallEnd={() => {
+              fetchUpcomingConsultation();
+              onRefresh(true);
+            }}
+          />
+        )}
+
+        {showScheduler && activeUserId && (
+          <ConsultationScheduler
+            elderId={activeUserId}
+            elderName={activeProfile?.full_name || 'Patient'}
+            userRole="elder"
+            onScheduled={() => {
+              setShowScheduler(false);
+              fetchUpcomingConsultation();
+              onRefresh(true);
+            }}
+            onClose={() => setShowScheduler(false)}
+          />
+        )}
     </div>
   );
 }

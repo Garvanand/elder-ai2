@@ -4,7 +4,7 @@ import {
   Clock, User, Heart, Pill, Star, HelpCircle, 
   TrendingUp, Search, PlusCircle, ArrowUpRight, AlertTriangle,
   BookOpen, UserCircle, CalendarDays, Settings, Activity, Sparkles, 
-  Phone, Bell, CheckCircle, Send, Camera, Mic, Volume2
+  Phone, Bell, CheckCircle, Send, Camera, Mic, Volume2, Video, Stethoscope, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { generateCaregiverDailySummary } from '@/lib/ai';
 import { toast } from 'sonner';
+import { VideoRoom, ConsultationScheduler, UpcomingConsultations } from '@/components/teleconsultation';
 
 interface CaregiverDashboardProps {
   memories: Memory[];
@@ -71,6 +72,12 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
   const [sendingMessage, setSendingMessage] = useState(false);
   const [reminderText, setReminderText] = useState('');
   const [reminderTime, setReminderTime] = useState('');
+  const [showVideoRoom, setShowVideoRoom] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [activeConsultation, setActiveConsultation] = useState<any>(null);
+  const [showMedicationModal, setShowMedicationModal] = useState(false);
+  const [medications, setMedications] = useState<any[]>([]);
+  const [loadingMeds, setLoadingMeds] = useState(false);
 
   useEffect(() => {
     async function fetchSummary() {
@@ -83,6 +90,70 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
     }
     fetchSummary();
   }, [memories]);
+
+  useEffect(() => {
+    if (memories.length > 0) {
+      fetchMedications();
+    }
+  }, [memories]);
+
+  const fetchMedications = async () => {
+    if (!memories[0]?.elder_id) return;
+    setLoadingMeds(true);
+    try {
+      const { data } = await supabase
+        .from('medication_logs')
+        .select('*')
+        .eq('elder_id', memories[0].elder_id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setMedications(data);
+    } catch (err) {
+      console.error('Error fetching medications:', err);
+    } finally {
+      setLoadingMeds(false);
+    }
+  };
+
+  const handleStartVideoCall = () => {
+    const elderId = memories[0]?.elder_id;
+    if (!elderId) {
+      toast.error('No elder connected');
+      return;
+    }
+    const roomName = `quick-call-${elderId.slice(0, 8)}-${Date.now()}`;
+    setActiveConsultation({ room_name: roomName, elder_id: elderId });
+    setShowVideoRoom(true);
+  };
+
+  const handleJoinScheduledCall = (consultation: any) => {
+    setActiveConsultation(consultation);
+    setShowVideoRoom(true);
+  };
+
+  const handleSendQuickMessage = async (message: string) => {
+    const elderId = memories[0]?.elder_id;
+    if (!elderId) {
+      toast.error('No elder connected');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('reminders').insert({
+        elder_id: elderId,
+        title: message,
+        scheduled_time: new Date().toISOString(),
+        is_recurring: false,
+        status: 'pending'
+      });
+
+      if (error) throw error;
+      toast.success('Message sent!');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Could not send message');
+    }
+  };
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -334,32 +405,48 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
                 </Card>
 
                 <Card className="bg-white border-0 shadow-md rounded-2xl">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-5 h-5 text-emerald-500" />
-                      <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
-                    </div>
-                    <CardDescription>Common tasks at your fingertips</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-3">
-                    <Button variant="outline" className="h-20 rounded-xl flex-col gap-2 hover:bg-primary/5 hover:border-primary/30">
-                      <Phone className="w-6 h-6 text-emerald-500" />
-                      <span className="text-xs font-medium">Video Call</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 rounded-xl flex-col gap-2 hover:bg-primary/5 hover:border-primary/30">
-                      <Camera className="w-6 h-6 text-blue-500" />
-                      <span className="text-xs font-medium">View Photos</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 rounded-xl flex-col gap-2 hover:bg-primary/5 hover:border-primary/30">
-                      <Pill className="w-6 h-6 text-rose-500" />
-                      <span className="text-xs font-medium">Medications</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 rounded-xl flex-col gap-2 hover:bg-primary/5 hover:border-primary/30">
-                      <CalendarDays className="w-6 h-6 text-violet-500" />
-                      <span className="text-xs font-medium">Schedule</span>
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-5 h-5 text-emerald-500" />
+                        <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
+                      </div>
+                      <CardDescription>Common tasks at your fingertips</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="h-20 rounded-xl flex-col gap-2 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all"
+                        onClick={handleStartVideoCall}
+                      >
+                        <Video className="w-6 h-6 text-emerald-500" />
+                        <span className="text-xs font-medium">Video Call</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="h-20 rounded-xl flex-col gap-2 hover:bg-violet-50 hover:border-violet-300 hover:text-violet-700 transition-all"
+                        onClick={() => setShowScheduler(true)}
+                      >
+                        <Stethoscope className="w-6 h-6 text-violet-500" />
+                        <span className="text-xs font-medium">Book Clinician</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="h-20 rounded-xl flex-col gap-2 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition-all"
+                        onClick={() => setShowMedicationModal(true)}
+                      >
+                        <Pill className="w-6 h-6 text-rose-500" />
+                        <span className="text-xs font-medium">Medications</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="h-20 rounded-xl flex-col gap-2 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all"
+                        onClick={() => setActiveTab('memories')}
+                      >
+                        <Camera className="w-6 h-6 text-blue-500" />
+                        <span className="text-xs font-medium">View Memories</span>
+                      </Button>
+                    </CardContent>
+                  </Card>
               </div>
 
               <CaregiverInsights memories={memories} />
@@ -591,6 +678,90 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
           )}
         </AnimatePresence>
       </div>
+
+      {showVideoRoom && activeConsultation && (
+        <VideoRoom
+          roomName={activeConsultation.room_name}
+          userName={profile?.full_name || 'Caregiver'}
+          userRole="caregiver"
+          consultationId={activeConsultation.id}
+          onClose={() => {
+            setShowVideoRoom(false);
+            setActiveConsultation(null);
+          }}
+        />
+      )}
+
+      {showScheduler && memories[0]?.elder_id && (
+        <ConsultationScheduler
+          elderId={memories[0].elder_id}
+          elderName={memories[0].metadata?.elder_name || 'Your Loved One'}
+          caregiverId={profile?.id}
+          userRole="caregiver"
+          onScheduled={() => {
+            setShowScheduler(false);
+            onRefresh(true);
+          }}
+          onClose={() => setShowScheduler(false)}
+        />
+      )}
+
+      {showMedicationModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+          >
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+                  <Pill className="w-5 h-5 text-rose-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Medication Log</h2>
+                  <p className="text-sm text-slate-500">Recent medication records</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setShowMedicationModal(false)} className="rounded-full">
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {loadingMeds ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+                </div>
+              ) : medications.length === 0 ? (
+                <div className="text-center py-8">
+                  <Pill className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500">No medication records found</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {medications.map((med) => (
+                    <div key={med.id} className="p-4 bg-slate-50 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-slate-900">{med.medication_name || 'Medication'}</span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-full text-xs font-bold",
+                          med.taken ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                        )}>
+                          {med.taken ? 'TAKEN' : 'PENDING'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-500">
+                        {format(new Date(med.created_at), 'MMM d, yyyy h:mm a')}
+                      </p>
+                      {med.notes && <p className="text-sm text-slate-600 mt-2">{med.notes}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
