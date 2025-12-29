@@ -82,9 +82,15 @@ export const ClinicianDashboard = () => {
   const [savingTreatment, setSavingTreatment] = useState(false);
   const [memories, setMemories] = useState<any[]>([]);
   const [cognitiveAssessments, setCognitiveAssessments] = useState<any[]>([]);
+  const [showVideoRoom, setShowVideoRoom] = useState(false);
+  const [activeConsultation, setActiveConsultation] = useState<any>(null);
+  const [upcomingConsultations, setUpcomingConsultations] = useState<any[]>([]);
 
     useEffect(() => {
       fetchElders();
+      if (!isDemoMode) {
+        fetchUpcomingConsultations();
+      }
       
       let channel: any;
       if (!isDemoMode) {
@@ -103,6 +109,37 @@ export const ClinicianDashboard = () => {
         if (channel) channel.unsubscribe(); 
       };
     }, [isDemoMode]);
+
+  const fetchUpcomingConsultations = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+
+      const { data } = await supabase
+        .from('teleconsultations')
+        .select('*')
+        .eq('clinician_id', userData.user.id)
+        .in('status', ['scheduled', 'in_progress'])
+        .order('scheduled_at', { ascending: true })
+        .limit(10);
+
+      if (data) setUpcomingConsultations(data);
+    } catch (err) {
+      console.error('Error fetching consultations:', err);
+    }
+  };
+
+  const handleStartConsultation = async (consultation: any) => {
+    setActiveConsultation(consultation);
+    setShowVideoRoom(true);
+  };
+
+  const canJoinCall = (consultation: any) => {
+    const scheduledTime = new Date(consultation.scheduled_at);
+    const now = new Date();
+    const minutesBefore = differenceInMinutes(scheduledTime, now);
+    return minutesBefore <= 15 && minutesBefore >= -consultation.duration_minutes;
+  };
 
   useEffect(() => {
     if (selectedElder) {
@@ -632,72 +669,155 @@ export const ClinicianDashboard = () => {
                 )}
 
                 {activeTab === 'telemedicine' && (
-                  <Card className="rounded-2xl border-0 shadow-lg bg-white overflow-hidden">
-                    <div className="grid md:grid-cols-3">
-                      <div className="md:col-span-2 bg-slate-900 h-[450px] relative">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <Video className="h-20 w-20 text-white/20 mx-auto mb-4" />
-                            <p className="text-white/40 font-medium">Video consultation ready</p>
-                          </div>
-                        </div>
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
-                          <Button size="icon" className="h-14 w-14 rounded-full bg-emerald-500 hover:bg-emerald-600 shadow-lg">
-                            <Phone className="h-6 w-6 text-white" />
-                          </Button>
-                          <Button size="icon" className="h-14 w-14 rounded-full bg-rose-500 hover:bg-rose-600 shadow-lg">
-                            <XCircle className="h-6 w-6 text-white" />
-                          </Button>
-                          <Button size="icon" className="h-14 w-14 rounded-full bg-slate-700 hover:bg-slate-600 shadow-lg">
+                  <div className="space-y-6">
+                    <Card className="rounded-2xl border-0 shadow-lg bg-white overflow-hidden">
+                      <CardHeader className="bg-gradient-to-br from-indigo-50 to-violet-50 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center">
                             <Video className="h-6 w-6 text-white" />
-                          </Button>
-                        </div>
-                        <div className="absolute top-6 left-6 bg-black/50 backdrop-blur px-4 py-2 rounded-xl text-white text-xs font-bold flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                          SECURE CONNECTION
-                        </div>
-                      </div>
-                      <div className="p-6 space-y-6 border-l border-slate-100">
-                        <div>
-                          <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                            <Users className="h-5 w-5 text-indigo-600" /> Patient Info
-                          </h4>
-                          <div className="space-y-2">
-                            <p className="text-sm"><span className="text-slate-400">Name:</span> <span className="font-medium">{selectedElder.full_name}</span></p>
-                            <p className="text-sm"><span className="text-slate-400">ID:</span> <span className="font-medium">{selectedElder.id.slice(0, 8)}</span></p>
+                          </div>
+                          <div>
+                            <CardTitle className="text-xl font-bold">Telemedicine</CardTitle>
+                            <CardDescription>Scheduled video consultations</CardDescription>
                           </div>
                         </div>
-                        <div>
-                          <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-indigo-600" /> Quick Actions
-                          </h4>
-                          <div className="space-y-2">
-                            <Button variant="outline" className="w-full justify-start h-11 rounded-xl font-medium text-sm">
-                              <FileText className="mr-2 h-4 w-4" /> View Medical Records
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start h-11 rounded-xl font-medium text-sm">
-                              <Mail className="mr-2 h-4 w-4" /> Send Summary to Family
-                            </Button>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        {upcomingConsultations.length === 0 ? (
+                          <div className="text-center py-12">
+                            <Calendar className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+                            <p className="text-lg font-semibold text-slate-400">No scheduled consultations</p>
+                            <p className="text-sm text-slate-400 mt-1">Patients can book consultations through their portal</p>
                           </div>
-                        </div>
-                        <Button className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-semibold">
-                          Start Consultation
+                        ) : (
+                          <div className="space-y-4">
+                            {upcomingConsultations.map((consultation) => (
+                              <div 
+                                key={consultation.id}
+                                className="p-5 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                    <div className={cn(
+                                      "w-14 h-14 rounded-2xl flex items-center justify-center",
+                                      consultation.status === 'in_progress' ? "bg-emerald-100" : "bg-indigo-100"
+                                    )}>
+                                      <Video className={cn(
+                                        "h-7 w-7",
+                                        consultation.status === 'in_progress' ? "text-emerald-600" : "text-indigo-600"
+                                      )} />
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-bold text-slate-900">
+                                          {consultation.metadata?.elder_name || 'Patient'}
+                                        </h4>
+                                        <span className={cn(
+                                          "px-2 py-0.5 rounded-full text-xs font-bold",
+                                          consultation.status === 'in_progress' 
+                                            ? "bg-emerald-100 text-emerald-700"
+                                            : canJoinCall(consultation)
+                                              ? "bg-amber-100 text-amber-700"
+                                              : "bg-blue-100 text-blue-700"
+                                        )}>
+                                          {consultation.status === 'in_progress' ? 'IN PROGRESS' : 
+                                           canJoinCall(consultation) ? 'STARTING SOON' : 'SCHEDULED'}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-4 text-sm text-slate-500">
+                                        <span className="flex items-center gap-1">
+                                          <Calendar className="h-4 w-4" />
+                                          {format(new Date(consultation.scheduled_at), 'MMM d, yyyy')}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="h-4 w-4" />
+                                          {format(new Date(consultation.scheduled_at), 'h:mm a')}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-slate-400 mt-1 capitalize">
+                                        {consultation.consultation_type?.replace('_', ' ') || 'Routine'} • {consultation.duration_minutes} min
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  {canJoinCall(consultation) || consultation.status === 'in_progress' ? (
+                                    <Button
+                                      onClick={() => handleStartConsultation(consultation)}
+                                      className={cn(
+                                        "rounded-xl font-semibold",
+                                        consultation.status === 'in_progress'
+                                          ? "bg-emerald-600 hover:bg-emerald-700"
+                                          : "bg-indigo-600 hover:bg-indigo-700"
+                                      )}
+                                    >
+                                      <Phone className="h-4 w-4 mr-2" />
+                                      {consultation.status === 'in_progress' ? 'Rejoin' : 'Start Call'}
+                                    </Button>
+                                  ) : (
+                                    <span className="text-sm text-slate-400">
+                                      Available 15 min before
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {selectedElder && (
+                      <Card className="rounded-2xl border-0 shadow-lg bg-white p-6">
+                        <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                          <Users className="h-5 w-5 text-indigo-600" /> Quick Call with {selectedElder.full_name}
+                        </h4>
+                        <p className="text-sm text-slate-500 mb-4">
+                          Start an instant consultation with this patient
+                        </p>
+                        <Button 
+                          onClick={() => {
+                            const roomName = `instant-${selectedElder.id.slice(0, 8)}-${Date.now()}`;
+                            setActiveConsultation({ 
+                              room_name: roomName, 
+                              elder_id: selectedElder.id,
+                              metadata: { elder_name: selectedElder.full_name }
+                            });
+                            setShowVideoRoom(true);
+                          }}
+                          className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-semibold"
+                        >
+                          <Video className="h-5 w-5 mr-2" />
+                          Start Instant Consultation
                         </Button>
-                      </div>
-                    </div>
-                  </Card>
+                      </Card>
+                    )}
+                  </div>
                 )}
-              </motion.div>
-            </AnimatePresence>
-          ) : (
-            <div className="h-[600px] flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
-              <Users className="h-16 w-16 opacity-30 mb-4" />
-              <p className="text-xl font-semibold text-slate-400">Select a Patient</p>
-              <p className="text-sm text-slate-400 mt-1">Choose from the patient list to view details</p>
-            </div>
-          )}
-        </main>
-      </div>
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div className="h-[600px] flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+            <Users className="h-16 w-16 opacity-30 mb-4" />
+            <p className="text-xl font-semibold text-slate-400">Select a Patient</p>
+            <p className="text-sm text-slate-400 mt-1">Choose from the patient list to view details</p>
+          </div>
+        )}
+      </main>
     </div>
-  );
+
+    {showVideoRoom && activeConsultation && (
+      <VideoRoom
+        roomName={activeConsultation.room_name}
+        userName="Dr. Clinician"
+        userRole="clinician"
+        consultationId={activeConsultation.id}
+        onClose={() => {
+          setShowVideoRoom(false);
+          setActiveConsultation(null);
+          fetchUpcomingConsultations();
+        }}
+      />
+    )}
+  </div>
+);
 };
