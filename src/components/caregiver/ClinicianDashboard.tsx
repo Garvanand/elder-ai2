@@ -60,7 +60,10 @@ interface TreatmentPlan {
   start_date: string;
 }
 
+import { useDemo } from '@/contexts/DemoContext';
+
 export const ClinicianDashboard = () => {
+  const { isDemoMode, demoElders, demoHealthRisks, demoMemories } = useDemo();
   const [elders, setElders] = useState<Elder[]>([]);
   const [selectedElder, setSelectedElder] = useState<Elder | null>(null);
   const [healthData, setHealthData] = useState<any[]>([]);
@@ -78,21 +81,26 @@ export const ClinicianDashboard = () => {
   const [memories, setMemories] = useState<any[]>([]);
   const [cognitiveAssessments, setCognitiveAssessments] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchElders();
-    
-    const channel = supabase
-      .channel('clinician_alerts')
-      .on('postgres_changes', { event: 'INSERT', table: 'alerts' }, (payload) => {
-        toast.error(`ALERT: ${payload.new.message}`, {
-          description: "Review patient status.",
-          duration: 15000
-        });
-      })
-      .subscribe();
+    useEffect(() => {
+      fetchElders();
+      
+      let channel: any;
+      if (!isDemoMode) {
+        channel = supabase
+          .channel('clinician_alerts')
+          .on('postgres_changes', { event: 'INSERT', table: 'alerts' }, (payload) => {
+            toast.error(`ALERT: ${payload.new.message}`, {
+              description: "Review patient status.",
+              duration: 15000
+            });
+          })
+          .subscribe();
+      }
 
-    return () => { channel.unsubscribe(); };
-  }, []);
+      return () => { 
+        if (channel) channel.unsubscribe(); 
+      };
+    }, [isDemoMode]);
 
   useEffect(() => {
     if (selectedElder) {
@@ -101,6 +109,13 @@ export const ClinicianDashboard = () => {
   }, [selectedElder]);
 
   const fetchElders = async () => {
+    if (isDemoMode) {
+      setElders(demoElders);
+      if (demoElders.length > 0) setSelectedElder(demoElders[0]);
+      setLoading(false);
+      return;
+    }
+
     const { data } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, role')
@@ -115,6 +130,13 @@ export const ClinicianDashboard = () => {
 
   const fetchElderData = async (elderId: string) => {
     setLoading(true);
+    if (isDemoMode) {
+      setHealthRisks(demoHealthRisks);
+      setMemories(demoMemories);
+      setLoading(false);
+      return;
+    }
+
     try {
       const [risks, mood, memoriesRes, assessmentsRes, metricsRes] = await Promise.all([
         assessHealthRisks(elderId),
@@ -252,68 +274,72 @@ export const ClinicianDashboard = () => {
       </header>
 
       <div className="grid lg:grid-cols-12 gap-6">
-        <aside className="lg:col-span-3 space-y-4">
-          <Card className="rounded-2xl border-0 shadow-lg overflow-hidden bg-white">
-            <div className="p-5 bg-slate-900 text-white">
-              <div className="flex items-center justify-between mb-4">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <Users className="h-5 w-5" /> Patients
-                </CardTitle>
-                <span className="bg-white/20 px-2.5 py-1 rounded-full text-[10px] font-bold">
-                  {elders.length} ACTIVE
-                </span>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
-                  placeholder="Search patients..." 
-                  className="bg-white/10 border-none text-white placeholder:text-slate-400 rounded-lg pl-10 h-10" 
-                />
-              </div>
-            </div>
-            <CardContent className="p-0 max-h-[500px] overflow-y-auto">
-              {elders.map((elder) => (
-                <button
-                  key={elder.id}
-                  onClick={() => setSelectedElder(elder)}
-                  className={cn(
-                    "w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-all border-b border-slate-100",
-                    selectedElder?.id === elder.id && 'bg-indigo-50 border-l-4 border-l-indigo-600'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-lg overflow-hidden">
-                      {elder.avatar_url ? <img src={elder.avatar_url} className="w-full h-full object-cover" /> : elder.full_name[0]}
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-slate-900">{elder.full_name}</p>
-                      <p className="text-xs text-slate-400">ID: {elder.id.slice(0, 8)}</p>
-                    </div>
-                  </div>
-                  <ChevronRight className={cn("h-5 w-5", selectedElder?.id === elder.id ? 'text-indigo-600' : 'text-slate-200')} />
-                </button>
-              ))}
-              {elders.length === 0 && (
-                <div className="p-8 text-center text-slate-400">
-                  <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No patients found</p>
+          <aside className="lg:col-span-3 space-y-4" data-tour="clinician-patients">
+            <Card className="rounded-2xl border-0 shadow-lg overflow-hidden bg-white">
+              <div className="p-5 bg-slate-900 text-white">
+                <div className="flex items-center justify-between mb-4">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Users className="h-5 w-5" /> Patients
+                  </CardTitle>
+                  <span className="bg-white/20 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                    {elders.length} ACTIVE
+                  </span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </aside>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input 
+                    placeholder="Search patients..." 
+                    className="bg-white/10 border-none text-white placeholder:text-slate-400 rounded-lg pl-10 h-10" 
+                  />
+                </div>
+              </div>
+              <CardContent className="p-0 max-h-[500px] overflow-y-auto">
+                {elders.map((elder) => (
+                  <button
+                    key={elder.id}
+                    onClick={() => setSelectedElder(elder)}
+                    className={cn(
+                      "w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-all border-b border-slate-100",
+                      selectedElder?.id === elder.id && 'bg-indigo-50 border-l-4 border-l-indigo-600'
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-lg overflow-hidden">
+                          {elder.avatar_url ? (
+                            <img src={elder.avatar_url} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            elder.full_name?.[0] || '?'
+                          )}
+                        </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-slate-900">{elder.full_name}</p>
+                        <p className="text-xs text-slate-400">ID: {elder.id.slice(0, 8)}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className={cn("h-5 w-5", selectedElder?.id === elder.id ? 'text-indigo-600' : 'text-slate-200')} />
+                  </button>
+                ))}
+                {elders.length === 0 && (
+                  <div className="p-8 text-center text-slate-400">
+                    <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">No patients found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </aside>
 
-        <main className="lg:col-span-9 space-y-6">
-          {selectedElder ? (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedElder.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="grid md:grid-cols-4 gap-4">
-                  <Card className="md:col-span-2 rounded-2xl border-0 shadow-lg bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-6 relative overflow-hidden">
+          <main className="lg:col-span-9 space-y-6">
+            {selectedElder ? (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedElder.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <div className="grid md:grid-cols-4 gap-4">
+                    <Card className="md:col-span-2 rounded-2xl border-0 shadow-lg bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-6 relative overflow-hidden" data-tour="clinician-risks">
                     <Zap className="absolute top-[-20px] right-[-20px] h-32 w-32 text-white/5" />
                     <div className="relative z-10">
                       <div className="flex items-center gap-2 mb-4">
@@ -342,38 +368,38 @@ export const ClinicianDashboard = () => {
                     </div>
                   </Card>
 
-                  <Card className="rounded-2xl border-0 shadow-lg bg-white p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-xs font-bold uppercase text-slate-400">Cognitive Status</p>
-                      <Brain className="h-5 w-5 text-indigo-500" />
-                    </div>
-                    <p className="text-3xl font-bold text-slate-900 capitalize">{moodTrend?.mood || 'Stable'}</p>
-                    <p className="text-sm text-indigo-600 mt-1 flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" /> {moodTrend?.trend || 'stable'} trend
-                    </p>
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                      <p className="text-xs text-slate-400 mb-2">Assessment Score</p>
-                      <p className="text-2xl font-bold text-slate-900">{avgCognitiveScore || '--'}<span className="text-sm text-slate-400">/100</span></p>
-                    </div>
-                  </Card>
-
-                  <Card className="rounded-2xl border-0 shadow-lg bg-white p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-xs font-bold uppercase text-slate-400">Recent Activity</p>
-                      <Activity className="h-5 w-5 text-emerald-500" />
-                    </div>
-                    <p className="text-3xl font-bold text-slate-900">{memories.length}</p>
-                    <p className="text-sm text-slate-500">Memories logged</p>
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                      <p className="text-xs text-slate-400 mb-2">Last Activity</p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {memories[0] ? format(new Date(memories[0].created_at), 'MMM d, h:mm a') : 'No activity'}
+                    <Card className="rounded-2xl border-0 shadow-lg bg-white p-5" data-tour="clinician-cognitive">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-xs font-bold uppercase text-slate-400">Cognitive Status</p>
+                        <Brain className="h-5 w-5 text-indigo-500" />
+                      </div>
+                      <p className="text-3xl font-bold text-slate-900 capitalize">{moodTrend?.mood || 'Stable'}</p>
+                      <p className="text-sm text-indigo-600 mt-1 flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" /> {moodTrend?.trend || 'stable'} trend
                       </p>
-                    </div>
-                  </Card>
-                </div>
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <p className="text-xs text-slate-400 mb-2">Assessment Score</p>
+                        <p className="text-2xl font-bold text-slate-900">{avgCognitiveScore || '--'}<span className="text-sm text-slate-400">/100</span></p>
+                      </div>
+                    </Card>
 
-                <div className="flex gap-2 p-1.5 bg-slate-100 rounded-xl w-fit">
+                    <Card className="rounded-2xl border-0 shadow-lg bg-white p-5" data-tour="clinician-activity">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-xs font-bold uppercase text-slate-400">Recent Activity</p>
+                        <Activity className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      <p className="text-3xl font-bold text-slate-900">{memories.length}</p>
+                      <p className="text-sm text-slate-500">Memories logged</p>
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <p className="text-xs text-slate-400 mb-2">Last Activity</p>
+                        <p className="text-sm font-medium text-slate-700">
+                          {memories[0] ? format(new Date(memories[0].created_at), 'MMM d, h:mm a') : 'No activity'}
+                        </p>
+                      </div>
+                    </Card>
+                  </div>
+
+                  <div className="flex gap-2 p-1.5 bg-slate-100 rounded-xl w-fit" data-tour="clinician-tabs">
                   {(['overview', 'clinical', 'treatment', 'telemedicine'] as const).map((tab) => (
                     <Button
                       key={tab}

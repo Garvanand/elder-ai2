@@ -15,6 +15,8 @@ interface DemoContextType {
   demoSignals: BehavioralSignal[];
   demoProfile: Profile | null;
   demoReminders: Reminder[];
+  demoElders: Profile[];
+  demoHealthRisks: any;
   addDemoMemory: (memory: Partial<Memory>) => void;
   addDemoQuestion: (question: string) => void;
 }
@@ -212,6 +214,42 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [demoSignals] = useState<BehavioralSignal[]>(generateDemoSignals());
   const [demoReminders] = useState<Reminder[]>(generateDemoReminders());
 
+  const demoElders: Profile[] = [
+    {
+      id: DEMO_ELDER_ID,
+      user_id: DEMO_ELDER_ID,
+      full_name: 'Robert Anderson',
+      role: 'elder',
+      avatar_url: 'https://images.unsplash.com/photo-1566616213894-2d4e1baee5d8?w=150',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'demo-elder-002',
+      user_id: 'demo-elder-002',
+      full_name: 'Margaret Thompson',
+      role: 'elder',
+      avatar_url: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=150',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'demo-elder-003',
+      user_id: 'demo-elder-003',
+      full_name: 'James Wilson',
+      role: 'elder',
+      avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      created_at: new Date().toISOString()
+    }
+  ];
+
+  const demoHealthRisks = {
+    risk_score: 72,
+    risks: [
+      { type: 'dehydration', probability: 0.85 },
+      { type: 'agitation', probability: 0.45 },
+      { type: 'wandering', probability: 0.20 }
+    ]
+  };
+
   const enterGuestMode = useCallback((portal: DemoPortal = 'elder') => {
     setIsGuestMode(true);
     setDemoPortal(portal);
@@ -267,10 +305,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       demoQuestions,
       demoSignals,
       demoProfile,
-      demoReminders,
-      addDemoMemory,
-      addDemoQuestion
-    }}>
+        demoReminders,
+        demoElders,
+        demoHealthRisks,
+        addDemoMemory,
+        addDemoQuestion
+      }}>
       {children}
     </DemoContext.Provider>
   );
