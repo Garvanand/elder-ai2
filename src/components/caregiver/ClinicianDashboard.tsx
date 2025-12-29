@@ -25,7 +25,8 @@ import {
   XCircle,
   Edit3,
   Phone,
-  Mail
+  Mail,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,10 +34,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
-import { format } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { assessHealthRisks, predictMoodAndAnalyzeSentiment } from '@/lib/ai';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { VideoRoom } from '@/components/teleconsultation';
 
 interface Elder {
   id: string;
