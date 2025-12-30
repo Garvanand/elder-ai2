@@ -3,22 +3,35 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as aesjs from 'aes-js';
-import 'react-native-get-random-values';
+import { Platform } from 'react-native';
 
 class LargeSecureStore {
   private async _encrypt(key: string, value: string) {
+    if (typeof window === 'undefined') {
+      return value;
+    }
     const encryptionKey = crypto.getRandomValues(new Uint8Array(256 / 8));
 
     const cipher = new aesjs.ModeOfOperation.ctr(encryptionKey, new aesjs.Counter(1));
     const encryptedBytes = cipher.encrypt(aesjs.utils.utf8.toBytes(value));
 
-    await SecureStore.setItemAsync(key, aesjs.utils.hex.fromBytes(encryptionKey));
+    if (Platform.OS !== 'web') {
+      await SecureStore.setItemAsync(key, aesjs.utils.hex.fromBytes(encryptionKey));
+    }
 
     return aesjs.utils.hex.fromBytes(encryptedBytes);
   }
 
   private async _decrypt(key: string, value: string) {
-    const encryptionKeyHex = await SecureStore.getItemAsync(key);
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    
+    let encryptionKeyHex = null;
+    if (Platform.OS !== 'web') {
+      encryptionKeyHex = await SecureStore.getItemAsync(key);
+    }
+    
     if (!encryptionKeyHex) {
       return encryptionKeyHex;
     }
@@ -33,6 +46,9 @@ class LargeSecureStore {
   }
 
   async getItem(key: string) {
+    if (typeof window === 'undefined') {
+      return null;
+    }
     const encrypted = await AsyncStorage.getItem(key);
     if (!encrypted) {
       return encrypted;
@@ -42,11 +58,19 @@ class LargeSecureStore {
   }
 
   async removeItem(key: string) {
+    if (typeof window === 'undefined') {
+      return;
+    }
     await AsyncStorage.removeItem(key);
-    await SecureStore.deleteItemAsync(key);
+    if (Platform.OS !== 'web') {
+      await SecureStore.deleteItemAsync(key);
+    }
   }
 
   async setItem(key: string, value: string) {
+    if (typeof window === 'undefined') {
+      return;
+    }
     const encrypted = await this._encrypt(key, value);
     await AsyncStorage.setItem(key, encrypted);
   }
