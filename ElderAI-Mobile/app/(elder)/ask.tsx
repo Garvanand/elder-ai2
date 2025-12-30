@@ -10,19 +10,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { answerQuestion } from '@/lib/ai';
 import { colors, spacing, fontSize, borderRadius } from '@/styles/theme';
-import type { Question, Memory } from '@/types';
+import type { Memory } from '@/types';
 
 export default function AskScreen() {
   const { user } = useAuth();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
-  const [recentQuestions, setRecentQuestions] = useState<Question[]>([]);
   const [matchedMemories, setMatchedMemories] = useState<Memory[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -44,46 +44,9 @@ export default function AskScreen() {
     setMatchedMemories([]);
 
     try {
-      const { data: memories } = await supabase
-        .from('memories')
-        .select('*')
-        .eq('elder_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (!memories || memories.length === 0) {
-        setAnswer("I don't have any memories stored yet. Try adding some memories first!");
-        setLoading(false);
-        return;
-      }
-
-      const relevantMemories = memories.filter((m: Memory) =>
-        q.toLowerCase().split(' ').some(word =>
-          m.raw_text.toLowerCase().includes(word) ||
-          m.tags.some(tag => tag.toLowerCase().includes(word))
-        )
-      ).slice(0, 5);
-
-      const context = relevantMemories.length > 0
-        ? relevantMemories.map((m: Memory) => m.raw_text).join('\n\n')
-        : memories.slice(0, 5).map((m: Memory) => m.raw_text).join('\n\n');
-
-      const generatedAnswer = `Based on your memories, here's what I found:\n\n${
-        relevantMemories.length > 0
-          ? relevantMemories.map((m: Memory) => `• ${m.raw_text}`).join('\n')
-          : "I couldn't find specific memories related to your question. Would you like to add more memories?"
-      }`;
-
-      setAnswer(generatedAnswer);
-      setMatchedMemories(relevantMemories as Memory[]);
-
-      await supabase.from('questions').insert({
-        elder_id: user.id,
-        question_text: q,
-        answer_text: generatedAnswer,
-        matched_memory_ids: relevantMemories.map((m: Memory) => m.id),
-      });
-
+      const response = await answerQuestion(q, user.id);
+      setAnswer(response.answer);
+      setMatchedMemories(response.matchedMemories);
       setQuestion('');
     } catch (error) {
       Alert.alert('Error', 'Could not process your question.');
@@ -110,12 +73,20 @@ export default function AskScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.inputSection}>
+        <View style={styles.header}>
+          <LinearGradient
+            colors={[colors.primary, colors.secondary]}
+            style={styles.iconContainer}
+          >
+            <Ionicons name="chatbubble-ellipses" size={32} color={colors.textLight} />
+          </LinearGradient>
           <Text style={styles.title}>Ask Me Anything</Text>
           <Text style={styles.subtitle}>
             I'll search through your memories to help you remember
           </Text>
+        </View>
 
+        <View style={styles.inputCard}>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
@@ -125,18 +96,23 @@ export default function AskScreen() {
               onChangeText={setQuestion}
               multiline
             />
-            <TouchableOpacity
-              style={[styles.askButton, (!question.trim() || loading) && styles.askButtonDisabled]}
-              onPress={() => handleAsk()}
-              disabled={!question.trim() || loading}
+          </View>
+          <TouchableOpacity
+            style={[styles.askButton, (!question.trim() || loading) && styles.askButtonDisabled]}
+            onPress={() => handleAsk()}
+            disabled={!question.trim() || loading}
+          >
+            <LinearGradient
+              colors={[colors.primary, colors.primaryDark]}
+              style={styles.askButtonGradient}
             >
               {loading ? (
-                <ActivityIndicator color={colors.text} />
+                <ActivityIndicator color={colors.textLight} />
               ) : (
-                <Ionicons name="send" size={24} color={colors.text} />
+                <Ionicons name="send" size={24} color={colors.textLight} />
               )}
-            </TouchableOpacity>
-          </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionTitle}>Suggested Questions</Text>
@@ -151,38 +127,46 @@ export default function AskScreen() {
               }}
             >
               <Text style={styles.suggestedText}>{q}</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.primary} />
             </TouchableOpacity>
           ))}
         </View>
 
         {answer && (
           <View style={styles.answerCard}>
-            <View style={styles.answerHeader}>
-              <Ionicons name="chatbubble-ellipses" size={24} color={colors.primary} />
-              <Text style={styles.answerTitle}>Answer</Text>
-              <TouchableOpacity onPress={speakAnswer} style={styles.speakButton}>
-                <Ionicons
-                  name={isSpeaking ? 'volume-mute' : 'volume-high'}
-                  size={24}
-                  color={colors.primary}
-                />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.answerText}>{answer}</Text>
-
-            {matchedMemories.length > 0 && (
-              <View style={styles.matchedSection}>
-                <Text style={styles.matchedTitle}>Related Memories</Text>
-                {matchedMemories.map((memory) => (
-                  <View key={memory.id} style={styles.matchedMemory}>
-                    <Ionicons name="bookmark" size={16} color={colors.textMuted} />
-                    <Text style={styles.matchedText} numberOfLines={2}>
-                      {memory.raw_text}
-                    </Text>
-                  </View>
-                ))}
+            <LinearGradient
+              colors={['rgba(139, 92, 246, 0.1)', 'rgba(236, 72, 153, 0.05)']}
+              style={styles.answerGradient}
+            >
+              <View style={styles.answerHeader}>
+                <View style={styles.answerIconContainer}>
+                  <Ionicons name="sparkles" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.answerTitle}>My Response</Text>
+                <TouchableOpacity onPress={speakAnswer} style={styles.speakButton}>
+                  <Ionicons
+                    name={isSpeaking ? 'volume-mute' : 'volume-high'}
+                    size={24}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
               </View>
-            )}
+              <Text style={styles.answerText}>{answer}</Text>
+
+              {matchedMemories.length > 0 && (
+                <View style={styles.matchedSection}>
+                  <Text style={styles.matchedTitle}>Related Memories</Text>
+                  {matchedMemories.map((memory) => (
+                    <View key={memory.id} style={styles.matchedMemory}>
+                      <View style={styles.matchedDot} />
+                      <Text style={styles.matchedText} numberOfLines={2}>
+                        {memory.raw_text}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </LinearGradient>
           </View>
         )}
       </ScrollView>
@@ -199,40 +183,70 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
   },
-  inputSection: {
+  header: {
+    alignItems: 'center',
     marginBottom: spacing.xl,
   },
+  iconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
   title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.text,
     marginBottom: spacing.xs,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
-    marginBottom: spacing.lg,
+    textAlign: 'center',
   },
-  inputWrapper: {
+  inputCard: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginBottom: spacing.xl,
   },
-  input: {
+  inputWrapper: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  input: {
     padding: spacing.lg,
     color: colors.text,
     fontSize: fontSize.lg,
     minHeight: 60,
   },
   askButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  askButtonGradient: {
     width: 60,
     height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -241,19 +255,20 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
     marginBottom: spacing.md,
   },
   suggestedGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.sm,
     marginBottom: spacing.xl,
   },
   suggestedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.backgroundCard,
-    borderRadius: borderRadius.md,
+    borderRadius: 16,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderWidth: 1,
@@ -262,44 +277,68 @@ const styles = StyleSheet.create({
   suggestedText: {
     color: colors.text,
     fontSize: fontSize.md,
+    flex: 1,
   },
   answerCard: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 2,
     borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  answerGradient: {
+    padding: spacing.xl,
   },
   answerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
     gap: spacing.sm,
+  },
+  answerIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   answerTitle: {
     flex: 1,
     fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
   },
   speakButton: {
-    padding: spacing.sm,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   answerText: {
     fontSize: fontSize.lg,
     color: colors.text,
     lineHeight: 28,
+    fontStyle: 'italic',
   },
   matchedSection: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     paddingTop: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
   matchedTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
+    fontSize: fontSize.sm,
+    fontWeight: '700',
     color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.md,
   },
   matchedMemory: {
@@ -308,9 +347,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },
+  matchedDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginTop: 8,
+  },
   matchedText: {
     flex: 1,
     fontSize: fontSize.sm,
     color: colors.textMuted,
+    lineHeight: 20,
   },
 });
