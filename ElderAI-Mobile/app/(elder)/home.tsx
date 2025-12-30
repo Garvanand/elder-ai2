@@ -93,12 +93,12 @@ export default function ElderHome() {
     setRefreshing(false);
   };
 
-  const quickActions = [
-    { icon: 'add-circle', label: 'Add Memory', route: '/(elder)/memories', color: colors.primary },
-    { icon: 'chatbubble-ellipses', label: 'Ask Question', route: '/(elder)/ask', color: colors.secondary },
-    { icon: 'videocam', label: 'Video Call', route: '/(elder)/video-call', color: colors.success },
-    { icon: 'images', label: 'My Memories', route: '/(elder)/memories', color: colors.warning },
-  ];
+    const quickActions = [
+      { icon: 'medical', label: 'My Meds', route: '/(elder)/medications', color: colors.error },
+      { icon: 'chatbubble-ellipses', label: 'Ask AI', route: '/(elder)/ask', color: colors.secondary },
+      { icon: 'videocam', label: 'Video Call', route: '/(elder)/video-call', color: colors.success },
+      { icon: 'images', label: 'Memories', route: '/(elder)/memories', color: colors.warning },
+    ];
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>

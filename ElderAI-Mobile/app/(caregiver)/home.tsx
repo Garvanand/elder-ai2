@@ -95,7 +95,7 @@ export default function CaregiverHome() {
   const quickActions = [
     { icon: 'videocam', label: 'Video Call', color: colors.success, onPress: () => Alert.alert('Video Call', 'Starting call...') },
     { icon: 'calendar', label: 'Schedule', color: colors.primary, onPress: () => router.push('/(caregiver)/schedule') },
-    { icon: 'medical', label: 'Health Log', color: colors.warning, onPress: () => Alert.alert('Health', 'Opening health tracker...') },
+    { icon: 'medical', label: 'Meds Log', color: colors.warning, onPress: () => router.push('/(caregiver)/medications') },
     { icon: 'chatbubble', label: 'Message', color: colors.secondary, onPress: () => Alert.alert('Message', 'Opening messages...') },
   ];
 
