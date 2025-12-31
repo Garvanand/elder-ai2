@@ -21,7 +21,8 @@ import {
   Loader2,
   Zap,
   Database,
-  Activity
+  Activity,
+  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getSupportAIResponse } from "@/lib/ai";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const CATEGORIES = [
   { id: 'elder', label: 'Elders', icon: Heart, color: 'text-rose-400', bg: 'bg-rose-400/10' },
@@ -44,6 +46,8 @@ const Support = () => {
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [ticketStatus, setTicketStatus] = useState<'idle' | 'sending' | 'success'>('idle');
+  const [ticketDescription, setTicketDescription] = useState('');
+  const [ticketCategory, setTicketCategory] = useState('System Malfunction');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', text: string }[]>([
     { role: 'ai', text: "Hello! How can I help you today? I'm your Elder AI support assistant." }
@@ -87,16 +91,69 @@ const Support = () => {
     setIsAiLoading(false);
   };
 
-  const handleSubmitTicket = (e: React.FormEvent) => {
+  const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!ticketDescription.trim()) {
+      toast.error("Please provide details for the anomaly.");
+      return;
+    }
     setTicketStatus('sending');
     
-    // Simulate routing to email/phone
-    setTimeout(() => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from('support_requests').insert({
+        user_id: user?.id,
+        type: 'ticket',
+        category: ticketCategory,
+        content: ticketDescription,
+        contact_info: { email: 'garvanand03@gmail.com' }
+      });
+
+      if (error) throw error;
+
       setTicketStatus('success');
       toast.success("Ticket submitted! Our team will contact you shortly.");
+      setTicketDescription('');
       setTimeout(() => setTicketStatus('idle'), 3000);
-    }, 1500);
+    } catch (error: any) {
+      toast.error("Failed to transmit ticket: " + error.message);
+      setTicketStatus('idle');
+    }
+  };
+
+  const handleRequestCallback = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from('support_requests').insert({
+        user_id: user?.id,
+        type: 'callback',
+        content: 'User requested a callback.',
+        contact_info: { phone: '+91 80541 82892' }
+      });
+
+      if (error) throw error;
+      toast.success("Callback request sent! We'll call you at +91 80541 82892.");
+    } catch (error: any) {
+      toast.error("Failed to request callback: " + error.message);
+    }
+  };
+
+  const handleComposeMessage = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from('support_requests').insert({
+        user_id: user?.id,
+        type: 'message',
+        content: 'User initiated neural mail compose.',
+        contact_info: { email: 'garvanand03@gmail.com' }
+      });
+
+      if (error) throw error;
+      toast.success("Message session initiated. Check your garvanand03@gmail.com inbox.");
+      window.location.href = "mailto:garvanand03@gmail.com";
+    } catch (error: any) {
+      toast.error("Failed to initiate message: " + error.message);
+    }
   };
 
   return (
@@ -271,93 +328,114 @@ const Support = () => {
                     </div>
                   </div>
                 </div>
-                <form onSubmit={handleSubmitTicket} className="bg-white p-10 rounded-[40px] border border-white shadow-2xl shadow-primary/5 space-y-6 scale-105">
-                  <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">Anomaly Type</label>
-                    <select className="w-full bg-slate-50 border-slate-100 rounded-2xl p-4 text-slate-900 font-bold focus:ring-primary appearance-none cursor-pointer">
-                      <option>System Malfunction</option>
-                      <option>Entity Synchronization</option>
-                      <option>Resource Billing</option>
-                      <option>Protocol Request</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">System Report</label>
-                    <Textarea 
-                      placeholder="Detail the anomaly parameters..." 
-                      className="bg-slate-50 border-slate-100 rounded-2xl h-40 font-medium text-lg focus-visible:ring-primary p-4"
-                    />
+                  <form onSubmit={handleSubmitTicket} className="bg-white p-10 rounded-[40px] border border-white shadow-2xl shadow-primary/5 space-y-6 scale-105">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">Anomaly Type</label>
+                      <select 
+                        value={ticketCategory}
+                        onChange={(e) => setTicketCategory(e.target.value)}
+                        className="w-full bg-slate-50 border-slate-100 rounded-2xl p-4 text-slate-900 font-bold focus:ring-primary appearance-none cursor-pointer"
+                      >
+                        <option>System Malfunction</option>
+                        <option>Entity Synchronization</option>
+                        <option>Resource Billing</option>
+                        <option>Protocol Request</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">System Report</label>
+                      <Textarea 
+                        value={ticketDescription}
+                        onChange={(e) => setTicketDescription(e.target.value)}
+                        placeholder="Detail the anomaly parameters..." 
+                        className="bg-slate-50 border-slate-100 rounded-2xl h-40 font-medium text-lg focus-visible:ring-primary p-4"
+                      />
+                    </div>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90 text-white rounded-2xl py-8 font-black uppercase tracking-[0.2em] text-sm shadow-xl shadow-primary/20"
+                      disabled={ticketStatus !== 'idle'}
+                    >
+                      {ticketStatus === 'sending' ? <Loader2 className="animate-spin" /> : 
+                       ticketStatus === 'success' ? "Transmission Success!" : "Transmit Ticket"}
+                    </Button>
+                  </form>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="video" className="space-y-12">
+                <div className="grid md:grid-cols-3 gap-10">
+                  {[
+                    { title: "Node Initialization", duration: "2:45", thumbnail: "bg-primary/10", icon: Zap },
+                    { title: "Archive Management", duration: "4:12", thumbnail: "bg-accent/10", icon: Database },
+                    { title: "Health Telemetry", duration: "3:30", thumbnail: "bg-rose-500/10", icon: Activity },
+                  ].map((v, i) => (
+                    <motion.div 
+                      key={i} 
+                      whileHover={{ scale: 1.05, y: -10 }}
+                      className="group cursor-pointer space-y-6"
+                    >
+                      <div className={`aspect-video rounded-[32px] ${v.thumbnail} border border-white shadow-xl flex items-center justify-center relative overflow-hidden`}>
+                        <div className="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-colors" />
+                        <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-md group-hover:scale-110 transition-all duration-500 shadow-xl text-primary">
+                          <v.icon size={40} />
+                        </div>
+                        <span className="absolute bottom-6 right-6 text-xs font-black tracking-widest bg-slate-900/80 px-3 py-1.5 rounded-full text-white backdrop-blur-md uppercase">{v.duration}</span>
+                      </div>
+                      <h4 className="font-black text-slate-900 group-hover:text-primary transition-colors text-xl uppercase tracking-tighter">{v.title}</h4>
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="bg-slate-900 rounded-[40px] p-12 flex flex-col md:flex-row justify-between items-center gap-10 text-white shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-rose-500" />
+                  <div className="space-y-3 relative z-10 text-center md:text-left">
+                    <h3 className="text-3xl font-black uppercase tracking-tighter">Request Human Sync?</h3>
+                    <p className="text-white/60 font-medium text-lg">Schedule a high-bandwidth video consultation with a support engineer.</p>
                   </div>
                   <Button 
-                    className="w-full bg-primary hover:bg-primary/90 text-white rounded-2xl py-8 font-black uppercase tracking-[0.2em] text-sm shadow-xl shadow-primary/20"
-                    disabled={ticketStatus !== 'idle'}
+                    onClick={() => window.open('https://calendly.com/garvanand03/30min', '_blank')}
+                    className="bg-white text-slate-900 hover:bg-slate-100 rounded-2xl px-12 py-8 h-auto font-black uppercase tracking-widest text-sm shadow-xl transition-all hover:scale-105"
                   >
-                    {ticketStatus === 'sending' ? <Loader2 className="animate-spin" /> : 
-                     ticketStatus === 'success' ? "Transmission Success!" : "Transmit Ticket"}
+                    Schedule Uplink
                   </Button>
-                </form>
-              </div>
-            </TabsContent>
+                </div>
+              </TabsContent>
 
-            <TabsContent value="video" className="space-y-12">
-              <div className="grid md:grid-cols-3 gap-10">
-                {[
-                  { title: "Node Initialization", duration: "2:45", thumbnail: "bg-primary/10", icon: Zap },
-                  { title: "Archive Management", duration: "4:12", thumbnail: "bg-accent/10", icon: Database },
-                  { title: "Health Telemetry", duration: "3:30", thumbnail: "bg-rose-500/10", icon: Activity },
-                ].map((v, i) => (
-                  <motion.div 
-                    key={i} 
-                    whileHover={{ scale: 1.05, y: -10 }}
-                    className="group cursor-pointer space-y-6"
+              <TabsContent value="phone" className="grid md:grid-cols-2 gap-10">
+                <div className="p-12 rounded-[40px] bg-white border border-white shadow-2xl shadow-black/5 space-y-8 group hover:bg-slate-900 hover:text-white transition-all duration-500">
+                  <div className="p-5 w-fit rounded-3xl bg-rose-500/10 text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all duration-500">
+                    <Phone size={40} />
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="text-3xl font-black uppercase tracking-tighter">Direct Comm Line</h3>
+                    <p className="text-slate-500 font-medium text-lg leading-relaxed group-hover:text-white/60">Voice-to-voice synchronization for urgent system criticalities.</p>
+                    <div className="text-3xl font-black tracking-tighter text-primary group-hover:text-white">+91 80541 82892</div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleRequestCallback}
+                    className="border-slate-200 text-slate-900 rounded-2xl h-14 font-black uppercase tracking-widest text-xs px-8 group-hover:border-white/20 group-hover:text-white"
                   >
-                    <div className={`aspect-video rounded-[32px] ${v.thumbnail} border border-white shadow-xl flex items-center justify-center relative overflow-hidden`}>
-                      <div className="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-colors" />
-                      <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-md group-hover:scale-110 transition-all duration-500 shadow-xl text-primary">
-                        <v.icon size={40} />
-                      </div>
-                      <span className="absolute bottom-6 right-6 text-xs font-black tracking-widest bg-slate-900/80 px-3 py-1.5 rounded-full text-white backdrop-blur-md uppercase">{v.duration}</span>
-                    </div>
-                    <h4 className="font-black text-slate-900 group-hover:text-primary transition-colors text-xl uppercase tracking-tighter">{v.title}</h4>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="bg-slate-900 rounded-[40px] p-12 flex flex-col md:flex-row justify-between items-center gap-10 text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-rose-500" />
-                <div className="space-y-3 relative z-10 text-center md:text-left">
-                  <h3 className="text-3xl font-black uppercase tracking-tighter">Request Human Sync?</h3>
-                  <p className="text-white/60 font-medium text-lg">Schedule a high-bandwidth video consultation with a support engineer.</p>
+                    Request Callback
+                  </Button>
                 </div>
-                <Button className="bg-white text-slate-900 hover:bg-slate-100 rounded-2xl px-12 py-8 h-auto font-black uppercase tracking-widest text-sm shadow-xl transition-all hover:scale-105">
-                  Schedule Uplink
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="phone" className="grid md:grid-cols-2 gap-10">
-              <div className="p-12 rounded-[40px] bg-white border border-white shadow-2xl shadow-black/5 space-y-8 group hover:bg-slate-900 hover:text-white transition-all duration-500">
-                <div className="p-5 w-fit rounded-3xl bg-rose-500/10 text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all duration-500">
-                  <Phone size={40} />
+                <div className="p-12 rounded-[40px] bg-white border border-white shadow-2xl shadow-black/5 space-y-8 group hover:bg-slate-900 hover:text-white transition-all duration-500">
+                  <div className="p-5 w-fit rounded-3xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                    <Mail size={40} />
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="text-3xl font-black uppercase tracking-tighter">Neural Mail</h3>
+                    <p className="text-slate-500 font-medium text-lg leading-relaxed group-hover:text-white/60">Submit long-form asynchronous queries to the core engineering team.</p>
+                    <div className="text-3xl font-black tracking-tighter text-primary group-hover:text-white overflow-hidden text-ellipsis">garvanand03@gmail.com</div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleComposeMessage}
+                    className="border-slate-200 text-slate-900 rounded-2xl h-14 font-black uppercase tracking-widest text-xs px-8 group-hover:border-white/20 group-hover:text-white"
+                  >
+                    Compose Message
+                  </Button>
                 </div>
-                <div className="space-y-4">
-                  <h3 className="text-3xl font-black uppercase tracking-tighter">Direct Comm Line</h3>
-                  <p className="text-slate-500 font-medium text-lg leading-relaxed group-hover:text-white/60">Voice-to-voice synchronization for urgent system criticalities.</p>
-                  <div className="text-3xl font-black tracking-tighter text-primary group-hover:text-white">+91 80541 82892</div>
-                </div>
-                <Button variant="outline" className="border-slate-200 text-slate-900 rounded-2xl h-14 font-black uppercase tracking-widest text-xs px-8 group-hover:border-white/20 group-hover:text-white">Request Callback</Button>
-              </div>
-              <div className="p-12 rounded-[40px] bg-white border border-white shadow-2xl shadow-black/5 space-y-8 group hover:bg-slate-900 hover:text-white transition-all duration-500">
-                <div className="p-5 w-fit rounded-3xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
-                  <Mail size={40} />
-                </div>
-                <div className="space-y-4">
-                  <h3 className="text-3xl font-black uppercase tracking-tighter">Neural Mail</h3>
-                  <p className="text-slate-500 font-medium text-lg leading-relaxed group-hover:text-white/60">Submit long-form asynchronous queries to the core engineering team.</p>
-                  <div className="text-3xl font-black tracking-tighter text-primary group-hover:text-white overflow-hidden text-ellipsis">garvanand03@gmail.com</div>
-                </div>
-                <Button variant="outline" className="border-slate-200 text-slate-900 rounded-2xl h-14 font-black uppercase tracking-widest text-xs px-8 group-hover:border-white/20 group-hover:text-white">Compose Message</Button>
-              </div>
-            </TabsContent>
+              </TabsContent>
           </div>
         </Tabs>
       </section>
