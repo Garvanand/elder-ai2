@@ -24,18 +24,18 @@ const UplinkDocs = () => {
   ];
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-slate-900">
       <main className="relative pt-12 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
               <aside className="lg:col-span-3 hidden lg:block space-y-10 sticky top-32 h-fit">
                 <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-primary transition-colors" size={16} />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
                   <input 
                     type="text" 
                     placeholder="Search docs..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary/50 font-bold text-sm text-white placeholder:text-white/20"
+                    className="w-full bg-slate-100 border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary/50 font-bold text-sm text-slate-900 placeholder:text-slate-400"
                   />
                 </div>
 
@@ -45,7 +45,7 @@ const UplinkDocs = () => {
                     <ul className="space-y-1">
                       {section.items.map((item) => (
                         <li key={item}>
-                          <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-white/60 hover:text-white transition-all font-bold text-sm flex items-center justify-between group">
+                          <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-primary transition-all font-bold text-sm flex items-center justify-between group">
                             {item}
                             <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-all" />
                           </button>
@@ -66,10 +66,10 @@ const UplinkDocs = () => {
                     <Book size={16} />
                     <span className="text-xs font-black uppercase tracking-[0.3em]">Documentation</span>
                   </motion.div>
-                  <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-6 uppercase text-white">
+                  <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-6 uppercase text-slate-900">
                     Developer <span className="text-primary italic">Docs</span>
                   </h1>
-                  <p className="text-white/70 text-lg max-w-3xl font-medium leading-relaxed">
+                  <p className="text-slate-600 text-lg max-w-3xl font-medium leading-relaxed">
                     Technical documentation for MemoryFriend. Learn about our architecture, APIs, and how to extend the platform.
                   </p>
                 </section>
@@ -81,13 +81,13 @@ const UplinkDocs = () => {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.1 }}
-                      className="p-6 bg-slate-900/80 border border-white/10 rounded-[24px] hover:border-primary/30 transition-all"
+                      className="p-6 bg-slate-900 border border-white/10 rounded-[24px] hover:border-primary/30 transition-all"
                     >
                       <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-primary mb-4">
                         <h.icon size={20} />
                       </div>
                       <h3 className="text-base font-black uppercase tracking-tight mb-1 text-white">{h.title}</h3>
-                      <p className="text-xs text-white/60 font-medium leading-relaxed">{h.desc}</p>
+                      <p className="text-xs text-white/70 font-medium leading-relaxed">{h.desc}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -97,7 +97,7 @@ const UplinkDocs = () => {
                     <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                       <Code size={16} />
                     </div>
-                    <h2 className="text-2xl font-black uppercase tracking-tight text-white">Quick <span className="text-primary">Start</span></h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">Quick <span className="text-primary">Start</span></h2>
                   </div>
 
                   <div className="relative group">
@@ -131,7 +131,7 @@ const { data: memories } = await supabase
                 </section>
 
                 <section className="space-y-6">
-                  <h2 className="text-2xl font-black uppercase tracking-tight text-white">API <span className="text-primary">Endpoints</span></h2>
+                  <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">API <span className="text-primary">Endpoints</span></h2>
                   <div className="space-y-3">
                     {[
                       { method: 'GET', path: '/api/memories', desc: 'Fetch all memories for authenticated user' },
@@ -139,25 +139,25 @@ const { data: memories } = await supabase
                       { method: 'POST', path: '/api/questions/answer', desc: 'AI-powered question answering' },
                       { method: 'GET', path: '/api/summaries/daily', desc: 'Generate daily memory summary' },
                     ].map((endpoint) => (
-                      <div key={endpoint.path} className="flex items-center gap-4 p-4 bg-white/5 rounded-xl">
+                      <div key={endpoint.path} className="flex items-center gap-4 p-4 bg-slate-100 rounded-xl border border-slate-200">
                         <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
-                          endpoint.method === 'GET' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-blue-500/20 text-blue-500'
+                          endpoint.method === 'GET' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-blue-500/20 text-blue-600'
                         }`}>
                           {endpoint.method}
                         </span>
-                        <code className="text-sm font-mono text-white/90">{endpoint.path}</code>
-                        <span className="text-xs text-white/60 ml-auto">{endpoint.desc}</span>
+                        <code className="text-sm font-mono text-slate-800 font-bold">{endpoint.path}</code>
+                        <span className="text-xs text-slate-500 font-bold ml-auto">{endpoint.desc}</span>
                       </div>
                     ))}
                   </div>
                 </section>
 
-              <div className="p-8 bg-primary rounded-[32px] text-white flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="p-8 bg-primary rounded-[32px] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
                 <div>
-                  <h2 className="text-2xl font-black uppercase tracking-tight mb-1">Need Help?</h2>
-                  <p className="text-white/70 text-sm font-medium">Contact our support team for technical assistance.</p>
+                  <h2 className="text-2xl font-black uppercase tracking-tight mb-1 text-white">Need Help?</h2>
+                  <p className="text-white/90 text-sm font-medium">Contact our support team for technical assistance.</p>
                 </div>
-                <a href="/support" className="px-8 py-4 bg-white text-slate-950 rounded-xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all">
+                <a href="/support" className="px-8 py-4 bg-white text-primary rounded-xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-lg">
                   Get Support
                 </a>
               </div>

@@ -82,7 +82,7 @@ const SecurityLab = () => {
   };
 
   return (
-    <div className="min-h-screen text-white selection:bg-primary/30">
+    <div className="min-h-screen text-slate-900 selection:bg-primary/30">
       <main className="relative pt-12 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-16 text-center">
@@ -93,7 +93,7 @@ const SecurityLab = () => {
             >
               <Shield size={16} />
               <span className="text-xs font-black uppercase tracking-[0.3em]">Security Lab</span>
-              <button onClick={fetchSecurityData} className="ml-2 hover:text-white transition-colors">
+              <button onClick={fetchSecurityData} className="ml-2 hover:text-primary transition-colors">
                 <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
               </button>
             </motion.div>
@@ -101,7 +101,7 @@ const SecurityLab = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-5xl md:text-7xl font-black tracking-tighter mb-6 uppercase"
+              className="text-5xl md:text-7xl font-black tracking-tighter mb-6 uppercase text-slate-900"
             >
               Security <span className="text-primary italic">Center</span>
             </motion.h1>
@@ -109,11 +109,11 @@ const SecurityLab = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-white/70 text-xl max-w-2xl mx-auto font-medium"
+              className="text-slate-600 text-xl max-w-2xl mx-auto font-medium"
             >
               Real-time security monitoring and protection status for MemoryFriend.
             </motion.p>
-            <p className="text-white/40 text-xs mt-4">Last updated: {lastRefresh.toLocaleTimeString()}</p>
+            <p className="text-slate-400 text-xs mt-4 font-bold uppercase tracking-widest">Last updated: {lastRefresh.toLocaleTimeString()}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
@@ -125,16 +125,16 @@ const SecurityLab = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.1 + 0.3 }}
-                  className="relative group p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[24px] overflow-hidden"
+                  className="relative group p-6 bg-slate-900 border border-white/10 rounded-[24px] overflow-hidden shadow-lg"
                 >
                   <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
-                    <test.icon size={48} />
+                    <test.icon size={48} className="text-white" />
                   </div>
                   <div className="relative z-10">
                     <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-4 ${test.color}`}>
                       <test.icon size={20} />
                     </div>
-                    <h3 className="text-sm font-black uppercase tracking-wider mb-2">{test.name}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider mb-2 text-white">{test.name}</h3>
                     <div className="flex items-center gap-2 mb-3">
                       <CheckCircle2 size={12} className="text-emerald-500" />
                       <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{data.status}</span>
@@ -157,7 +157,7 @@ const SecurityLab = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start mb-16">
             <div className="lg:col-span-7 space-y-8">
               <div className="space-y-6">
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Security <span className="text-primary">Protocols</span></h2>
+                <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900">Security <span className="text-primary">Protocols</span></h2>
                 <div className="space-y-6">
                   {protocols.map((p, i) => (
                     <motion.div 
@@ -165,14 +165,14 @@ const SecurityLab = () => {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.1 + 0.6 }}
-                      className="flex gap-4 p-4 bg-white/5 rounded-2xl"
+                      className="flex gap-4 p-5 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="mt-1 p-2 bg-primary/10 rounded-lg text-primary h-fit">
                         <Zap size={16} />
                       </div>
                       <div>
-                        <h4 className="text-lg font-bold mb-1">{p.title}</h4>
-                        <p className="text-white/60 leading-relaxed text-sm font-medium">{p.desc}</p>
+                        <h4 className="text-lg font-black text-slate-900 mb-1">{p.title}</h4>
+                        <p className="text-slate-600 leading-relaxed text-sm font-medium">{p.desc}</p>
                       </div>
                     </motion.div>
                   ))}
@@ -216,21 +216,21 @@ const SecurityLab = () => {
             </div>
           </div>
 
-          <div className="p-8 bg-white/5 rounded-[32px] border border-white/10">
+          <div className="p-8 bg-slate-100 rounded-[32px] border border-slate-200">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div>
-                <h3 className="text-xl font-black uppercase tracking-widest mb-2">Infrastructure Security</h3>
-                <p className="text-white/60 text-sm">Powered by Supabase with enterprise-grade security features.</p>
+                <h3 className="text-xl font-black uppercase tracking-widest mb-2 text-slate-900">Infrastructure Security</h3>
+                <p className="text-slate-600 text-sm font-medium">Powered by Supabase with enterprise-grade security features.</p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-black text-primary">256-bit</div>
-                  <div className="text-[10px] text-white/60 uppercase tracking-widest">AES Encryption</div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">AES Encryption</div>
                 </div>
-                <div className="w-px h-12 bg-white/10" />
+                <div className="w-px h-12 bg-slate-200" />
                 <div className="text-center">
-                  <div className="text-2xl font-black text-emerald-500">99.9%</div>
-                  <div className="text-[10px] text-white/60 uppercase tracking-widest">Uptime SLA</div>
+                  <div className="text-2xl font-black text-emerald-600">99.9%</div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Uptime SLA</div>
                 </div>
               </div>
             </div>
