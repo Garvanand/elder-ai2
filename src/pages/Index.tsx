@@ -306,27 +306,8 @@ const Index = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="py-20 border-t border-black/5 px-6 bg-white/20 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex items-center gap-4 group">
-            <div className="p-3 bg-primary rounded-2xl text-white shadow-xl">
-              <Brain className="w-8 h-8" />
-            </div>
-            <span className="font-black text-3xl tracking-tighter uppercase group-hover:text-primary transition-colors">MemoryFriend</span>
-          </div>
-          <div className="flex gap-12 text-sm font-black uppercase tracking-widest text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">Privacy Prot</a>
-            <a href="#" className="hover:text-primary transition-colors">Terms of Ops</a>
-            <a href="#" className="hover:text-primary transition-colors">Support Link</a>
-          </div>
-          <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest opacity-50">© 2025 Neural Core v1.0.4</p>
-        </div>
-      </footer>
-
-      <GuestModeModal isOpen={showGuestModal} onClose={() => setShowGuestModal(false)} />
-    </div>
-  );
-};
-
-export default Index;
+      </div>
+    );
+  };
+  
+  export default Index;

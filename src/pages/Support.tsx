@@ -18,7 +18,10 @@ import {
   CheckCircle2,
   LifeBuoy,
   X,
-  Loader2
+  Loader2,
+  Zap,
+  Database,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,14 +106,14 @@ const Support = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 text-cyan-400 text-sm font-medium border border-cyan-500/20"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold uppercase tracking-widest border border-primary/20"
         >
           <LifeBuoy size={16} /> 24/7 Intelligent Support
         </motion.div>
-        <h1 className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 animate-gradient-x">
-          How can we help you today?
+        <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase text-slate-900 leading-none">
+          How can we <span className="text-primary italic text-6xl md:text-8xl block md:inline">Help</span>?
         </h1>
-        <p className="text-xl text-white/60 max-w-2xl mx-auto">
+        <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium">
           Choose your category for personalized assistance or use our AI-powered Smart Help system.
         </p>
       </section>
@@ -123,17 +126,17 @@ const Support = () => {
             whileHover={{ y: -5 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setActiveCategory(cat.id)}
-            className={`p-8 rounded-3xl border transition-all duration-300 flex flex-col items-center gap-4 text-center ${
+            className={`p-8 rounded-[40px] border transition-all duration-500 flex flex-col items-center gap-4 text-center ${
               activeCategory === cat.id 
-              ? 'bg-white/10 border-white/20 shadow-lg shadow-white/5' 
-              : 'bg-white/5 border-white/5 hover:border-white/10'
+              ? 'bg-white border-white shadow-2xl shadow-primary/20 scale-105' 
+              : 'bg-white/40 border-white/60 hover:border-white hover:bg-white/60'
             }`}
           >
-            <div className={`p-4 rounded-2xl ${cat.bg} ${cat.color}`}>
-              <cat.icon size={32} />
+            <div className={`p-5 rounded-3xl ${cat.bg} ${cat.color} group-hover:scale-110 transition-transform duration-500 shadow-inner`}>
+              <cat.icon size={40} />
             </div>
             <div>
-              <h3 className={`font-bold text-lg ${activeCategory === cat.id ? 'text-white' : 'text-white/60'}`}>
+              <h3 className={`font-black uppercase tracking-tighter text-xl ${activeCategory === cat.id ? 'text-slate-900' : 'text-slate-400'}`}>
                 {cat.label}
               </h3>
             </div>
@@ -142,60 +145,64 @@ const Support = () => {
       </section>
 
       {/* Smart Help AI Section */}
-      <section className="bg-gradient-to-br from-purple-500/10 to-cyan-500/10 rounded-[2rem] p-8 md:p-12 border border-white/10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <HelpCircle size={200} className="text-cyan-400" />
+      <section className="bg-white/40 backdrop-blur-2xl rounded-[60px] p-10 md:p-16 border border-white shadow-2xl shadow-black/5 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transition-transform duration-1000 group-hover:scale-110 group-hover:rotate-12">
+          <HelpCircle size={300} className="text-primary" />
         </div>
         
-        <div className="relative z-10 max-w-3xl space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-              <span className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400">
-                <Search size={24} />
-              </span>
+        <div className="relative z-10 max-w-3xl space-y-10">
+          <div className="space-y-3">
+            <h2 className="text-4xl font-black text-slate-900 flex items-center gap-4 uppercase tracking-tighter">
+              <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                <Search size={32} />
+              </div>
               Smart Help AI
             </h2>
-            <p className="text-white/60">Ask anything! Our AI will find the best answers and guides for you.</p>
+            <p className="text-slate-500 font-medium text-lg">Neural core active. Ask anything to access the global knowledge base.</p>
           </div>
 
-          <form onSubmit={handleAiSearch} className="flex gap-4 p-2 bg-black/40 rounded-2xl border border-white/10">
+          <form onSubmit={handleAiSearch} className="flex flex-col sm:flex-row gap-4 p-3 bg-white/80 rounded-3xl border border-white shadow-xl shadow-black/5">
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="e.g. How do I add a memory?"
-              className="bg-transparent border-none text-lg h-12 focus-visible:ring-0 placeholder:text-white/30"
+              placeholder="e.g. How do I synchronize my neural bank?"
+              className="bg-transparent border-none text-xl h-14 focus-visible:ring-0 placeholder:text-slate-300 font-medium"
             />
             <Button 
               disabled={isAiLoading}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl px-8 h-12"
+              className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-14 text-lg font-black uppercase tracking-widest shadow-lg shadow-primary/20"
             >
-              {isAiLoading ? <Loader2 className="animate-spin" /> : "Ask AI"}
+              {isAiLoading ? <Loader2 className="animate-spin" /> : "Initiate Ask"}
             </Button>
           </form>
 
           <AnimatePresence mode="wait">
             {aiResponse && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4"
+                exit={{ opacity: 0, y: -20 }}
+                className="p-10 rounded-[40px] bg-slate-900 text-white shadow-2xl relative overflow-hidden"
               >
-                <div className="flex justify-between items-start">
-                  <p className="text-lg text-white/80 leading-relaxed">{aiResponse}</p>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-white/40 hover:text-white"
-                    onClick={() => speak(aiResponse)}
-                  >
-                    <Volume2 size={20} />
-                  </Button>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="link" className="text-cyan-400 p-0 h-auto flex items-center gap-2">
-                    View full guide <ArrowRight size={16} />
-                  </Button>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent" />
+                <div className="space-y-6">
+                  <div className="flex justify-between items-start gap-8">
+                    <p className="text-xl text-white/90 leading-relaxed font-medium italic">"{aiResponse}"</p>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-white/40 hover:text-primary hover:bg-white/10 flex-shrink-0"
+                      onClick={() => speak(aiResponse)}
+                    >
+                      <Volume2 size={24} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <Button variant="link" className="text-primary p-0 h-auto flex items-center gap-2 font-black uppercase tracking-widest text-xs hover:text-white transition-colors">
+                      Deep Protocol Scan <ArrowRight size={16} />
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -204,30 +211,41 @@ const Support = () => {
       </section>
 
       {/* Multi-Channel Support Tabs */}
-      <section className="space-y-8">
-        <h2 className="text-3xl font-bold text-white text-center">More Support Options</h2>
+      <section className="space-y-12">
+        <h2 className="text-4xl font-black text-slate-900 text-center uppercase tracking-tighter">Support Channels</h2>
         <Tabs defaultValue="faq" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white/5 p-1 rounded-2xl h-auto">
-            <TabsTrigger value="faq" className="rounded-xl py-4 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">FAQ</TabsTrigger>
-            <TabsTrigger value="tickets" className="rounded-xl py-4 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400">Ticket System</TabsTrigger>
-            <TabsTrigger value="video" className="rounded-xl py-4 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400">Video Support</TabsTrigger>
-            <TabsTrigger value="phone" className="rounded-xl py-4 data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-400">Phone & Email</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white/40 backdrop-blur-md p-2 rounded-3xl h-auto border border-white gap-2">
+            {[
+              { value: 'faq', label: 'Neural FAQ', icon: MessageSquare },
+              { value: 'tickets', label: 'Ticket Hub', icon: LifeBuoy },
+              { value: 'video', label: 'Video Sync', icon: Video },
+              { value: 'phone', label: 'Direct Comm', icon: Phone }
+            ].map(tab => (
+              <TabsTrigger 
+                key={tab.value}
+                value={tab.value} 
+                className="rounded-2xl py-5 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-xl font-black uppercase tracking-widest text-xs gap-2"
+              >
+                <tab.icon size={16} />
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          <div className="mt-8">
+          <div className="mt-12">
             <TabsContent value="faq" className="space-y-6">
-              <Accordion type="single" collapsible className="space-y-4">
+              <Accordion type="single" collapsible className="space-y-6">
                 {[
-                  { q: "How do I reset my password?", a: "Go to the login page, click 'Forgot Password', and follow the instructions sent to your registered email." },
-                  { q: "Can I manage multiple elder accounts?", a: "Yes, caregivers can link multiple elders from their dashboard. Go to 'Settings' > 'Link Elder'." },
-                  { q: "Is my medical data secure?", a: "Absolutely. We use end-to-end encryption and follow strict HIPAA-compliant practices for all health-related data." },
-                  { q: "How does the AI memory extraction work?", a: "Our AI analyzes your conversations or voice logs to automatically identify events, people, and emotions, organizing them into a visual timeline." }
+                  { q: "How do I reset my credentials?", a: "Go to the authentication portal, initiate 'Credential Recovery', and follow the neural-link instructions sent to your registered node." },
+                  { q: "Can I manage multiple elder entities?", a: "Yes, caregiver nodes can synchronize with multiple elders from their primary dashboard. Protocol: 'Settings' > 'Link Entity'." },
+                  { q: "Is my biological data encrypted?", a: "Every byte of medical data is protected by quantum-resistant encryption (QRE) and adheres to global Bio-Ethics standards." },
+                  { q: "How does the AI memory synthesis operate?", a: "Our engine processes natural language and emotional frequency to automatically archive events, entities, and sentiments into a persistent legacy timeline." }
                 ].map((faq, i) => (
-                  <AccordionItem key={i} value={`item-${i}`} className="bg-white/5 border border-white/10 rounded-2xl px-6 border-none overflow-hidden">
-                    <AccordionTrigger className="text-lg font-medium text-white/90 hover:no-underline hover:text-cyan-400">
+                  <AccordionItem key={i} value={`item-${i}`} className="bg-white/60 backdrop-blur-md border border-white rounded-[32px] px-8 border-none overflow-hidden shadow-xl shadow-black/5 hover:bg-white transition-all duration-500">
+                    <AccordionTrigger className="text-xl font-black text-slate-900 hover:no-underline hover:text-primary uppercase tracking-tighter py-8">
                       {faq.q}
                     </AccordionTrigger>
-                    <AccordionContent className="text-white/60 text-lg leading-relaxed pb-6">
+                    <AccordionContent className="text-slate-600 text-lg leading-relaxed pb-8 font-medium italic">
                       {faq.a}
                     </AccordionContent>
                   </AccordionItem>
@@ -236,103 +254,108 @@ const Support = () => {
             </TabsContent>
 
             <TabsContent value="tickets">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-white">Open a Support Ticket</h3>
-                  <p className="text-white/60 leading-relaxed">
-                    Have a complex issue? Submit a ticket and our technical team will get back to you within 24 hours.
+              <div className="grid md:grid-cols-2 gap-20 items-center">
+                <div className="space-y-8">
+                  <h3 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Initiate Support Ticket</h3>
+                  <p className="text-slate-500 font-medium text-lg leading-relaxed">
+                    Experiencing a system anomaly? Submit a high-priority ticket and our neural-technicians will respond within 24 standard hours.
                   </p>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 text-cyan-400">
-                      <CheckCircle2 size={20} />
-                      <span>Direct route to garvanand03@gmail.com</span>
+                  <div className="space-y-4 font-black uppercase tracking-widest text-xs">
+                    <div className="flex items-center gap-4 text-emerald-600">
+                      <div className="p-1 rounded-full bg-emerald-100"><CheckCircle2 size={16} /></div>
+                      <span>Priority node: garvanand03@gmail.com</span>
                     </div>
-                    <div className="flex items-center gap-3 text-purple-400">
-                      <CheckCircle2 size={20} />
-                      <span>Priority tracking for clinicians</span>
+                    <div className="flex items-center gap-4 text-primary">
+                      <div className="p-1 rounded-full bg-primary/10"><CheckCircle2 size={16} /></div>
+                      <span>Clinical suite tracking enabled</span>
                     </div>
                   </div>
                 </div>
-                <form onSubmit={handleSubmitTicket} className="bg-white/5 p-8 rounded-3xl border border-white/10 space-y-4">
+                <form onSubmit={handleSubmitTicket} className="bg-white p-10 rounded-[40px] border border-white shadow-2xl shadow-primary/5 space-y-6 scale-105">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/60">Issue Type</label>
-                    <select className="w-full bg-black/40 border-white/10 rounded-xl p-3 text-white focus:ring-cyan-500">
-                      <option>Technical Issue</option>
-                      <option>Account Access</option>
-                      <option>Billing</option>
-                      <option>Feature Request</option>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">Anomaly Type</label>
+                    <select className="w-full bg-slate-50 border-slate-100 rounded-2xl p-4 text-slate-900 font-bold focus:ring-primary appearance-none cursor-pointer">
+                      <option>System Malfunction</option>
+                      <option>Entity Synchronization</option>
+                      <option>Resource Billing</option>
+                      <option>Protocol Request</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/60">Description</label>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">System Report</label>
                     <Textarea 
-                      placeholder="Tell us what's happening..." 
-                      className="bg-black/40 border-white/10 rounded-xl h-32"
+                      placeholder="Detail the anomaly parameters..." 
+                      className="bg-slate-50 border-slate-100 rounded-2xl h-40 font-medium text-lg focus-visible:ring-primary p-4"
                     />
                   </div>
                   <Button 
-                    className="w-full bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl py-6"
+                    className="w-full bg-primary hover:bg-primary/90 text-white rounded-2xl py-8 font-black uppercase tracking-[0.2em] text-sm shadow-xl shadow-primary/20"
                     disabled={ticketStatus !== 'idle'}
                   >
                     {ticketStatus === 'sending' ? <Loader2 className="animate-spin" /> : 
-                     ticketStatus === 'success' ? "Ticket Sent!" : "Submit Ticket"}
+                     ticketStatus === 'success' ? "Transmission Success!" : "Transmit Ticket"}
                   </Button>
                 </form>
               </div>
             </TabsContent>
 
             <TabsContent value="video" className="space-y-12">
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-10">
                 {[
-                  { title: "Getting Started", duration: "2:45", thumbnail: "bg-purple-500/20" },
-                  { title: "Managing Memories", duration: "4:12", thumbnail: "bg-cyan-500/20" },
-                  { title: "Health Monitoring", duration: "3:30", thumbnail: "bg-rose-500/20" },
+                  { title: "Node Initialization", duration: "2:45", thumbnail: "bg-primary/10", icon: Zap },
+                  { title: "Archive Management", duration: "4:12", thumbnail: "bg-accent/10", icon: Database },
+                  { title: "Health Telemetry", duration: "3:30", thumbnail: "bg-rose-500/10", icon: Activity },
                 ].map((v, i) => (
                   <motion.div 
                     key={i} 
-                    whileHover={{ scale: 1.05 }}
-                    className="group cursor-pointer space-y-4"
+                    whileHover={{ scale: 1.05, y: -10 }}
+                    className="group cursor-pointer space-y-6"
                   >
-                    <div className={`aspect-video rounded-2xl ${v.thumbnail} border border-white/10 flex items-center justify-center relative overflow-hidden`}>
-                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
-                      <div className="p-4 rounded-full bg-white/20 backdrop-blur-md group-hover:scale-110 transition-transform">
-                        <Video size={32} className="text-white" />
+                    <div className={`aspect-video rounded-[32px] ${v.thumbnail} border border-white shadow-xl flex items-center justify-center relative overflow-hidden`}>
+                      <div className="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-colors" />
+                      <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-md group-hover:scale-110 transition-all duration-500 shadow-xl text-primary">
+                        <v.icon size={40} />
                       </div>
-                      <span className="absolute bottom-4 right-4 text-xs font-mono bg-black/60 px-2 py-1 rounded text-white">{v.duration}</span>
+                      <span className="absolute bottom-6 right-6 text-xs font-black tracking-widest bg-slate-900/80 px-3 py-1.5 rounded-full text-white backdrop-blur-md uppercase">{v.duration}</span>
                     </div>
-                    <h4 className="font-semibold text-white group-hover:text-cyan-400 transition-colors">{v.title}</h4>
+                    <h4 className="font-black text-slate-900 group-hover:text-primary transition-colors text-xl uppercase tracking-tighter">{v.title}</h4>
                   </motion.div>
                 ))}
               </div>
-              <div className="bg-orange-500/10 border border-orange-500/20 rounded-3xl p-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-white">Need Hands-on Help?</h3>
-                  <p className="text-white/60">Schedule a 1-on-1 video call with our support specialists.</p>
+              <div className="bg-slate-900 rounded-[40px] p-12 flex flex-col md:flex-row justify-between items-center gap-10 text-white shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-rose-500" />
+                <div className="space-y-3 relative z-10 text-center md:text-left">
+                  <h3 className="text-3xl font-black uppercase tracking-tighter">Request Human Sync?</h3>
+                  <p className="text-white/60 font-medium text-lg">Schedule a high-bandwidth video consultation with a support engineer.</p>
                 </div>
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-8 py-6 h-auto">
-                  Schedule a Call
+                <Button className="bg-white text-slate-900 hover:bg-slate-100 rounded-2xl px-12 py-8 h-auto font-black uppercase tracking-widest text-sm shadow-xl transition-all hover:scale-105">
+                  Schedule Uplink
                 </Button>
               </div>
             </TabsContent>
 
-            <TabsContent value="phone" className="grid md:grid-cols-2 gap-8">
-              <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/10 space-y-6">
-                <div className="p-4 w-fit rounded-2xl bg-rose-500/20 text-rose-400">
-                  <Phone size={32} />
+            <TabsContent value="phone" className="grid md:grid-cols-2 gap-10">
+              <div className="p-12 rounded-[40px] bg-white border border-white shadow-2xl shadow-black/5 space-y-8 group hover:bg-slate-900 hover:text-white transition-all duration-500">
+                <div className="p-5 w-fit rounded-3xl bg-rose-500/10 text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all duration-500">
+                  <Phone size={40} />
                 </div>
-                <h3 className="text-2xl font-bold text-white">Direct Hotline</h3>
-                <p className="text-white/60 leading-relaxed">Call us directly for urgent matters. Available 9 AM - 6 PM IST.</p>
-                <div className="text-2xl font-mono text-rose-400">+91 80541 82892</div>
-                <Button variant="outline" className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10">Request Call-back</Button>
+                <div className="space-y-4">
+                  <h3 className="text-3xl font-black uppercase tracking-tighter">Direct Comm Line</h3>
+                  <p className="text-slate-500 font-medium text-lg leading-relaxed group-hover:text-white/60">Voice-to-voice synchronization for urgent system criticalities.</p>
+                  <div className="text-3xl font-black tracking-tighter text-primary group-hover:text-white">+91 80541 82892</div>
+                </div>
+                <Button variant="outline" className="border-slate-200 text-slate-900 rounded-2xl h-14 font-black uppercase tracking-widest text-xs px-8 group-hover:border-white/20 group-hover:text-white">Request Callback</Button>
               </div>
-              <div className="p-8 rounded-3xl bg-cyan-500/5 border border-cyan-500/10 space-y-6">
-                <div className="p-4 w-fit rounded-2xl bg-cyan-500/20 text-cyan-400">
-                  <Mail size={32} />
+              <div className="p-12 rounded-[40px] bg-white border border-white shadow-2xl shadow-black/5 space-y-8 group hover:bg-slate-900 hover:text-white transition-all duration-500">
+                <div className="p-5 w-fit rounded-3xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                  <Mail size={40} />
                 </div>
-                <h3 className="text-2xl font-bold text-white">Email Support</h3>
-                <p className="text-white/60 leading-relaxed">Send us your detailed queries and we'll reply within a business day.</p>
-                <div className="text-2xl font-mono text-cyan-400">garvanand03@gmail.com</div>
-                <Button variant="outline" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">Draft Email</Button>
+                <div className="space-y-4">
+                  <h3 className="text-3xl font-black uppercase tracking-tighter">Neural Mail</h3>
+                  <p className="text-slate-500 font-medium text-lg leading-relaxed group-hover:text-white/60">Submit long-form asynchronous queries to the core engineering team.</p>
+                  <div className="text-3xl font-black tracking-tighter text-primary group-hover:text-white overflow-hidden text-ellipsis">garvanand03@gmail.com</div>
+                </div>
+                <Button variant="outline" className="border-slate-200 text-slate-900 rounded-2xl h-14 font-black uppercase tracking-widest text-xs px-8 group-hover:border-white/20 group-hover:text-white">Compose Message</Button>
               </div>
             </TabsContent>
           </div>
@@ -340,46 +363,46 @@ const Support = () => {
       </section>
 
       {/* Floating Chat Bot UI */}
-      <div className="fixed bottom-24 right-8 z-50 flex flex-col items-end gap-4">
+      <div className="fixed bottom-24 right-8 z-50 flex flex-col items-end gap-6">
         <AnimatePresence>
           {isChatOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-80 md:w-96 h-[500px] bg-black/90 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              exit={{ opacity: 0, scale: 0.9, y: 50 }}
+              className="w-[90vw] md:w-96 h-[600px] bg-white/95 backdrop-blur-2xl border border-white rounded-[40px] shadow-[0_50px_100px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden"
             >
               {/* Chat Header */}
-              <div className="p-4 bg-gradient-to-r from-purple-600/80 to-cyan-600/80 border-b border-white/10 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-white/20">
-                    <MessageSquare size={18} className="text-white" />
+              <div className="p-8 bg-slate-900 border-b border-white/10 flex justify-between items-center text-white">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl bg-primary/20 text-primary ring-1 ring-primary/30">
+                    <Brain size={24} className="animate-pulse" />
                   </div>
                   <div>
-                    <h4 className="text-white font-bold text-sm">Instant Help</h4>
-                    <span className="text-white/60 text-xs flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> AI Agent Online
+                    <h4 className="font-black uppercase tracking-widest text-xs">Neural Assistant</h4>
+                    <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
                     </span>
                   </div>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-white/60 hover:text-white"
+                  className="text-white/40 hover:text-white hover:bg-white/10 rounded-xl"
                   onClick={() => setIsChatOpen(false)}
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </Button>
               </div>
 
               {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10">
+              <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                    <div className={`max-w-[85%] p-5 rounded-[24px] text-lg font-medium leading-relaxed ${
                       msg.role === 'user' 
-                      ? 'bg-cyan-500 text-white rounded-tr-none' 
-                      : 'bg-white/10 text-white/80 rounded-tl-none border border-white/5'
+                      ? 'bg-primary text-white rounded-tr-none shadow-xl shadow-primary/20' 
+                      : 'bg-slate-50 text-slate-600 rounded-tl-none border border-slate-100 shadow-sm'
                     }`}>
                       {msg.text}
                     </div>
@@ -387,39 +410,41 @@ const Support = () => {
                 ))}
                 {isAiLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white/10 p-3 rounded-2xl rounded-tl-none border border-white/5 flex gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce delay-100" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce delay-200" />
+                    <div className="bg-slate-50 p-5 rounded-[24px] rounded-tl-none border border-slate-100 flex gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" />
+                      <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce [animation-delay:0.2s]" />
+                      <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce [animation-delay:0.4s]" />
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Chat Input */}
-              <div className="p-4 bg-white/5 border-t border-white/10 flex gap-2">
+              <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex gap-4 items-center">
                 <Input 
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Type a message..."
-                  className="bg-black/40 border-white/10 rounded-xl"
+                  placeholder="Ask the collective..."
+                  className="bg-white border-slate-200 rounded-2xl h-16 px-6 text-lg font-medium focus-visible:ring-primary shadow-inner"
                 />
-                <Button size="icon" className="bg-cyan-500 hover:bg-cyan-600 shrink-0" onClick={handleSendMessage}>
-                  <Send size={18} />
+                <Button size="icon" className="w-16 h-16 rounded-2xl bg-primary hover:bg-primary/90 shrink-0 shadow-xl shadow-primary/20" onClick={handleSendMessage}>
+                  <Send size={24} />
                 </Button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <Button 
-          size="lg"
+        <motion.button 
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className="rounded-full w-16 h-16 bg-gradient-to-r from-purple-600 to-cyan-600 shadow-xl shadow-cyan-500/20 group"
+          className="w-20 h-20 rounded-3xl bg-slate-900 shadow-2xl shadow-black/20 flex items-center justify-center text-white relative group"
         >
-          {isChatOpen ? <X size={28} /> : <MessageSquare size={28} className="group-hover:scale-110 transition-transform" />}
-        </Button>
+          <div className="absolute inset-0 bg-primary opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl -z-10 blur-xl" />
+          {isChatOpen ? <X size={32} /> : <MessageSquare size={32} />}
+        </motion.button>
       </div>
     </div>
   );
