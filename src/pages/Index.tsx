@@ -304,8 +304,9 @@ const Index = () => {
             </div>
           </motion.div>
         </section>
-      </main>
-
+        </main>
+        
+        <GuestModeModal isOpen={showGuestModal} onClose={() => setShowGuestModal(false)} />
       </div>
     );
   };
