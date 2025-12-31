@@ -139,13 +139,12 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
     }
 
     try {
-      const { error } = await supabase.from('reminders').insert({
-        elder_id: elderId,
-        title: message,
-        scheduled_time: new Date().toISOString(),
-        is_recurring: false,
-        status: 'pending'
-      });
+        const { error } = await supabase.from('reminders').insert({
+          elder_id: elderId,
+          title: message,
+          due_at: new Date().toISOString(),
+          status: 'pending'
+        });
 
       if (error) throw error;
       toast.success('Message sent!');
@@ -193,13 +192,12 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
         return;
       }
 
-      const { error } = await supabase.from('reminders').insert({
-        elder_id: elderId,
-        title: reminderText,
-        scheduled_time: reminderTime || new Date().toISOString(),
-        is_recurring: false,
-        status: 'pending'
-      });
+        const { error } = await supabase.from('reminders').insert({
+          elder_id: elderId,
+          title: reminderText,
+          due_at: reminderTime || new Date().toISOString(),
+          status: 'pending'
+        });
 
       if (error) throw error;
       
@@ -223,12 +221,12 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
         return;
       }
 
-      const { error } = await supabase.from('activity_logs').insert({
-        elder_id: elderId,
-        activity_type: 'caregiver_message',
-        description: messageToElder,
-        metadata: { from: profile?.full_name || 'Caregiver' }
-      });
+        const { error } = await supabase.from('activity_logs').insert({
+          user_id: elderId,
+          action: 'caregiver_message',
+          entity_type: 'message',
+          metadata: { from: profile?.full_name || 'Caregiver', message: messageToElder }
+        });
 
       if (error) throw error;
       
