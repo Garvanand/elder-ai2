@@ -1,75 +1,65 @@
 import { Link } from "react-router-dom";
-import { Github, Twitter, Linkedin, Mail, Phone, LifeBuoy, Brain, Shield, Zap, Activity, Globe, Heart, MessageSquare } from "lucide-react";
+import { Github, Twitter, Linkedin, Mail, Phone, Brain, Globe, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const Footer = () => {
   return (
-    <footer className="relative w-full py-10 px-6 mt-10">
-      {/* Neural Link Decoration */}
+    <footer className="relative w-full py-8 px-6 mt-8">
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       
-      {/* Futuristic Background Container */}
-      <div className="max-w-7xl mx-auto relative group">
-        {/* Background Glow */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-primary/10 via-accent/10 to-purple-600/10 rounded-[32px] blur-xl group-hover:blur-2xl transition-all duration-1000 opacity-30" />
-        
-        <div className="relative bg-slate-950/80 backdrop-blur-2xl border border-white/5 rounded-[32px] p-8 md:p-12 overflow-hidden shadow-2xl">
-          {/* Animated Background Patterns */}
-          <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
-            <Globe className="w-64 h-64 text-primary animate-spin-[60s]" />
+      <div className="max-w-6xl mx-auto relative">
+        <div className="relative bg-slate-950/70 backdrop-blur-xl border border-white/5 rounded-[24px] p-6 md:p-8 overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+            <Globe className="w-40 h-40 text-primary" />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
-            {/* Brand Intelligence Column */}
-            <div className="lg:col-span-4 space-y-6">
-              <Link to="/" className="flex items-center gap-3 group/logo">
-                <div className="p-2 bg-gradient-to-br from-primary via-primary to-purple-600 rounded-xl text-white shadow-2xl shadow-primary/20 group-hover/logo:scale-110 transition-all duration-500">
-                  <Brain className="w-6 h-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+            <div className="lg:col-span-4 space-y-4">
+              <Link to="/" className="flex items-center gap-2 group/logo">
+                <div className="p-1.5 bg-gradient-to-br from-primary to-purple-600 rounded-lg text-white">
+                  <Brain className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-2xl font-black tracking-tighter uppercase text-white leading-none">
+                  <span className="text-xl font-black tracking-tighter uppercase text-white leading-none">
                     Memory<span className="text-primary italic">Friend</span>
                   </span>
-                  <span className="text-[8px] font-black tracking-[0.4em] uppercase text-primary/60 mt-1">Neural Core v1.0.4</span>
+                  <span className="text-[7px] font-black tracking-[0.3em] uppercase text-primary/50">v1.0.4</span>
                 </div>
               </Link>
               
-              <p className="text-white/50 text-base leading-relaxed max-w-sm font-medium">
-                Decentralised ecosystem designed to preserve human legacy through <span className="text-white">Neural Synthesis</span>.
+              <p className="text-white/40 text-sm leading-relaxed max-w-xs">
+                AI-powered memory care platform for elders and caregivers.
               </p>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {[
-                  { icon: Twitter, href: "#", color: "hover:bg-sky-500" },
-                  { icon: Linkedin, href: "#", color: "hover:bg-blue-600" },
-                  { icon: Github, href: "#", color: "hover:bg-slate-800" }
+                  { icon: Twitter, href: "#" },
+                  { icon: Linkedin, href: "#" },
+                  { icon: Github, href: "#" }
                 ].map((social, i) => (
-                  <motion.a
+                  <a
                     key={i}
                     href={social.href}
-                    whileHover={{ y: -4, scale: 1.05 }}
-                    className={`p-3 bg-white/5 rounded-xl text-white/30 hover:text-white transition-all duration-500 border border-white/5 ${social.color} hover:border-transparent`}
+                    className="p-2 bg-white/5 rounded-lg text-white/30 hover:text-white hover:bg-white/10 transition-all border border-white/5"
                   >
-                    <social.icon size={18} />
-                  </motion.a>
+                    <social.icon size={14} />
+                  </a>
                 ))}
               </div>
             </div>
 
-            {/* Navigation Matrix */}
-            <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-8">
-              <div className="space-y-6">
-                <h4 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Ecosystem</h4>
-                <ul className="space-y-3">
+            <div className="lg:col-span-8 grid grid-cols-3 gap-6">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Platform</h4>
+                <ul className="space-y-2">
                   {[
                     { label: "Elder Portal", to: "/elder" },
-                    { label: "Caregiver Axis", to: "/caregiver" },
-                    { label: "Clinical Suite", to: "/clinician" },
-                    { label: "Family Cloud", to: "/family" }
+                    { label: "Caregiver", to: "/caregiver" },
+                    { label: "Clinician", to: "/clinician" },
+                    { label: "Family", to: "/family" }
                   ].map((link) => (
                     <li key={link.label}>
-                      <Link to={link.to} className="text-white/40 hover:text-white transition-all font-bold hover:pl-2 duration-300 block text-sm group/link">
-                        <span className="group-hover/link:text-primary transition-colors inline-block mr-2 opacity-0 group-hover/link:opacity-100 -ml-4 group-hover/link:ml-0">•</span>
+                      <Link to={link.to} className="text-white/30 hover:text-white transition-colors text-xs font-semibold">
                         {link.label}
                       </Link>
                     </li>
@@ -77,18 +67,17 @@ export const Footer = () => {
                 </ul>
               </div>
 
-              <div className="space-y-6">
-                <h4 className="text-xs font-black uppercase tracking-[0.3em] text-accent">Intelligence</h4>
-                <ul className="space-y-3">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Resources</h4>
+                <ul className="space-y-2">
                   {[
-                    { label: "Smart Help", to: "/support" },
-                    { label: "Neural FAQ", to: "/support" },
-                    { label: "Network Status", to: "/status" },
-                    { label: "Uplink Docs", to: "/docs" }
+                    { label: "Support", to: "/support" },
+                    { label: "Status", to: "/status" },
+                    { label: "Docs", to: "/docs" },
+                    { label: "Security", to: "/security" }
                   ].map((link) => (
                     <li key={link.label}>
-                      <Link to={link.to} className="text-white/40 hover:text-white transition-all font-bold hover:pl-2 duration-300 block text-sm group/link">
-                        <span className="group-hover/link:text-accent transition-colors inline-block mr-2 opacity-0 group-hover/link:opacity-100 -ml-4 group-hover/link:ml-0">•</span>
+                      <Link to={link.to} className="text-white/30 hover:text-white transition-colors text-xs font-semibold">
                         {link.label}
                       </Link>
                     </li>
@@ -96,18 +85,15 @@ export const Footer = () => {
                 </ul>
               </div>
 
-              <div className="space-y-6 col-span-2 sm:col-span-1">
-                <h4 className="text-xs font-black uppercase tracking-[0.3em] text-purple-400">Governance</h4>
-                <ul className="space-y-3">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400">Legal</h4>
+                <ul className="space-y-2">
                   {[
-                    { label: "Privacy Protocol", to: "/privacy" },
-                    { label: "Terms of Ops", to: "/terms" },
-                    { label: "Bio-Ethics", to: "#" },
-                    { label: "Security Lab", to: "/security" }
+                    { label: "Privacy", to: "/privacy" },
+                    { label: "Terms", to: "/terms" }
                   ].map((link) => (
                     <li key={link.label}>
-                      <Link to={link.to} className="text-white/40 hover:text-white transition-all font-bold hover:pl-2 duration-300 block text-sm group/link">
-                        <span className="group-hover/link:text-purple-400 transition-colors inline-block mr-2 opacity-0 group-hover/link:opacity-100 -ml-4 group-hover/link:ml-0">•</span>
+                      <Link to={link.to} className="text-white/30 hover:text-white transition-colors text-xs font-semibold">
                         {link.label}
                       </Link>
                     </li>
@@ -117,51 +103,41 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Bottom Terminal Bar */}
-          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex flex-wrap justify-center md:justify-start items-center gap-6 text-[10px] font-black uppercase tracking-widest">
-              <div className="flex items-center gap-2 text-white/20 hover:text-white transition-colors cursor-pointer group/contact">
-                <Mail size={12} className="group-hover/contact:text-primary" />
+          <div className="mt-8 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-4 text-[9px] font-semibold text-white/20">
+              <div className="flex items-center gap-1.5">
+                <Mail size={10} />
                 garvanand03@gmail.com
               </div>
-              <div className="flex items-center gap-2 text-white/20 hover:text-white transition-colors cursor-pointer group/contact">
-                <Phone size={12} className="group-hover/contact:text-primary" />
+              <div className="flex items-center gap-1.5">
+                <Phone size={10} />
                 +91 80541 82892
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/10">
-                © 2025 ALL PROTOCOLS RESERVED
-              </div>
-              <div className="flex items-center gap-2 px-2 py-0.5 rounded-full bg-emerald-500/5 text-emerald-500 text-[8px] font-black uppercase tracking-widest border border-emerald-500/10">
+            <div className="flex items-center gap-3">
+              <span className="text-[8px] font-semibold text-white/10">© 2025 MemoryFriend</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[7px] font-bold border border-emerald-500/20">
                 <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                Network: Stable
+                Online
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Futuristic Floating Help Button */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 1.5, type: "spring" }}
-        className="fixed bottom-10 right-10 z-50"
+        className="fixed bottom-6 right-6 z-50"
       >
         <Link 
           to="/support"
-          className="relative flex items-center gap-4 p-5 bg-primary text-white rounded-3xl shadow-[0_20px_60px_rgba(var(--primary-rgb),0.5)] hover:scale-110 transition-all duration-500 group overflow-hidden border border-white/20"
+          className="flex items-center gap-2 px-4 py-3 bg-primary text-white rounded-2xl shadow-lg hover:scale-105 transition-all group"
         >
-          <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
-          <div className="relative z-10 p-2 bg-white/20 rounded-xl group-hover:rotate-12 transition-transform">
-            <MessageSquare className="w-6 h-6" />
-          </div>
-          <div className="relative z-10 flex flex-col pr-2">
-            <span className="font-black tracking-[0.2em] uppercase text-[10px] opacity-70 leading-none mb-1">Support</span>
-            <span className="font-black tracking-widest uppercase text-xs leading-none">AI Assistant</span>
-          </div>
+          <MessageSquare className="w-4 h-4" />
+          <span className="font-bold text-xs">Help</span>
         </Link>
       </motion.div>
     </footer>

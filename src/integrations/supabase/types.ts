@@ -137,28 +137,136 @@ export type Database = {
         }
         Relationships: []
       }
-      caregiver_elder_links: {
-        Row: {
-          id: string
-          caregiver_user_id: string
-          elder_user_id: string
-          created_at: string
+        caregiver_elder_links: {
+          Row: {
+            id: string
+            caregiver_user_id: string
+            elder_user_id: string
+            created_at: string
+          }
+          Insert: {
+            id?: string
+            caregiver_user_id: string
+            elder_user_id: string
+            created_at?: string
+          }
+          Update: {
+            id?: string
+            caregiver_user_id?: string
+            elder_user_id?: string
+            created_at?: string
+          }
+          Relationships: []
         }
-        Insert: {
-          id?: string
-          caregiver_user_id: string
-          elder_user_id: string
-          created_at?: string
+        service_status: {
+          Row: {
+            id: string
+            service_name: string
+            status: 'operational' | 'degraded' | 'outage'
+            uptime_percentage: number
+            response_time_ms: number
+            last_checked: string
+            created_at: string
+          }
+          Insert: {
+            id?: string
+            service_name: string
+            status?: 'operational' | 'degraded' | 'outage'
+            uptime_percentage?: number
+            response_time_ms?: number
+            last_checked?: string
+            created_at?: string
+          }
+          Update: {
+            id?: string
+            service_name?: string
+            status?: 'operational' | 'degraded' | 'outage'
+            uptime_percentage?: number
+            response_time_ms?: number
+            last_checked?: string
+            created_at?: string
+          }
+          Relationships: []
         }
-        Update: {
-          id?: string
-          caregiver_user_id?: string
-          elder_user_id?: string
-          created_at?: string
+        incidents: {
+          Row: {
+            id: string
+            title: string
+            description: string | null
+            status: 'resolved' | 'investigating' | 'identified' | 'monitoring'
+            severity: 'minor' | 'major' | 'critical'
+            created_at: string
+            resolved_at: string | null
+          }
+          Insert: {
+            id?: string
+            title: string
+            description?: string | null
+            status?: 'resolved' | 'investigating' | 'identified' | 'monitoring'
+            severity?: 'minor' | 'major' | 'critical'
+            created_at?: string
+            resolved_at?: string | null
+          }
+          Update: {
+            id?: string
+            title?: string
+            description?: string | null
+            status?: 'resolved' | 'investigating' | 'identified' | 'monitoring'
+            severity?: 'minor' | 'major' | 'critical'
+            created_at?: string
+            resolved_at?: string | null
+          }
+          Relationships: []
         }
-        Relationships: []
+        security_logs: {
+          Row: {
+            id: string
+            event_type: string
+            message: string
+            severity: 'info' | 'warning' | 'error'
+            created_at: string
+          }
+          Insert: {
+            id?: string
+            event_type: string
+            message: string
+            severity?: 'info' | 'warning' | 'error'
+            created_at?: string
+          }
+          Update: {
+            id?: string
+            event_type?: string
+            message?: string
+            severity?: 'info' | 'warning' | 'error'
+            created_at?: string
+          }
+          Relationships: []
+        }
+        security_metrics: {
+          Row: {
+            id: string
+            metric_name: string
+            metric_value: number
+            status: string
+            updated_at: string
+          }
+          Insert: {
+            id?: string
+            metric_name: string
+            metric_value?: number
+            status?: string
+            updated_at?: string
+          }
+          Update: {
+            id?: string
+            metric_name?: string
+            metric_value?: number
+            status?: string
+            updated_at?: string
+          }
+          Relationships: []
+        }
       }
-    }
     Views: {
       [_ in never]: never
     }
