@@ -375,6 +375,39 @@ export async function extractMemoryIntelligence(rawText: string): Promise<{
   }
 }
 
+export async function getSupportAIResponse(query: string, category: string = 'general'): Promise<string> {
+  const apiKey = getGroqApiKey();
+  if (!apiKey) return "I'm sorry, I'm having trouble connecting to my support system. Please try again later or contact our team directly at garvanand03@gmail.com.";
+
+  try {
+    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+    
+    const categoryPrompts: Record<string, string> = {
+      elder: "You are an elder-friendly support assistant. Use simple words, warm tone, and short sentences. Help the user with using the app, viewing memories, or getting help.",
+      caregiver: "You are a professional support assistant for family caregivers. Provide clear, actionable advice on managing elder accounts, tracking health metrics, and using caregiving tools.",
+      clinician: "You are a medical-technical support assistant for clinicians. Focus on data privacy (HIPAA compliance), secure communication channels, and technical integration of health monitoring tools.",
+      general: "You are a helpful support assistant for Elder AI. Help the user with account issues, troubleshooting, and general information about the platform."
+    };
+
+    const systemPrompt = categoryPrompts[category] || categoryPrompts.general;
+    const prompt = `${systemPrompt}\nUser Query: "${query}"\nAnswer (warm, helpful, 2-3 sentences):`;
+
+    const completion = await withRetry(() => groq.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: query }
+      ],
+      model: GROQ_MODEL,
+      temperature: 0.6,
+      max_tokens: 250,
+    }));
+
+    return completion.choices[0].message.content?.trim() || "I'm here to help! Could you please tell me more about what you need?";
+  } catch (error) {
+    return "I'm having a little trouble right now. Please reach out to garvanand03@gmail.com for immediate assistance.";
+  }
+}
+
 export function matchMemoriesByKeyword(question: string, memories: Memory[]): Memory[] {
   const keywords = question.toLowerCase().replace(/[?.,!]/g, '').split(' ').filter(word => word.length > 3);
   return memories.filter(m => {
