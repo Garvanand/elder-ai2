@@ -105,29 +105,101 @@ const Support = () => {
     }
   };
 
+  const getEmailTemplate = (type: string, details: any) => {
+    const isTicket = type === 'ticket';
+    const accentColor = isTicket ? '#6366f1' : '#f43f5e';
+    const typeLabel = isTicket ? 'Support Ticket' : 'Callback Request';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${typeLabel}</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #1e293b;">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+            <!-- Header -->
+            <tr>
+              <td style="padding: 40px 40px 30px; background: linear-gradient(135deg, ${accentColor} 0%, #4338ca 100%); text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -0.025em; text-transform: uppercase;">Elder AI</h1>
+                <p style="margin: 10px 0 0; color: rgba(255, 255, 255, 0.8); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Neural Support Link</p>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding: 40px;">
+                <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px; font-weight: 800; letter-spacing: -0.025em;">New ${typeLabel} Received</h2>
+                <p style="margin: 0 0 30px; color: #64748b; font-size: 16px; line-height: 1.6;">A new ${type === 'ticket' ? 'system anomaly report' : 'human-to-human sync request'} has been transmitted to your node.</p>
+
+                <!-- Details Table -->
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f1f5f9; border-radius: 16px; border-collapse: separate; border-spacing: 0;">
+                  ${details.name ? `
+                  <tr>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #64748b; font-weight: 600; width: 30%;">User Identity</td>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a; font-weight: 700;">${details.name}</td>
+                  </tr>` : ''}
+                  ${details.phone ? `
+                  <tr>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #64748b; font-weight: 600;">Comm Number</td>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a; font-weight: 700;">${details.phone}</td>
+                  </tr>` : ''}
+                  ${details.time ? `
+                  <tr>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #64748b; font-weight: 600;">Sync Window</td>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a; font-weight: 700;">${details.time}</td>
+                  </tr>` : ''}
+                  ${details.category ? `
+                  <tr>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #64748b; font-weight: 600;">Anomaly Type</td>
+                    <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a; font-weight: 700;">
+                      <span style="background-color: ${accentColor}15; color: ${accentColor}; padding: 4px 12px; border-radius: 99px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">${details.category}</span>
+                    </td>
+                  </tr>` : ''}
+                  <tr>
+                    <td style="padding: 16px 20px; font-size: 14px; color: #64748b; font-weight: 600;">Timestamp</td>
+                    <td style="padding: 16px 20px; font-size: 14px; color: #0f172a; font-weight: 700;">${format(new Date(), 'MMM d, yyyy • HH:mm:ss')}</td>
+                  </tr>
+                </table>
+
+                <!-- Content Area -->
+                <div style="margin-top: 30px;">
+                  <h3 style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Transmission Log</h3>
+                  <div style="background-color: #ffffff; border: 2px solid #f1f5f9; border-radius: 16px; padding: 20px; color: #334155; font-size: 16px; line-height: 1.6; font-style: italic;">
+                    "${details.content}"
+                  </div>
+                </div>
+
+                <!-- Action Button -->
+                <div style="margin-top: 40px; text-align: center;">
+                  <a href="https://nwnexkbndpngmqfqnogh.supabase.co" style="display: inline-block; background-color: ${accentColor}; color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">Open Control Center</a>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding: 30px 40px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center;">
+                <p style="margin: 0; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">Elder AI System • Neural Link Protocol v2.4.0</p>
+                <p style="margin: 10px 0 0; color: #cbd5e1; font-size: 11px;">Automated system notification. Please do not reply directly to this transmission.</p>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+  };
+
   const sendEmailNotification = async (type: string, details: any) => {
     try {
       console.log(`Sending ${type} notification via Supabase Function...`);
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: 'garvanand03@gmail.com',
-          subject: `New Support ${type === 'ticket' ? 'Ticket' : 'Callback Request'}: ${details.category || 'General'}`,
-          html: `
-            <div style="font-family: sans-serif; padding: 20px; color: #333;">
-              <h2 style="color: #6366f1;">New ${type.toUpperCase()} Received</h2>
-              <p><strong>Type:</strong> ${type}</p>
-              ${details.name ? `<p><strong>Name:</strong> ${details.name}</p>` : ''}
-              ${details.phone ? `<p><strong>Phone:</strong> ${details.phone}</p>` : ''}
-              ${details.time ? `<p><strong>Preferred Time:</strong> ${details.time}</p>` : ''}
-              ${details.category ? `<p><strong>Category:</strong> ${details.category}</p>` : ''}
-              <p><strong>Content:</strong></p>
-              <div style="background: #f4f4f5; padding: 15px; border-radius: 8px;">
-                ${details.content}
-              </div>
-              <hr style="margin-top: 20px; border: 0; border-top: 1px solid #eee;" />
-              <p style="font-size: 12px; color: #666;">Sent from Elder AI Support Neural Link</p>
-            </div>
-          `
+          subject: `[SYSTEM] New ${type === 'ticket' ? 'Ticket' : 'Callback'}: ${details.category || 'Priority'}`,
+          html: getEmailTemplate(type, details)
         }
       });
 
