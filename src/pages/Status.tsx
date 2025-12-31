@@ -169,10 +169,10 @@ const Status = () => {
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 uppercase">
               System <span className="text-primary italic">Status</span>
             </h1>
-            <p className="text-white/40 text-xl max-w-2xl mx-auto font-medium">
+            <p className="text-white/70 text-xl max-w-2xl mx-auto font-medium">
               Real-time monitoring of MemoryFriend infrastructure and services.
             </p>
-            <p className="text-white/20 text-xs mt-4">Last checked: {lastRefresh.toLocaleTimeString()}</p>
+            <p className="text-white/40 text-xs mt-4">Last checked: {lastRefresh.toLocaleTimeString()}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
@@ -184,14 +184,14 @@ const Status = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="p-6 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-[24px] hover:border-primary/50 transition-colors group"
+                  className="p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[24px] hover:border-primary/50 transition-colors group"
                 >
                   <div className="flex justify-between items-start mb-6">
                     <div className="p-3 bg-white/5 rounded-xl text-primary group-hover:scale-110 transition-transform">
                       <service.icon size={20} />
                     </div>
                     <div className="text-right">
-                      <span className="block text-[10px] font-black uppercase tracking-widest text-white/30 mb-1">Uptime</span>
+                      <span className="block text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">Uptime</span>
                       <span className="text-lg font-black text-white">{data.uptime.toFixed(1)}%</span>
                     </div>
                   </div>
@@ -203,7 +203,7 @@ const Status = () => {
                         {data.status}
                       </span>
                     </div>
-                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{data.latency}ms</span>
+                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{data.latency}ms</span>
                   </div>
                 </motion.div>
               );
@@ -213,11 +213,11 @@ const Status = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <div className="space-y-6">
               <h2 className="text-2xl font-black uppercase tracking-tighter">Uptime <span className="text-primary">History</span></h2>
-              <div className="p-6 bg-slate-900/50 border border-white/10 rounded-[24px]">
+              <div className="p-6 bg-slate-900/80 border border-white/10 rounded-[24px]">
                 <div className="space-y-4">
                   {['Last 24 hours', 'Last 7 days', 'Last 30 days'].map((period, i) => (
                     <div key={period} className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-white/60">{period}</span>
+                      <span className="text-sm font-bold text-white/80">{period}</span>
                       <div className="flex items-center gap-3">
                         <div className="w-32 h-2 bg-white/5 rounded-full overflow-hidden">
                           <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${99.9 - i * 0.3}%` }} />
@@ -232,7 +232,7 @@ const Status = () => {
 
             <div className="space-y-6">
               <h2 className="text-2xl font-black uppercase tracking-tighter">Recent <span className="text-primary">Incidents</span></h2>
-              <div className="p-6 bg-slate-900/50 border border-white/10 rounded-[24px] space-y-4">
+              <div className="p-6 bg-slate-900/80 border border-white/10 rounded-[24px] space-y-4">
                 {incidents.length > 0 ? (
                   incidents.slice(0, 5).map((incident) => (
                     <div key={incident.id} className="flex gap-4">
@@ -244,12 +244,12 @@ const Status = () => {
                         )}
                       </div>
                       <div>
-                        <span className="block text-[10px] font-black uppercase tracking-widest text-white/30 mb-1">
+                        <span className="block text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">
                           {formatDate(incident.created_at)}
                         </span>
-                        <p className="font-bold text-sm">{incident.title}</p>
+                        <p className="font-bold text-sm text-white">{incident.title}</p>
                         {incident.description && (
-                          <p className="text-xs text-white/40 mt-1">{incident.description}</p>
+                          <p className="text-xs text-white/60 mt-1">{incident.description}</p>
                         )}
                       </div>
                     </div>
@@ -260,11 +260,11 @@ const Status = () => {
                       <CheckCircle2 size={16} className="text-emerald-500" />
                     </div>
                     <div>
-                      <span className="block text-[10px] font-black uppercase tracking-widest text-white/30 mb-1">
+                      <span className="block text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">
                         {formatDate(new Date().toISOString())}
                       </span>
-                      <p className="font-bold text-sm">No incidents reported</p>
-                      <p className="text-xs text-white/40 mt-1">All systems are operating normally.</p>
+                      <p className="font-bold text-sm text-white">No incidents reported</p>
+                      <p className="text-xs text-white/60 mt-1">All systems are operating normally.</p>
                     </div>
                   </div>
                 )}

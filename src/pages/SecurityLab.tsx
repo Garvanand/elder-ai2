@@ -109,11 +109,11 @@ const SecurityLab = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-white/40 text-xl max-w-2xl mx-auto font-medium"
+              className="text-white/70 text-xl max-w-2xl mx-auto font-medium"
             >
               Real-time security monitoring and protection status for MemoryFriend.
             </motion.p>
-            <p className="text-white/20 text-xs mt-4">Last updated: {lastRefresh.toLocaleTimeString()}</p>
+            <p className="text-white/40 text-xs mt-4">Last updated: {lastRefresh.toLocaleTimeString()}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
@@ -125,7 +125,7 @@ const SecurityLab = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.1 + 0.3 }}
-                  className="relative group p-6 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-[24px] overflow-hidden"
+                  className="relative group p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[24px] overflow-hidden"
                 >
                   <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
                     <test.icon size={48} />
@@ -147,7 +147,7 @@ const SecurityLab = () => {
                         className="h-full bg-primary"
                       />
                     </div>
-                    <span className="text-[10px] text-white/30 mt-1 block">{data.value}% integrity</span>
+                    <span className="text-[10px] text-white/50 mt-1 block">{data.value}% integrity</span>
                   </div>
                 </motion.div>
               );
@@ -172,7 +172,7 @@ const SecurityLab = () => {
                       </div>
                       <div>
                         <h4 className="text-lg font-bold mb-1">{p.title}</h4>
-                        <p className="text-white/40 leading-relaxed text-sm font-medium">{p.desc}</p>
+                        <p className="text-white/60 leading-relaxed text-sm font-medium">{p.desc}</p>
                       </div>
                     </motion.div>
                   ))}
@@ -190,24 +190,24 @@ const SecurityLab = () => {
                   <div className="flex items-center justify-between border-b border-white/5 pb-3">
                     <div className="flex items-center gap-3">
                       <Terminal size={16} className="text-primary" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Live Security Log</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Live Security Log</span>
                     </div>
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
                   <div className="font-mono text-[9px] space-y-2 max-h-48 overflow-y-auto">
                     {securityLogs.length > 0 ? (
                       securityLogs.map((log) => (
-                        <p key={log.id} className={`flex justify-between ${log.severity === 'warning' ? 'text-amber-500' : log.severity === 'error' ? 'text-red-500' : 'text-emerald-500/80'}`}>
+                        <p key={log.id} className={`flex justify-between ${log.severity === 'warning' ? 'text-amber-500' : log.severity === 'error' ? 'text-red-500' : 'text-emerald-500'}`}>
                           <span>[{log.event_type}] {log.message}</span>
-                          <span className="text-white/20">{formatTimeAgo(log.created_at)}</span>
+                          <span className="text-white/40">{formatTimeAgo(log.created_at)}</span>
                         </p>
                       ))
                     ) : (
                       <>
-                        <p className="flex justify-between text-emerald-500/80"><span>[SYSTEM] Security monitoring active</span> <span className="text-white/20">NOW</span></p>
-                        <p className="flex justify-between text-emerald-500/80"><span>[AUTH] All authentication systems operational</span> <span className="text-white/20">1m ago</span></p>
-                        <p className="flex justify-between text-emerald-500/80"><span>[DB] Database connection secure</span> <span className="text-white/20">2m ago</span></p>
-                        <p className="flex justify-between text-emerald-500/80"><span>[SSL] TLS certificate valid</span> <span className="text-white/20">5m ago</span></p>
+                        <p className="flex justify-between text-emerald-500"><span>[SYSTEM] Security monitoring active</span> <span className="text-white/40">NOW</span></p>
+                        <p className="flex justify-between text-emerald-500"><span>[AUTH] All authentication systems operational</span> <span className="text-white/40">1m ago</span></p>
+                        <p className="flex justify-between text-emerald-500"><span>[DB] Database connection secure</span> <span className="text-white/40">2m ago</span></p>
+                        <p className="flex justify-between text-emerald-500"><span>[SSL] TLS certificate valid</span> <span className="text-white/40">5m ago</span></p>
                       </>
                     )}
                   </div>
@@ -220,17 +220,17 @@ const SecurityLab = () => {
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div>
                 <h3 className="text-xl font-black uppercase tracking-widest mb-2">Infrastructure Security</h3>
-                <p className="text-white/40 text-sm">Powered by Supabase with enterprise-grade security features.</p>
+                <p className="text-white/60 text-sm">Powered by Supabase with enterprise-grade security features.</p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-black text-primary">256-bit</div>
-                  <div className="text-[10px] text-white/40 uppercase tracking-widest">AES Encryption</div>
+                  <div className="text-[10px] text-white/60 uppercase tracking-widest">AES Encryption</div>
                 </div>
                 <div className="w-px h-12 bg-white/10" />
                 <div className="text-center">
                   <div className="text-2xl font-black text-emerald-500">99.9%</div>
-                  <div className="text-[10px] text-white/40 uppercase tracking-widest">Uptime SLA</div>
+                  <div className="text-[10px] text-white/60 uppercase tracking-widest">Uptime SLA</div>
                 </div>
               </div>
             </div>
