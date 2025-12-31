@@ -7,32 +7,40 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Resend API key not configured' }, { status: 500 });
   }
 
-  try {
-    const { to, subject, html, from = 'onboarding@resend.dev' } = await req.json();
+    try {
+      const { to, subject, html, from = 'onboarding@resend.dev' } = await req.json();
 
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: `MemoryFriend Support <${from}>`,
-        to: [to],
-        subject,
-        html,
-      }),
-    });
+      console.log('Sending email via Resend API...', { to, subject, from });
 
-    const data = await response.json();
+      // Resend free tier is strict: from address must be exactly 'onboarding@resend.dev' 
+      // or a verified domain. Adding a display name often fails on free accounts.
+      const fromAddress = from === 'onboarding@resend.dev' ? 'onboarding@resend.dev' : `MemoryFriend Support <${from}>`;
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to send email');
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: [to],
+          subject,
+          html,
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Resend API Response:', { status: response.status, data });
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send email');
+      }
+
+      return NextResponse.json(data);
+    } catch (error: any) {
+      console.error('Email sending error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('Email sending error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 }

@@ -107,10 +107,9 @@ const Support = () => {
 
   const sendEmailNotification = async (type: string, details: any) => {
     try {
-      const response = await fetch('/api/support/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      console.log(`Sending ${type} notification via Supabase Function...`);
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
           to: 'garvanand03@gmail.com',
           subject: `New Support ${type === 'ticket' ? 'Ticket' : 'Callback Request'}: ${details.category || 'General'}`,
           html: `
@@ -129,11 +128,14 @@ const Support = () => {
               <p style="font-size: 12px; color: #666;">Sent from Elder AI Support Neural Link</p>
             </div>
           `
-        })
+        }
       });
 
-      if (!response.ok) {
-        console.error("Failed to send email notification");
+      if (error) {
+        console.error("Failed to send email notification via Supabase:", error);
+        // Fallback or just log
+      } else {
+        console.log("Email notification sent successfully:", data);
       }
     } catch (error) {
       console.error("Email notification error:", error);
