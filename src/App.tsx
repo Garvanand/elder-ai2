@@ -19,6 +19,9 @@ import Family from "./pages/Family";
 import Support from "./pages/Support";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import SecurityLab from "./pages/SecurityLab";
+import Status from "./pages/Status";
+import UplinkDocs from "./pages/UplinkDocs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +50,9 @@ const App = () => (
                   <Route path="/support" element={<Support />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/security" element={<SecurityLab />} />
+                  <Route path="/status" element={<Status />} />
+                  <Route path="/docs" element={<UplinkDocs />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
