@@ -102,21 +102,21 @@ const Support = () => {
   return (
     <div className="max-w-7xl mx-auto py-12 px-6 space-y-20 pb-32">
       {/* Hero Section */}
-      <section className="text-center space-y-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold uppercase tracking-widest border border-primary/20"
-        >
-          <LifeBuoy size={16} /> 24/7 Intelligent Support
-        </motion.div>
-        <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase text-slate-900 leading-none">
-          How can we <span className="text-primary italic text-6xl md:text-8xl block md:inline">Help</span>?
-        </h1>
-        <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium">
-          Choose your category for personalized assistance or use our AI-powered Smart Help system.
-        </p>
-      </section>
+        <section className="text-center space-y-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-black uppercase tracking-widest border border-primary/20"
+          >
+            <LifeBuoy size={16} /> 24/7 Intelligent Support
+          </motion.div>
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase text-slate-950 leading-none">
+            How can we <span className="text-primary italic text-6xl md:text-8xl block md:inline">Help</span>?
+          </h1>
+          <p className="text-xl text-slate-700 max-w-2xl mx-auto font-bold leading-relaxed">
+            Choose your category for personalized assistance or use our AI-powered Smart Help system.
+          </p>
+        </section>
 
       {/* Category Selection */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -135,11 +135,11 @@ const Support = () => {
             <div className={`p-5 rounded-3xl ${cat.bg} ${cat.color} group-hover:scale-110 transition-transform duration-500 shadow-inner`}>
               <cat.icon size={40} />
             </div>
-            <div>
-              <h3 className={`font-black uppercase tracking-tighter text-xl ${activeCategory === cat.id ? 'text-slate-900' : 'text-slate-400'}`}>
-                {cat.label}
-              </h3>
-            </div>
+              <div>
+                <h3 className={`font-black uppercase tracking-tighter text-xl ${activeCategory === cat.id ? 'text-slate-950' : 'text-slate-600'}`}>
+                  {cat.label}
+                </h3>
+              </div>
           </motion.button>
         ))}
       </section>
@@ -150,16 +150,16 @@ const Support = () => {
           <HelpCircle size={300} className="text-primary" />
         </div>
         
-        <div className="relative z-10 max-w-3xl space-y-10">
-          <div className="space-y-3">
-            <h2 className="text-4xl font-black text-slate-900 flex items-center gap-4 uppercase tracking-tighter">
-              <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-                <Search size={32} />
-              </div>
-              Smart Help AI
-            </h2>
-            <p className="text-slate-500 font-medium text-lg">Neural core active. Ask anything to access the global knowledge base.</p>
-          </div>
+          <div className="relative z-10 max-w-3xl space-y-10">
+            <div className="space-y-3">
+              <h2 className="text-4xl font-black text-slate-950 flex items-center gap-4 uppercase tracking-tighter">
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                  <Search size={32} />
+                </div>
+                Smart Help AI
+              </h2>
+              <p className="text-slate-700 font-bold text-lg">Neural core active. Ask anything to access the global knowledge base.</p>
+            </div>
 
           <form onSubmit={handleAiSearch} className="flex flex-col sm:flex-row gap-4 p-3 bg-white/80 rounded-3xl border border-white shadow-xl shadow-black/5">
             <Input 
