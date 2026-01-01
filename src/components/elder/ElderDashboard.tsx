@@ -34,7 +34,7 @@ interface ElderDashboardProps {
 
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
   const { user, profile, signOut } = useAuth();
-  const { isGuestMode, demoProfile, demoReminders, addDemoMemory, addDemoQuestion } = useDemo();
+  const { isGuestMode, demoProfile, demoReminders, addDemoMemory, addDemoQuestion, completeDemoReminder, demoMemories } = useDemo();
   const { toast } = useToast();
     const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
   const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner' | 'matchingGame' | 'lifeTimeline' | 'settings' | 'videoCall'>('home');
@@ -89,6 +89,16 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       setReminders(demoReminders);
       return;
     }
+    if (isGuestMode) {
+      setUpcomingConsultation({
+        id: 'demo-call-1',
+        scheduled_at: new Date(Date.now() + 1000 * 60 * 10).toISOString(),
+        status: 'scheduled',
+        room_name: 'demo-room-123',
+        metadata: { clinician_name: 'Sarah Mitchell' }
+      });
+      return;
+    }
     if (user) {
       fetchReminders();
       fetchUpcomingConsultation();
@@ -96,6 +106,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   }, [user, isGuestMode, demoReminders]);
 
   const fetchUpcomingConsultation = async () => {
+    if (isGuestMode) return;
     if (!user) return;
     try {
       const { data } = await supabase
@@ -182,6 +193,12 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   };
 
   const handleCompleteReminder = async (id: string) => {
+    if (isGuestMode) {
+      completeDemoReminder(id);
+      toast({ title: "Done!", description: "Activity completed." });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('reminders')
@@ -197,7 +214,28 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   };
 
   const handleAddMemory = async () => {
-    if (!memoryText.trim() || !user) return;
+    if (!memoryText.trim()) return;
+    
+    if (isGuestMode) {
+      setLoading(true);
+      setTimeout(() => {
+        addDemoMemory({
+          raw_text: memoryText,
+          image_url: memoryImageUrl,
+          type: 'story',
+          emotional_tone: 'happy'
+        });
+        setAdaptiveQuestion("That's a lovely memory. What else do you remember about that day?");
+        setMemoryText('');
+        setMemoryImageUrl(null);
+        setView('home');
+        setLoading(false);
+        toast({ title: 'Memory Saved!', description: 'Your story has been added to your photo album.' });
+      }, 800);
+      return;
+    }
+
+    if (!user) return;
     
     setLoading(true);
     try {
@@ -244,9 +282,18 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   };
 
   const handleShowRecap = async () => {
-    if (!user) return;
     setLoading(true);
     setView('recap');
+
+    if (isGuestMode) {
+      setTimeout(() => {
+        setRecap("This week has been full of warmth and connection. You've shared beautiful stories about Sarah's visit and your cherished wedding memories. Your commitment to your morning routines and garden walks shows great strength. It's wonderful to see you so engaged with your life's journey!");
+        setLoading(false);
+      }, 1000);
+      return;
+    }
+
+    if (!user) return;
     try {
       const text = await generateWeeklyRecap(user.id);
       setRecap(text);
@@ -258,11 +305,21 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   };
 
   const handleAskQuestion = async () => {
-    if (!questionText.trim() || !user) return;
+    if (!questionText.trim()) return;
     
     setLoading(true);
     setAnswer('');
     
+    if (isGuestMode) {
+      setTimeout(() => {
+        addDemoQuestion(questionText);
+        setAnswer("That sounds like a wonderful memory. From what I recall, it was a very special moment for you and your family.");
+        setLoading(false);
+      }, 1000);
+      return;
+    }
+
+    if (!user) return;
     try {
         const response = await answerQuestion(questionText, user.id);
         setAnswer(response.answer);

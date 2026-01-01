@@ -4,6 +4,7 @@ import { Clock, Calendar, MapPin, Users, Star, X } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useDemo } from '@/contexts/DemoContext';
 import { format } from 'date-fns';
 
 interface MemoryItem {
@@ -18,10 +19,16 @@ interface MemoryItem {
 export const MemoryTimeline: React.FC<{ elderId: string; onClose: () => void }> = ({ elderId, onClose }) => {
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isGuestMode, demoMemories } = useDemo();
 
   useEffect(() => {
+    if (isGuestMode) {
+      setMemories(demoMemories as any);
+      setLoading(false);
+      return;
+    }
     fetchMemories();
-  }, [elderId]);
+  }, [elderId, isGuestMode, demoMemories]);
 
   const fetchMemories = async () => {
     const { data, error } = await supabase

@@ -19,6 +19,7 @@ interface DemoContextType {
   demoHealthRisks: any;
   addDemoMemory: (memory: Partial<Memory>) => void;
   addDemoQuestion: (question: string) => void;
+  completeDemoReminder: (id: string) => void;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -212,7 +213,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [demoMemories, setDemoMemories] = useState<Memory[]>(generateDemoMemories());
   const [demoQuestions, setDemoQuestions] = useState<Question[]>(generateDemoQuestions());
   const [demoSignals] = useState<BehavioralSignal[]>(generateDemoSignals());
-  const [demoReminders] = useState<Reminder[]>(generateDemoReminders());
+  const [demoReminders, setDemoReminders] = useState<Reminder[]>(generateDemoReminders());
 
   const demoElders: Profile[] = [
     {
@@ -291,6 +292,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setDemoQuestions(prev => [newQuestion, ...prev]);
   }, []);
 
+  const completeDemoReminder = useCallback((id: string) => {
+    setDemoReminders(prev => prev.map(rem => 
+      rem.id === id ? { ...rem, status: 'completed' as const } : rem
+    ));
+  }, []);
+
   const demoProfile = generateDemoProfile(demoPortal);
 
   return (
@@ -305,12 +312,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       demoQuestions,
       demoSignals,
       demoProfile,
-        demoReminders,
-        demoElders,
-        demoHealthRisks,
-        addDemoMemory,
-        addDemoQuestion
-      }}>
+      demoReminders,
+      demoElders,
+      demoHealthRisks,
+      addDemoMemory,
+      addDemoQuestion,
+      completeDemoReminder
+    }}>
       {children}
     </DemoContext.Provider>
   );
