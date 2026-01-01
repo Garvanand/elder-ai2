@@ -87,9 +87,6 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   useEffect(() => {
     if (isGuestMode) {
       setReminders(demoReminders);
-      return;
-    }
-    if (isGuestMode) {
       setUpcomingConsultation({
         id: 'demo-call-1',
         scheduled_at: new Date(Date.now() + 1000 * 60 * 10).toISOString(),
