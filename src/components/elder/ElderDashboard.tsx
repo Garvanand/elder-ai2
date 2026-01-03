@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users, AlertCircle, Gamepad2, CalendarDays, Settings, Type, Palette, HelpCircle, Video, Stethoscope, Phone, X, Loader2 } from 'lucide-react';
+import { Plus, MessageCircleQuestion, History, LogOut, Brain, Clock, CheckCircle2, ListTodo, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, Sparkles, Zap, ShieldCheck, ArrowRight, Users, AlertCircle, Gamepad2, CalendarDays, Settings, Type, Palette, HelpCircle, Video, Stethoscope, Phone, X, Loader2, Heart, MessageSquare, Sun, BookOpen, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { VideoRoom, ConsultationScheduler, UpcomingConsultations } from '@/components/teleconsultation';
 import { toast as sonnerToast } from 'sonner';
+import { MemoryCompanion } from './MemoryCompanion';
+import { MoodTracker } from './MoodTracker';
+import { FamilyMessages } from './FamilyMessages';
+import { DailyPrompts } from './DailyPrompts';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -36,7 +40,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const { user, profile, signOut } = useAuth();
   const { isGuestMode, demoProfile, demoReminders, addDemoMemory, addDemoQuestion, completeDemoReminder, demoMemories } = useDemo();
   const { toast } = useToast();
-    const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
+  const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();
   const [view, setView] = useState<'home' | 'addMemory' | 'askQuestion' | 'recap' | 'routines' | 'memoryWall' | 'peopleScanner' | 'matchingGame' | 'lifeTimeline' | 'settings' | 'videoCall'>('home');
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'extra-large'>('large');
   const [highContrast, setHighContrast] = useState(false);
@@ -49,6 +53,11 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const [showScheduler, setShowScheduler] = useState(false);
   const [activeConsultation, setActiveConsultation] = useState<any>(null);
   const [upcomingConsultation, setUpcomingConsultation] = useState<any>(null);
+
+  const [showCompanion, setShowCompanion] = useState(false);
+  const [showMoodTracker, setShowMoodTracker] = useState(false);
+  const [showFamilyMessages, setShowFamilyMessages] = useState(false);
+  const [showDailyPrompts, setShowDailyPrompts] = useState(false);
 
   const [answer, setAnswer] = useState('');
   const [recap, setRecap] = useState('');
@@ -64,8 +73,16 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     setView('askQuestion');
   };
 
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { greeting: 'Good Morning', icon: '🌅', color: 'from-amber-400 to-orange-400' };
+    if (hour < 17) return { greeting: 'Good Afternoon', icon: '☀️', color: 'from-blue-400 to-cyan-400' };
+    return { greeting: 'Good Evening', icon: '🌙', color: 'from-indigo-400 to-purple-400' };
+  };
+
+  const timeOfDay = getTimeOfDay();
+
   useEffect(() => {
-    // Apply accessibility settings to document body
     document.body.classList.toggle('contrast-150', highContrast);
     document.body.classList.toggle('grayscale-0', highContrast);
     
@@ -192,7 +209,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const handleCompleteReminder = async (id: string) => {
     if (isGuestMode) {
       completeDemoReminder(id);
-      toast({ title: "Done!", description: "Activity completed." });
+      toast({ title: "Well done!", description: "Activity completed." });
       return;
     }
 
@@ -204,7 +221,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       
       if (error) throw error;
       fetchReminders();
-      toast({ title: "Done!", description: "Activity completed." });
+      toast({ title: "Well done!", description: "Activity completed." });
     } catch (error) {
       toast({ title: "Error", description: "Could not complete activity.", variant: "destructive" });
     }
@@ -227,7 +244,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
         setMemoryImageUrl(null);
         setView('home');
         setLoading(false);
-        toast({ title: 'Memory Saved!', description: 'Your story has been added to your photo album.' });
+        toast({ title: 'Memory Saved!', description: 'Your story has been added to your album.' });
       }, 800);
       return;
     }
@@ -252,13 +269,12 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
 
         if (error) throw error;
 
-        // Generate adaptive question
         const adaptive = await generateAdaptiveQuestion(memoryText, user.id);
         setAdaptiveQuestion(adaptive);
 
         toast({
           title: 'Memory Saved!',
-          description: 'Your story has been added to your photo album.',
+          description: 'Your story has been added to your album.',
         });
         
         setMemoryText('');
@@ -333,203 +349,260 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     }
   };
 
-    const breadcrumbs = (
-      <div className="flex items-center gap-2 mb-8 text-sm font-bold uppercase tracking-widest text-muted-foreground/60 overflow-x-auto whitespace-nowrap pb-2">
-        <button onClick={() => setView('home')} className="hover:text-primary transition-colors">Home</button>
-        {view !== 'home' && (
-          <>
-            <ArrowRight className="w-3 h-3" />
-            <span className="text-primary">
-              {view === 'memoryWall' ? 'Photo Album' : 
-               view === 'addMemory' ? 'Record Memory' : 
-               view === 'askQuestion' ? 'Ask a Question' : 
-               view === 'matchingGame' ? 'Memory Game' :
-               view === 'lifeTimeline' ? 'My Life Story' :
-               view === 'settings' ? 'Settings' :
-               'Weekly Review'}
-            </span>
-          </>
-        )}
-        <div className="flex-1" />
-        <button onClick={() => setView('settings')} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-          <Settings className="w-5 h-5" />
-        </button>
-      </div>
-    );
+  const handlePromptSelected = (prompt: string) => {
+    setMemoryText(prompt);
+    setView('addMemory');
+  };
 
-
-    return (
-      <div className={cn(
-        "min-h-screen p-6 relative z-0 max-w-4xl mx-auto pt-24 transition-all",
-        fontSize === 'large' ? 'text-lg' : fontSize === 'extra-large' ? 'text-2xl' : 'text-base'
-      )}>
-        {breadcrumbs}
-        
-        <PanicButton elderId={user?.id} />
-
+  return (
+    <div className={cn(
+      "min-h-screen relative z-0 transition-all",
+      fontSize === 'large' ? 'text-lg' : fontSize === 'extra-large' ? 'text-2xl' : 'text-base'
+    )}>
+      <div className="fixed inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 -z-10" />
+      
+      <PanicButton elderId={user?.id} />
 
       <AnimatePresence mode="wait">
         {view === 'home' && (
           <motion.div 
             key="home"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="p-4 md:p-8 max-w-5xl mx-auto pt-20 pb-32 space-y-8"
           >
-            {/* User Greeting Card */}
-            <div data-tour="elder-greeting" className="relative p-10 rounded-[48px] bg-white/60 backdrop-blur-3xl border border-white shadow-2xl overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Brain className="w-40 h-40 text-primary" />
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                "relative p-8 md:p-12 rounded-[40px] overflow-hidden",
+                "bg-gradient-to-r", timeOfDay.color
+              )}
+            >
+              <div className="absolute top-0 right-0 w-40 h-40 opacity-20">
+                <span className="text-[120px]">{timeOfDay.icon}</span>
               </div>
-                <div className="relative z-10 space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">
-                    <ShieldCheck className="w-3 h-3" /> {isGuestMode ? 'Demo Mode' : 'Secure Account'}
+              <div className="relative z-10 text-white">
+                <p className="text-lg md:text-xl font-medium opacity-90 mb-2">{timeOfDay.greeting}</p>
+                <h1 className="text-4xl md:text-6xl font-bold mb-4">
+                  {activeProfile?.full_name?.split(' ')[0] || 'Friend'}
+                </h1>
+                <p className="text-lg md:text-xl opacity-90 italic">
+                  "Every day is a new page in your story"
+                </p>
+              </div>
+              {isGuestMode && (
+                <div className="absolute top-4 right-4 bg-white/20 px-4 py-2 rounded-full text-white text-sm font-medium">
+                  Demo Mode
+                </div>
+              )}
+            </motion.div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <motion.button
+                whileHover={{ scale: 1.03, y: -4 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowCompanion(true)}
+                className="relative p-6 rounded-[32px] bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-xl overflow-hidden group"
+              >
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
+                <Heart className="w-10 h-10 mb-3" />
+                <p className="text-xl font-bold">Talk to Me</p>
+                <p className="text-sm opacity-80">Your Memory Friend</p>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.03, y: -4 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowFamilyMessages(true)}
+                className="relative p-6 rounded-[32px] bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-xl overflow-hidden group"
+              >
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
+                <div className="relative">
+                  <MessageSquare className="w-10 h-10 mb-3" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center font-bold">2</span>
+                </div>
+                <p className="text-xl font-bold">Family</p>
+                <p className="text-sm opacity-80">Messages for you</p>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.03, y: -4 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowMoodTracker(true)}
+                className="relative p-6 rounded-[32px] bg-gradient-to-br from-rose-400 to-pink-500 text-white shadow-xl overflow-hidden group"
+              >
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
+                <Sun className="w-10 h-10 mb-3" />
+                <p className="text-xl font-bold">My Mood</p>
+                <p className="text-sm opacity-80">How are you?</p>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.03, y: -4 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowDailyPrompts(true)}
+                className="relative p-6 rounded-[32px] bg-gradient-to-br from-violet-400 to-purple-500 text-white shadow-xl overflow-hidden group"
+              >
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
+                <Sparkles className="w-10 h-10 mb-3" />
+                <p className="text-xl font-bold">Memory Prompts</p>
+                <p className="text-sm opacity-80">Start a story</p>
+              </motion.button>
+            </div>
+
+            <div className="bg-white/60 backdrop-blur-xl rounded-[32px] p-6 border border-white shadow-xl">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
                   </div>
-                  <h1 className="text-5xl font-bold tracking-tight">Hello, {activeProfile?.full_name?.split(' ')[0] || 'Friend'}</h1>
-                  <p className="text-xl text-muted-foreground font-medium italic">"Every memory is a gift to cherish."</p>
-                </div>
-                
-                <div className="absolute top-0 right-0 w-1/2 h-full opacity-60 pointer-events-none">
-                  <BrainModelContainer />
-                </div>
-              </div>
-
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Daily Checklist */}
-              <div data-tour="daily-activities" className="space-y-6">
-                <h2 className="text-2xl font-bold flex items-center gap-3 ml-2">
-                  <ListTodo className="w-6 h-6 text-primary" />
                   Today's Activities
                 </h2>
-                <div className="space-y-4">
-                  {reminders.length > 0 ? (
-                    reminders.map((reminder) => (
-                      <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        key={reminder.id}
-                      >
-                        <Card 
-                          className={cn(
-                            "p-5 flex items-center justify-between rounded-3xl border border-white/40 transition-all duration-500 shadow-xl",
-                            reminder.status === 'completed' ? 'bg-green-50/50' : 'bg-white/60 backdrop-blur-md'
-                          )}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-inner",
-                              reminder.status === 'completed' ? 'bg-green-100' : 'bg-primary/5'
-                            )}>
-                              {reminder.status === 'completed' ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <Clock className="w-6 h-6 text-primary" />}
-                            </div>
-                            <div>
-                              <p className={cn(
-                                "text-lg font-bold transition-all",
-                                reminder.status === 'completed' ? 'line-through text-muted-foreground opacity-50' : 'text-foreground'
-                              )}>
-                                {reminder.title}
-                              </p>
-                              <p className="text-xs font-bold uppercase tracking-tighter text-muted-foreground/60">
-                                Time: {format(new Date(reminder.due_at), 'h:mm a')}
-                              </p>
-                            </div>
-                          </div>
-                          {reminder.status === 'pending' && (
-                            <Button 
-                              variant="ghost"
-                              size="sm" 
-                              onClick={() => handleCompleteReminder(reminder.id)}
-                              className="rounded-xl px-6 h-10 border-2 border-primary/20 hover:bg-primary hover:text-white transition-all font-bold uppercase tracking-widest text-[10px]"
-                            >
-                              Done
-                            </Button>
-                          )}
-                        </Card>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <Card className="p-10 text-center border-dashed rounded-[40px] bg-white/20 backdrop-blur-sm">
-                      <Sparkles className="w-12 h-12 text-primary/20 mx-auto mb-4 animate-pulse" />
-                      <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs text-center">You're all caught up!</p>
-                    </Card>
-                  )}
-                </div>
+                <span className="text-sm text-gray-500">
+                  {reminders.filter(r => r.status === 'completed').length} of {reminders.length} done
+                </span>
               </div>
-
-              {/* Action Hub */}
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold flex items-center gap-3 ml-2">
-                  <Zap className="w-6 h-6 text-primary" />
-                  Common Tasks
-                </h2>
-                  <div className="grid grid-cols-1 gap-4">
-                    {[
-                            { label: 'Save a Story', icon: Plus, view: 'addMemory', color: 'bg-primary', secondary: 'Record a new memory or photo', tour: 'save-memory' },
-                            { label: 'Family Album', icon: ImageIcon, view: 'memoryWall', color: 'bg-amber-500', secondary: 'Look at your saved photos', tour: 'photo-album' },
-                            { label: 'Video Call', icon: Video, view: 'videoCall', color: 'bg-emerald-600', secondary: upcomingConsultation ? 'Join your scheduled call' : 'Talk face-to-face', tour: 'video-call' },
-                            { label: 'Who is this?', icon: Users, view: 'peopleScanner', color: 'bg-rose-600', secondary: 'Identify a friend or family member', tour: 'identify-friend' },
-                            { label: 'Find a Memory', icon: MessageCircleQuestion, view: 'askQuestion', color: 'bg-indigo-600', secondary: 'Search your memories', tour: 'find-memory' },
-                            { label: 'Brain Games', icon: Gamepad2, view: 'matchingGame', color: 'bg-purple-600', secondary: 'Play a memory matching game', tour: 'brain-games' },
-                            { label: 'My Journey', icon: CalendarDays, view: 'lifeTimeline', color: 'bg-blue-600', secondary: 'See your life story over time', tour: 'life-timeline' },
-                            { label: 'Weekly Summary', icon: Brain, view: 'recap', color: 'bg-slate-600', secondary: 'See what happened this week', tour: 'weekly-summary' }
-
-
-                    ].map((btn, i) => (
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 5 }}
-                        whileTap={{ scale: 0.98 }}
-                        key={btn.label}
-                        data-tour={btn.tour}
-                        onClick={() => {
-                          if (btn.view === 'recap') handleShowRecap();
-                          else if (btn.view === 'videoCall') {
-                            if (upcomingConsultation) handleJoinVideoCall();
-                            else setShowScheduler(true);
+              
+              <div className="space-y-3">
+                {reminders.length > 0 ? (
+                  reminders.map((reminder, index) => (
+                    <motion.div 
+                      key={reminder.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={cn(
+                        "flex items-center justify-between p-5 rounded-2xl transition-all",
+                        reminder.status === 'completed' 
+                          ? 'bg-green-50 border-2 border-green-200' 
+                          : 'bg-white border-2 border-gray-100 hover:border-amber-300'
+                      )}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-14 h-14 rounded-2xl flex items-center justify-center",
+                          reminder.status === 'completed' ? 'bg-green-200' : 'bg-amber-100'
+                        )}>
+                          {reminder.status === 'completed' 
+                            ? <CheckCircle2 className="w-7 h-7 text-green-600" />
+                            : <Clock className="w-7 h-7 text-amber-600" />
                           }
-                          else setView(btn.view as any);
-                        }}
-                        className="group flex items-center gap-6 p-6 rounded-[32px] bg-white/60 backdrop-blur-xl border border-white shadow-2xl hover:bg-white/80 transition-all text-left"
-                      >
-                      <div className={cn("w-16 h-16 rounded-[24px] flex items-center justify-center text-white shadow-lg", btn.color)}>
-                        <btn.icon className="w-8 h-8 group-hover:scale-110 transition-transform" />
+                        </div>
+                        <div>
+                          <p className={cn(
+                            "text-xl font-bold",
+                            reminder.status === 'completed' && 'line-through opacity-60'
+                          )}>
+                            {reminder.title}
+                          </p>
+                          <p className="text-gray-500">
+                            {format(new Date(reminder.due_at), 'h:mm a')}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-xl font-bold tracking-tight uppercase mb-0.5">{btn.label}</p>
-                        <p className="text-xs text-muted-foreground font-medium opacity-70 italic">{btn.secondary}</p>
-                      </div>
-                      <ArrowRight className="w-6 h-6 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:text-primary transition-all mr-2" />
-                    </motion.button>
-                  ))}
-                </div>
+                      {reminder.status === 'pending' && (
+                        <Button 
+                          onClick={() => handleCompleteReminder(reminder.id)}
+                          className="h-14 px-8 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-lg"
+                        >
+                          Done
+                        </Button>
+                      )}
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <Star className="w-16 h-16 text-amber-300 mx-auto mb-4" />
+                    <p className="text-xl text-gray-500">No activities scheduled</p>
+                    <p className="text-gray-400">Enjoy your free time!</p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Recent History Horizontal Stream */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setView('addMemory')}
+                className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-amber-200 hover:border-amber-400 shadow-lg transition-all"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg">
+                  <Plus className="w-8 h-8" />
+                </div>
+                <div className="text-left">
+                  <p className="text-2xl font-bold">Save a Memory</p>
+                  <p className="text-gray-500">Record your story</p>
+                </div>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setView('memoryWall')}
+                className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-rose-200 hover:border-rose-400 shadow-lg transition-all"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                  <ImageIcon className="w-8 h-8" />
+                </div>
+                <div className="text-left">
+                  <p className="text-2xl font-bold">Photo Album</p>
+                  <p className="text-gray-500">View your memories</p>
+                </div>
+              </motion.button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: 'Video Call', icon: Video, onClick: () => upcomingConsultation ? handleJoinVideoCall() : setShowScheduler(true), color: 'from-emerald-400 to-teal-500' },
+                { label: 'Who is this?', icon: Users, onClick: () => setView('peopleScanner'), color: 'from-cyan-400 to-blue-500' },
+                { label: 'Memory Game', icon: Gamepad2, onClick: () => setView('matchingGame'), color: 'from-purple-400 to-violet-500' },
+                { label: 'My Journey', icon: BookOpen, onClick: () => setView('lifeTimeline'), color: 'from-indigo-400 to-blue-500' },
+                { label: 'Ask Memory', icon: MessageCircleQuestion, onClick: () => setView('askQuestion'), color: 'from-teal-400 to-cyan-500' },
+                { label: 'Weekly Review', icon: Brain, onClick: handleShowRecap, color: 'from-slate-400 to-gray-500' },
+                { label: 'Settings', icon: Settings, onClick: () => setView('settings'), color: 'from-gray-400 to-slate-500' },
+                { label: 'Help', icon: HelpCircle, onClick: () => {}, color: 'from-amber-400 to-yellow-500' },
+              ].map((item) => (
+                <motion.button
+                  key={item.label}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={item.onClick}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-white/60 backdrop-blur-xl border border-white shadow-lg hover:shadow-xl transition-all"
+                >
+                  <div className={cn("w-14 h-14 rounded-xl flex items-center justify-center text-white bg-gradient-to-br", item.color)}>
+                    <item.icon className="w-7 h-7" />
+                  </div>
+                  <p className="font-bold text-gray-700">{item.label}</p>
+                </motion.button>
+              ))}
+            </div>
+
             {recentQuestions.length > 0 && (
-              <div className="space-y-6 pt-8 pb-12">
-                <h2 className="text-2xl font-bold flex items-center gap-3 ml-2">
-                  <History className="w-6 h-6 text-primary" />
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold flex items-center gap-3 px-2">
+                  <History className="w-6 h-6 text-gray-400" />
                   Recent Conversations
                 </h2>
-                <div className="flex gap-6 overflow-x-auto pb-6 -mx-6 px-6 snap-x no-scrollbar">
-                  {recentQuestions.slice(0, 8).map((q, i) => (
+                <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 snap-x">
+                  {recentQuestions.slice(0, 5).map((q, i) => (
                     <motion.div 
                       key={q.id}
-                      className="snap-center flex-shrink-0 w-[400px]"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="snap-center flex-shrink-0 w-[320px]"
                     >
-                      <Card className="h-full bg-white/40 backdrop-blur-md rounded-3xl p-8 border border-white/40 shadow-xl hover:bg-white/60 transition-all cursor-pointer group">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-4 opacity-60">Memory {i + 1}</div>
-                        <p className="text-xl font-bold text-foreground mb-4 leading-snug group-hover:text-primary transition-colors">
-                          “{q.question_text}”
+                      <Card className="h-full bg-white/70 backdrop-blur-xl rounded-3xl p-6 border border-white shadow-lg">
+                        <p className="text-lg font-bold text-gray-800 mb-3 line-clamp-2">
+                          "{q.question_text}"
                         </p>
                         {q.answer_text && (
-                          <div className="pt-4 border-t border-white/20">
-                            <p className="text-muted-foreground text-sm font-medium leading-relaxed italic">
-                              {q.answer_text.slice(0, 140)}...
-                            </p>
-                          </div>
+                          <p className="text-gray-500 text-sm line-clamp-3 italic">
+                            {q.answer_text}
+                          </p>
                         )}
                       </Card>
                     </motion.div>
@@ -541,281 +614,322 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
         )}
 
         {view === 'memoryWall' && (
-          <motion.div key="memoryWall" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-            <div className="space-y-8">
-              <h1 className="text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Photo Album</h1>
-              <MemoryWall elderId={activeUserId!} onTriggerConversation={handleTriggerConversation} />
+          <motion.div key="memoryWall" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 md:p-8 max-w-5xl mx-auto pt-20 pb-32">
+            <div className="flex items-center gap-4 mb-8">
+              <Button variant="ghost" onClick={() => setView('home')} className="rounded-full">
+                <ArrowRight className="w-6 h-6 rotate-180" />
+              </Button>
+              <h1 className="text-4xl font-bold">Photo Album</h1>
             </div>
+            <MemoryWall elderId={activeUserId!} onTriggerConversation={handleTriggerConversation} />
           </motion.div>
         )}
 
         {(view === 'addMemory' || view === 'askQuestion') && (
           <motion.div 
             key={view}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="pt-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="p-4 md:p-8 max-w-2xl mx-auto pt-20 pb-32"
           >
-            <Card className="rounded-[80px] bg-white/60 backdrop-blur-3xl border border-white p-16 shadow-[0_50px_100px_rgba(0,0,0,0.1)]">
-              <div className="max-w-xl mx-auto space-y-12">
-                <div className="space-y-6 text-center">
-                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-8 shadow-inner shadow-primary/20">
-                    {view === 'addMemory' ? <Plus className="w-12 h-12 text-primary" /> : <MessageCircleQuestion className="w-12 h-12 text-primary" />}
+            <div className="flex items-center gap-4 mb-8">
+              <Button variant="ghost" onClick={() => setView('home')} className="rounded-full">
+                <ArrowRight className="w-6 h-6 rotate-180" />
+              </Button>
+              <h1 className="text-4xl font-bold">
+                {view === 'addMemory' ? 'Save a Memory' : 'Search Memories'}
+              </h1>
+            </div>
+
+            <Card className="rounded-[40px] bg-white/80 backdrop-blur-xl border-2 border-amber-200 p-8 shadow-2xl">
+              <div className="space-y-6">
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white mb-4">
+                    {view === 'addMemory' ? <Plus className="w-10 h-10" /> : <MessageCircleQuestion className="w-10 h-10" />}
                   </div>
-                  <h2 className="text-5xl font-bold tracking-tight">
-                    {view === 'addMemory' ? 'Save a Memory' : 'Ask Anything'}
-                  </h2>
-                  <p className="text-2xl text-muted-foreground font-medium leading-relaxed">
+                  <p className="text-xl text-gray-600">
                     {view === 'addMemory' 
-                      ? "Tell me what happened today, or share a story from the past."
-                      : "Ask me anything about your saved memories or life stories."}
+                      ? "Share what's on your mind or tell me about a special moment."
+                      : "What would you like to remember?"}
                   </p>
                 </div>
 
-                <div className="relative space-y-6">
-                  <div className="relative">
-                    <Textarea
-                      className="min-h-[200px] p-10 rounded-[48px] bg-white/50 border-white text-2xl font-medium shadow-inner focus:ring-primary/20 transition-all resize-none"
-                      placeholder={view === 'addMemory' ? "Write your story here..." : "Ask your question here..."}
-                      value={view === 'addMemory' ? memoryText : questionText}
-                      onChange={(e) => view === 'addMemory' ? setMemoryText(e.target.value) : setQuestionText(e.target.value)}
-                    />
-                    {supported.stt && (
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => startListening((text) => {
-                          if (view === 'addMemory') setMemoryText(prev => prev ? `${prev} ${text}` : text);
-                          else setQuestionText(prev => prev ? `${prev} ${text}` : text);
-                        })}
-                        className={cn(
-                          "absolute right-8 bottom-8 rounded-full w-20 h-20 shadow-2xl transition-all flex items-center justify-center",
-                          isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-primary text-white'
-                        )}
-                      >
-                        {isListening ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
-                      </motion.button>
+                <div className="relative">
+                  <Textarea
+                    className="min-h-[180px] p-6 rounded-3xl bg-white border-2 border-gray-200 focus:border-amber-400 text-xl resize-none"
+                    placeholder={view === 'addMemory' ? "Start typing your story..." : "Type your question..."}
+                    value={view === 'addMemory' ? memoryText : questionText}
+                    onChange={(e) => view === 'addMemory' ? setMemoryText(e.target.value) : setQuestionText(e.target.value)}
+                  />
+                  {supported.stt && (
+                    <button
+                      onClick={() => startListening((text) => {
+                        if (view === 'addMemory') setMemoryText(prev => prev ? `${prev} ${text}` : text);
+                        else setQuestionText(prev => prev ? `${prev} ${text}` : text);
+                      })}
+                      className={cn(
+                        "absolute right-4 bottom-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all",
+                        isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-amber-500 text-white hover:bg-amber-600'
+                      )}
+                    >
+                      {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                    </button>
+                  )}
+                </div>
+
+                {view === 'addMemory' && (
+                  <div>
+                    {memoryImageUrl ? (
+                      <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-xl">
+                        <img src={memoryImageUrl} alt="Uploaded" className="w-full h-48 object-cover" />
+                        <button 
+                          onClick={() => setMemoryImageUrl(null)}
+                          className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="image-upload" />
+                        <Label 
+                          htmlFor="image-upload"
+                          className="flex flex-col items-center justify-center h-32 border-3 border-dashed border-amber-300 rounded-3xl hover:border-amber-500 hover:bg-amber-50 cursor-pointer transition-all"
+                        >
+                          {uploading ? (
+                            <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                          ) : (
+                            <>
+                              <ImageIcon className="w-8 h-8 text-amber-500 mb-2" />
+                              <span className="text-lg font-bold text-amber-600">Add a Photo</span>
+                            </>
+                          )}
+                        </Label>
+                      </div>
                     )}
                   </div>
+                )}
 
-                  {view === 'addMemory' && (
-                    <div className="flex flex-col items-center gap-4">
-                      {memoryImageUrl ? (
-                        <div className="relative w-full aspect-video rounded-3xl overflow-hidden border-4 border-white shadow-xl">
-                          <img src={memoryImageUrl} alt="Uploaded" className="w-full h-full object-cover" />
-                          <button 
-                            onClick={() => setMemoryImageUrl(null)}
-                            className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
-                          >
-                            <X className="w-6 h-6" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="w-full">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            id="image-upload"
-                          />
-                          <Label 
-                            htmlFor="image-upload"
-                            className="flex flex-col items-center justify-center w-full h-40 border-4 border-dashed border-primary/20 rounded-[40px] hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all"
-                          >
-                            {uploading ? (
-                              <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                            ) : (
-                              <>
-                                <ImageIcon className="w-10 h-10 text-primary mb-2" />
-                                <span className="text-xl font-bold text-primary">Add a Photo</span>
-                              </>
-                            )}
-                          </Label>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <Button
+                  onClick={view === 'addMemory' ? handleAddMemory : handleAskQuestion}
+                  disabled={loading || uploading || !(view === 'addMemory' ? memoryText.trim() : questionText.trim())}
+                  className="w-full h-16 rounded-2xl text-xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-xl"
+                >
+                  {loading ? 'Processing...' : view === 'addMemory' ? 'Save Memory' : 'Search'}
+                </Button>
 
-                <div className="space-y-6">
-                  <Button
-                    onClick={view === 'addMemory' ? handleAddMemory : handleAskQuestion}
-                    disabled={loading || uploading || !(view === 'addMemory' ? memoryText.trim() : questionText.trim())}
-                    className="w-full h-24 rounded-[32px] text-2xl font-bold bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 uppercase tracking-widest transition-all"
+                {answer && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 relative"
                   >
-                    {loading ? 'Thinking...' : view === 'addMemory' ? 'Save Story' : 'Search Memories'}
-                  </Button>
-                  
-                  {answer && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-10 bg-slate-100/80 backdrop-blur-md rounded-[48px] border border-white shadow-2xl relative"
-                    >
-                      <p className="text-xs font-bold text-primary uppercase tracking-widest mb-4">My Response</p>
-                      <p className="text-3xl font-bold leading-tight italic">“{answer}”</p>
-                      {supported.tts && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute bottom-6 right-6 w-14 h-14 bg-white/80 rounded-full shadow-lg"
-                          onClick={() => isSpeaking ? stopSpeaking() : speak(answer)}
-                        >
-                          {isSpeaking ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
-                        </Button>
-                      )}
-                    </motion.div>
-                  )}
-                </div>
+                    <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-3">Memory Friend says:</p>
+                    <p className="text-xl text-gray-800 leading-relaxed">"{answer}"</p>
+                    {supported.tts && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-md"
+                        onClick={() => isSpeaking ? stopSpeaking() : speak(answer)}
+                      >
+                        {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                      </Button>
+                    )}
+                  </motion.div>
+                )}
               </div>
             </Card>
           </motion.div>
         )}
 
-          {view === 'recap' && (
-            <motion.div key="recap" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="pt-12">
-               <Card className="rounded-[80px] bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-3xl border border-white p-20 shadow-2xl">
-                <div className="max-w-2xl mx-auto space-y-12">
-                  <div className="text-center space-y-6">
-                    <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
-                      <Brain className="w-12 h-12 text-white" />
-                    </div>
-                    <h2 className="text-6xl font-bold tracking-tight">Weekly Review</h2>
-                    <p className="text-xl font-bold uppercase tracking-widest text-primary/60 italic">Your week at a glance</p>
-                  </div>
+        {view === 'recap' && (
+          <motion.div key="recap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 md:p-8 max-w-2xl mx-auto pt-20 pb-32">
+            <div className="flex items-center gap-4 mb-8">
+              <Button variant="ghost" onClick={() => setView('home')} className="rounded-full">
+                <ArrowRight className="w-6 h-6 rotate-180" />
+              </Button>
+              <h1 className="text-4xl font-bold">Weekly Review</h1>
+            </div>
 
-                  {loading ? (
-                    <div className="flex flex-col items-center py-20 space-y-8">
-                      <div className="w-20 h-20 border-8 border-primary/20 border-t-primary rounded-full animate-spin shadow-inner" />
-                      <p className="text-3xl text-muted-foreground font-bold uppercase tracking-widest animate-pulse">Thinking...</p>
-                    </div>
-                  ) : (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="p-12 bg-white/80 backdrop-blur-2xl rounded-[60px] border border-white shadow-2xl relative"
+            <Card className="rounded-[40px] bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-violet-200 p-8 shadow-2xl">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white mb-4">
+                  <Brain className="w-10 h-10" />
+                </div>
+                <h2 className="text-2xl font-bold text-violet-800">Your Week at a Glance</h2>
+              </div>
+
+              {loading ? (
+                <div className="flex flex-col items-center py-16">
+                  <div className="w-16 h-16 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mb-4" />
+                  <p className="text-xl text-violet-600 font-medium">Preparing your review...</p>
+                </div>
+              ) : (
+                <div className="p-6 bg-white/80 rounded-3xl border border-violet-200 relative">
+                  <p className="text-2xl text-gray-800 leading-relaxed italic">"{recap}"</p>
+                  {supported.tts && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-4 right-4 w-12 h-12 rounded-full bg-violet-100 text-violet-600"
+                      onClick={() => isSpeaking ? stopSpeaking() : speak(recap)}
                     >
-                      <div className="absolute top-8 right-8">
-                        {supported.tts && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-16 h-16 rounded-full bg-primary/10 text-primary shadow-lg"
-                            onClick={() => isSpeaking ? stopSpeaking() : speak(recap)}
-                          >
-                            {isSpeaking ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
-                          </Button>
-                        )}
-                      </div>
-                      <p className="text-4xl font-bold leading-tight tracking-tight italic bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60">
-                        “{recap}”
-                      </p>
-                    </motion.div>
+                      {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                    </Button>
                   )}
-                  
-                  <Button variant="outline" className="w-full h-20 rounded-[32px] text-xl font-bold uppercase tracking-widest border-2" onClick={() => setView('home')}>Go Back Home</Button>
                 </div>
-              </Card>
-            </motion.div>
-          )}
-          {view === 'matchingGame' && (
+              )}
+            </Card>
+          </motion.div>
+        )}
+
+        {view === 'matchingGame' && (
+          <div className="p-4 pt-20">
+            <div className="flex items-center gap-4 mb-4 max-w-5xl mx-auto">
+              <Button variant="ghost" onClick={() => setView('home')} className="rounded-full">
+                <ArrowRight className="w-6 h-6 rotate-180" />
+              </Button>
+              <h1 className="text-4xl font-bold">Memory Game</h1>
+            </div>
             <MemoryMatchingGame elderId={activeUserId!} onClose={() => setView('home')} />
-          )}
-          {view === 'lifeTimeline' && (
-            <MemoryTimeline elderId={activeUserId!} onClose={() => setView('home')} />
-          )}
+          </div>
+        )}
 
-          {view === 'settings' && (
-            <motion.div key="settings" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="pt-12">
-              <Card className="rounded-[80px] bg-white/40 backdrop-blur-3xl border border-white p-16 shadow-2xl">
-                <div className="max-w-xl mx-auto space-y-12">
-                  <div className="text-center">
-                    <h2 className="text-5xl font-black tracking-tighter mb-4">Accessibility</h2>
-                    <p className="text-xl text-muted-foreground font-medium italic">Adjust the system to your comfort</p>
-                  </div>
+        {view === 'lifeTimeline' && (
+          <MemoryTimeline elderId={activeUserId!} onClose={() => setView('home')} />
+        )}
 
-                  <div className="space-y-8">
-                    <div className="space-y-4">
-                      <Label className="text-xl font-black flex items-center gap-3">
-                        <Type className="h-6 w-6 text-primary" /> Font Size
-                      </Label>
-                      <div className="grid grid-cols-3 gap-4">
-                        {(['normal', 'large', 'extra-large'] as const).map((size) => (
-                          <Button
-                            key={size}
-                            variant={fontSize === size ? 'default' : 'outline'}
-                            className="h-16 rounded-2xl font-bold capitalize text-lg"
-                            onClick={() => setFontSize(size)}
-                          >
-                            {size === 'extra-large' ? 'Huge' : size}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
+        {view === 'settings' && (
+          <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 md:p-8 max-w-2xl mx-auto pt-20 pb-32">
+            <div className="flex items-center gap-4 mb-8">
+              <Button variant="ghost" onClick={() => setView('home')} className="rounded-full">
+                <ArrowRight className="w-6 h-6 rotate-180" />
+              </Button>
+              <h1 className="text-4xl font-bold">Settings</h1>
+            </div>
 
-                    <div className="flex items-center justify-between p-6 bg-white/40 rounded-[32px] border border-white">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-indigo-500 flex items-center justify-center text-white">
-                          <Palette className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <p className="text-xl font-black">High Contrast</p>
-                          <p className="text-sm text-muted-foreground italic">Enhance visibility for easier reading</p>
-                        </div>
-                      </div>
-                      <Switch 
-                        checked={highContrast} 
-                        onCheckedChange={setHighContrast}
-                        className="scale-150"
-                      />
-                    </div>
-                  </div>
-
-                  <Button variant="outline" className="w-full h-20 rounded-[32px] text-xl font-black uppercase tracking-widest border-2" onClick={() => setView('home')}>Save & Close</Button>
+            <Card className="rounded-[40px] bg-white/80 backdrop-blur-xl border border-gray-200 p-8 shadow-xl space-y-8">
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold flex items-center gap-3">
+                  <Type className="w-6 h-6 text-gray-500" />
+                  Text Size
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {(['normal', 'large', 'extra-large'] as const).map((size) => (
+                    <Button
+                      key={size}
+                      variant={fontSize === size ? 'default' : 'outline'}
+                      className={cn(
+                        "h-14 rounded-2xl font-bold capitalize",
+                        fontSize === size && 'bg-gradient-to-r from-amber-500 to-orange-500'
+                      )}
+                      onClick={() => setFontSize(size)}
+                    >
+                      {size === 'extra-large' ? 'Huge' : size}
+                    </Button>
+                  ))}
                 </div>
-              </Card>
-            </motion.div>
-          )}
-          {view === 'peopleScanner' && (
-            <PeopleScanner elderId={activeUserId!} onClose={() => setView('home')} />
-          )}
-        </AnimatePresence>
+              </div>
 
-        {!isGuestMode && <TourTriggerButton tourId="elder-tour" />}
+              <div className="flex items-center justify-between p-5 bg-gray-50 rounded-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+                    <Palette className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold">High Contrast</p>
+                    <p className="text-gray-500">Easier to see</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={highContrast} 
+                  onCheckedChange={setHighContrast}
+                  className="scale-125"
+                />
+              </div>
 
-        {showVideoRoom && activeConsultation && (
-          <VideoRoom
-            roomName={activeConsultation.room_name}
-            userName={activeProfile?.full_name || 'Patient'}
-            userRole="elder"
-            consultationId={activeConsultation.id}
-            onClose={() => {
-              setShowVideoRoom(false);
-              setActiveConsultation(null);
-            }}
-            onCallEnd={() => {
-              fetchUpcomingConsultation();
-              onRefresh(true);
-            }}
-          />
+              {!isGuestMode && (
+                <Button 
+                  variant="outline" 
+                  onClick={signOut}
+                  className="w-full h-14 rounded-2xl border-2 border-red-200 text-red-600 hover:bg-red-50 font-bold"
+                >
+                  <LogOut className="w-5 h-5 mr-2" />
+                  Sign Out
+                </Button>
+              )}
+            </Card>
+          </motion.div>
         )}
 
-        {showScheduler && activeUserId && (
-          <ConsultationScheduler
-            elderId={activeUserId}
-            elderName={activeProfile?.full_name || 'Patient'}
-            userRole="elder"
-            onScheduled={() => {
-              setShowScheduler(false);
-              fetchUpcomingConsultation();
-              onRefresh(true);
-            }}
-            onClose={() => setShowScheduler(false)}
-          />
+        {view === 'peopleScanner' && (
+          <PeopleScanner elderId={activeUserId!} onClose={() => setView('home')} />
         )}
+      </AnimatePresence>
+
+      {showCompanion && (
+        <MemoryCompanion 
+          elderId={activeUserId!} 
+          elderName={activeProfile?.full_name || 'Friend'}
+          onClose={() => setShowCompanion(false)} 
+        />
+      )}
+
+      {showMoodTracker && (
+        <MoodTracker 
+          elderId={activeUserId!} 
+          onClose={() => setShowMoodTracker(false)} 
+        />
+      )}
+
+      {showFamilyMessages && (
+        <FamilyMessages 
+          elderId={activeUserId!} 
+          onClose={() => setShowFamilyMessages(false)} 
+        />
+      )}
+
+      {showDailyPrompts && (
+        <DailyPrompts 
+          onSelectPrompt={handlePromptSelected}
+          onClose={() => setShowDailyPrompts(false)} 
+        />
+      )}
+
+      {!isGuestMode && <TourTriggerButton tourId="elder-tour" />}
+
+      {showVideoRoom && activeConsultation && (
+        <VideoRoom
+          roomName={activeConsultation.room_name}
+          userName={activeProfile?.full_name || 'Patient'}
+          userRole="elder"
+          consultationId={activeConsultation.id}
+          onClose={() => {
+            setShowVideoRoom(false);
+            setActiveConsultation(null);
+          }}
+          onCallEnd={() => {
+            fetchUpcomingConsultation();
+            onRefresh(true);
+          }}
+        />
+      )}
+
+      {showScheduler && activeUserId && (
+        <ConsultationScheduler
+          elderId={activeUserId}
+          elderName={activeProfile?.full_name || 'Patient'}
+          userRole="elder"
+          onScheduled={() => {
+            setShowScheduler(false);
+            fetchUpcomingConsultation();
+            onRefresh(true);
+          }}
+          onClose={() => setShowScheduler(false)}
+        />
+      )}
     </div>
   );
 }
-
