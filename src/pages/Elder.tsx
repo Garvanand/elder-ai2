@@ -111,23 +111,36 @@ export default function ElderPage() {
     }, [user, profile]);
 
 
-  if (authLoading || loading) {
+  if (authLoading || loading || (!profile && !isGuestMode && user)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground">Loading...</p>
+          <p className="text-lg text-muted-foreground">Initializing secure session...</p>
         </div>
       </div>
     );
   }
 
   if (!user && !isGuestMode) {
+    navigate('/auth');
     return null;
   }
   
   if (!profile && !isGuestMode) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-destructive mb-2">Profile not found</p>
+          <button 
+            onClick={() => navigate('/auth')}
+            className="text-primary underline"
+          >
+            Please sign in again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const activeProfile = isGuestMode ? demoProfile : profile;

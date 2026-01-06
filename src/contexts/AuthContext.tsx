@@ -65,6 +65,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
+    // Check for native auth token from mobile app bridge
+    const checkNativeAuth = async () => {
+      const nativeToken = (window as any).nativeAuthToken;
+      if (nativeToken && !session) {
+        console.log('Syncing session from native token...');
+        const { data, error } = await supabase.auth.setSession({
+          access_token: nativeToken,
+          refresh_token: '', // We don't have the refresh token but setSession often works with just access_token for immediate sync
+        });
+        if (!error && data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          const p = await fetchProfile(data.session.user.id);
+          setProfile(p);
+        }
+      }
+    };
+
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -76,7 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
         });
       } else {
-        setLoading(false);
+        // If no regular session, check for native token
+        checkNativeAuth().finally(() => {
+          setLoading(false);
+        });
       }
     }).catch((error) => {
       console.error('Error getting session:', error);
