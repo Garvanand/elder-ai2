@@ -1,16 +1,45 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors, spacing, fontSize } from '@/styles/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { WebViewWrapper } from '@/components/WebViewWrapper';
+import * as SecureStore from 'expo-secure-store';
+
+const USE_WEBVIEW_MODE = true;
 
 export default function Index() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, session } = useAuth();
   const router = useRouter();
+  const [showWebView, setShowWebView] = useState(false);
+  const [webViewPath, setWebViewPath] = useState('/');
 
   useEffect(() => {
     if (loading) return;
+
+    if (USE_WEBVIEW_MODE) {
+      if (user && profile) {
+        let path = '/';
+        switch (profile.role) {
+          case 'elder':
+            path = '/elder';
+            break;
+          case 'caregiver':
+            path = '/caregiver';
+            break;
+          case 'clinician':
+            path = '/clinician';
+            break;
+        }
+        setWebViewPath(path);
+        setShowWebView(true);
+      } else {
+        setWebViewPath('/auth');
+        setShowWebView(true);
+      }
+      return;
+    }
 
     if (!user) {
       router.replace('/auth');
@@ -33,6 +62,19 @@ export default function Index() {
       }
     }
   }, [user, profile, loading]);
+
+  if (USE_WEBVIEW_MODE && showWebView) {
+    return (
+      <WebViewWrapper
+        initialPath={webViewPath}
+        userRole={profile?.role}
+        authToken={session?.access_token}
+        onNavigationChange={(url) => {
+          console.log('Navigation:', url);
+        }}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
