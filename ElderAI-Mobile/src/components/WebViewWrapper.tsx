@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { nativeBridge, NativeBridgeMessage } from '../lib/native-bridge';
 
 const WEB_APP_URL = __DEV__ 
-  ? 'http://localhost:8080' 
+  ? 'http://172.25.164.149:8080' 
   : 'https://memory-friend.vercel.app';
 
 interface WebViewWrapperProps {
