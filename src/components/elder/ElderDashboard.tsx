@@ -30,6 +30,8 @@ import { MemoryCompanion } from './MemoryCompanion';
 import { MoodTracker } from './MoodTracker';
 import { FamilyMessages } from './FamilyMessages';
 import { DailyPrompts } from './DailyPrompts';
+import { CognitiveHealthDashboard } from './CognitiveHealthDashboard';
+import { TimeCapsuleFeature } from './TimeCapsule';
 
 interface ElderDashboardProps {
   recentQuestions: Question[];
@@ -58,6 +60,8 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const [showMoodTracker, setShowMoodTracker] = useState(false);
   const [showFamilyMessages, setShowFamilyMessages] = useState(false);
   const [showDailyPrompts, setShowDailyPrompts] = useState(false);
+  const [showCognitiveHealth, setShowCognitiveHealth] = useState(false);
+  const [showTimeCapsule, setShowTimeCapsule] = useState(false);
 
   const [answer, setAnswer] = useState('');
   const [recap, setRecap] = useState('');
