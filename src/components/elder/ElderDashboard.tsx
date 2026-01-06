@@ -564,10 +564,10 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                 { label: 'Who is this?', icon: Users, onClick: () => setView('peopleScanner'), color: 'from-cyan-400 to-blue-500' },
                 { label: 'Memory Game', icon: Gamepad2, onClick: () => setView('matchingGame'), color: 'from-purple-400 to-violet-500' },
                 { label: 'My Journey', icon: BookOpen, onClick: () => setView('lifeTimeline'), color: 'from-indigo-400 to-blue-500' },
-                { label: 'Ask Memory', icon: MessageCircleQuestion, onClick: () => setView('askQuestion'), color: 'from-teal-400 to-cyan-500' },
-                { label: 'Weekly Review', icon: Brain, onClick: handleShowRecap, color: 'from-slate-400 to-gray-500' },
+                { label: 'Brain Health', icon: Brain, onClick: () => setShowCognitiveHealth(true), color: 'from-rose-400 to-red-500' },
+                { label: 'Time Capsule', icon: Clock, onClick: () => setShowTimeCapsule(true), color: 'from-amber-400 to-yellow-500' },
                 { label: 'Settings', icon: Settings, onClick: () => setView('settings'), color: 'from-gray-400 to-slate-500' },
-                { label: 'Help', icon: HelpCircle, onClick: () => {}, color: 'from-amber-400 to-yellow-500' },
+                { label: 'Help', icon: HelpCircle, onClick: () => {}, color: 'from-slate-400 to-gray-500' },
               ].map((item) => (
                 <motion.button
                   key={item.label}
@@ -895,14 +895,30 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
         />
       )}
 
-      {showDailyPrompts && (
-        <DailyPrompts 
-          onSelectPrompt={handlePromptSelected}
-          onClose={() => setShowDailyPrompts(false)} 
-        />
-      )}
+{showDailyPrompts && (
+          <DailyPrompts 
+            onSelectPrompt={handlePromptSelected}
+            onClose={() => setShowDailyPrompts(false)} 
+          />
+        )}
 
-      {!isGuestMode && <TourTriggerButton tourId="elder-tour" />}
+        {showCognitiveHealth && (
+          <CognitiveHealthDashboard
+            elderId={activeUserId!}
+            elderName={activeProfile?.full_name || 'Friend'}
+            onClose={() => setShowCognitiveHealth(false)}
+          />
+        )}
+
+        {showTimeCapsule && (
+          <TimeCapsuleFeature
+            elderId={activeUserId!}
+            elderName={activeProfile?.full_name || 'Friend'}
+            onClose={() => setShowTimeCapsule(false)}
+          />
+        )}
+
+        {!isGuestMode && <TourTriggerButton tourId="elder-tour" />}
 
       {showVideoRoom && activeConsultation && (
         <VideoRoom
