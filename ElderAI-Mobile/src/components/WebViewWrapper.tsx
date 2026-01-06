@@ -189,20 +189,8 @@ export function WebViewWrapper({
     })();
   `;
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#F59E0B"
-            colors={['#F59E0B']}
-          />
-        }
-        scrollEnabled={false}
-      >
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <WebView
           ref={webViewRef}
           source={{ uri: currentUrl }}
@@ -239,9 +227,8 @@ export function WebViewWrapper({
           allowFileAccess={true}
           allowUniversalAccessFromFileURLs={true}
         />
-      </ScrollView>
-      
-      {loading && (
+        
+        {loading && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContent}>
             <ActivityIndicator size="large" color="#F59E0B" />

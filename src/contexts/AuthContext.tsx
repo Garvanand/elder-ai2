@@ -67,20 +67,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check for native auth token from mobile app bridge
     const checkNativeAuth = async () => {
-      const nativeToken = (window as any).nativeAuthToken;
-      if (nativeToken && !session) {
-        console.log('Syncing session from native token...');
-        const { data, error } = await supabase.auth.setSession({
-          access_token: nativeToken,
-          refresh_token: '', // We don't have the refresh token but setSession often works with just access_token for immediate sync
-        });
-        if (!error && data.session) {
-          setSession(data.session);
-          setUser(data.session.user);
-          const p = await fetchProfile(data.session.user.id);
-          setProfile(p);
+      // Try multiple times in case of injection delay
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (attempts < maxAttempts) {
+        const nativeToken = (window as any).nativeAuthToken;
+        if (nativeToken && !session) {
+          console.log('Syncing session from native token...');
+          const { data, error } = await supabase.auth.setSession({
+            access_token: nativeToken,
+            refresh_token: '',
+          });
+          if (!error && data.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+            const p = await fetchProfile(data.session.user.id);
+            setProfile(p);
+            return true;
+          }
         }
+        attempts++;
+        await new Promise(r => setTimeout(r, 200));
       }
+      return false;
     };
 
     // THEN check for existing session
