@@ -2,7 +2,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import * as LocalAuthentication from 'expo-local-authentication';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 export interface NativeBridgeMessage {
@@ -37,11 +36,8 @@ class NativeBridge {
         return this.requestBiometric();
       
       case 'scheduleNotification':
-        return this.scheduleNotification(
-          payload?.title,
-          payload?.body,
-          payload?.trigger
-        );
+        console.log('Push notifications not supported in Expo Go SDK 53+');
+        return null;
       
       case 'getDeviceInfo':
         return this.getDeviceInfo();
@@ -214,42 +210,6 @@ class NativeBridge {
     } catch (error) {
       console.error('Biometric auth error:', error);
       return { success: false, error: 'Authentication error' };
-    }
-  }
-
-  async scheduleNotification(
-    title: string,
-    body: string,
-    trigger?: { seconds?: number; date?: string }
-  ): Promise<string | null> {
-    try {
-      const permission = await Notifications.requestPermissionsAsync();
-      if (!permission.granted) {
-        return null;
-      }
-
-      let notificationTrigger: Notifications.NotificationTriggerInput | null = null;
-      
-      if (trigger?.seconds) {
-        notificationTrigger = { seconds: trigger.seconds };
-      } else if (trigger?.date) {
-        notificationTrigger = { date: new Date(trigger.date) };
-      }
-
-      const id = await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-        },
-        trigger: notificationTrigger,
-      });
-
-      return id;
-    } catch (error) {
-      console.error('Schedule notification error:', error);
-      return null;
     }
   }
 
