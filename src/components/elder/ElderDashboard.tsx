@@ -40,6 +40,7 @@ interface ElderDashboardProps {
 
 export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDashboardProps) {
   const { user, profile, signOut } = useAuth();
+  const isNativeMobile = typeof window !== 'undefined' && (window as any).isNativeMobile;
   const { isGuestMode, demoProfile, demoReminders, addDemoMemory, addDemoQuestion, completeDemoReminder, demoMemories } = useDemo();
   const { toast } = useToast();
   const { isListening, isSpeaking, supported, startListening, speak, stopSpeaking } = useSpeech();

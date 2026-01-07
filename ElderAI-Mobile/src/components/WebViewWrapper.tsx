@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { nativeBridge, NativeBridgeMessage } from '../lib/native-bridge';
 
 const WEB_APP_URL = __DEV__ 
-  ? 'http://172.25.164.149:8080' 
+  ? 'http://172.25.250.109:8080' 
   : 'https://memory-friend.vercel.app';
 
 interface WebViewWrapperProps {
@@ -212,10 +212,12 @@ export function WebViewWrapper({
           cacheEnabled={true}
           cacheMode="LOAD_DEFAULT"
           startInLoadingState={true}
-          scalesPageToFit={true}
+          scalesPageToFit={false}
           bounces={false}
           overScrollMode="never"
           textZoom={100}
+          androidLayerType="hardware"
+          decelerationRate="normal"
           renderLoading={() => (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#F59E0B" />
@@ -227,17 +229,9 @@ export function WebViewWrapper({
           allowFileAccess={true}
           allowUniversalAccessFromFileURLs={true}
         />
-        
-        {loading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContent}>
-            <ActivityIndicator size="large" color="#F59E0B" />
-          </View>
-        </View>
-      )}
-    </View>
-  );
-}
+      </View>
+    );
+  }
 
 const styles = StyleSheet.create({
   container: {

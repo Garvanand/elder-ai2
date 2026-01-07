@@ -10,6 +10,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { TourOverlay, GuestModeBadge } from "@/components/TourOverlay";
+import { cn } from "@/lib/utils";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Elder from "./pages/Elder";
@@ -26,43 +27,47 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <DemoProvider>
-        <TourProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <FuturisticBackground />
-              <Navbar />
-              <GuestModeBadge />
-              <TourOverlay />
-              <main className="pt-20 min-h-screen">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/elder" element={<Elder />} />
-                  <Route path="/caregiver" element={<Caregiver />} />
-                  <Route path="/clinician" element={<Clinician />} />
-                  <Route path="/family" element={<Family />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/security" element={<SecurityLab />} />
-                  <Route path="/status" element={<Status />} />
-                  <Route path="/docs" element={<UplinkDocs />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-              <Footer />
-            </BrowserRouter>
-          </TooltipProvider>
-        </TourProvider>
-      </DemoProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const isNativeMobile = typeof window !== 'undefined' && (window as any).isNativeMobile;
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <DemoProvider>
+          <TourProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                {!isNativeMobile && <FuturisticBackground />}
+                {!isNativeMobile && <Navbar />}
+                <GuestModeBadge />
+                <TourOverlay />
+                <main className={cn("min-h-screen", !isNativeMobile && "pt-20")}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/elder" element={<Elder />} />
+                    <Route path="/caregiver" element={<Caregiver />} />
+                    <Route path="/clinician" element={<Clinician />} />
+                    <Route path="/family" element={<Family />} />
+                    <Route path="/support" element={<Support />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/security" element={<SecurityLab />} />
+                    <Route path="/status" element={<Status />} />
+                    <Route path="/docs" element={<UplinkDocs />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+                {!isNativeMobile && <Footer />}
+              </BrowserRouter>
+            </TooltipProvider>
+          </TourProvider>
+        </DemoProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

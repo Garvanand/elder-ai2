@@ -13,7 +13,9 @@ const Index = () => {
   const { isGuestMode } = useDemo();
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.8]);
+  const isNativeMobile = typeof window !== 'undefined' && (window as any).isNativeMobile;
+  
+  const scale = useTransform(scrollYProgress, [0, 1], [1, isNativeMobile ? 1 : 0.8]);
   const [showGuestModal, setShowGuestModal] = useState(false);
 
   useEffect(() => {
@@ -51,34 +53,39 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen text-[#1A1A1A] selection:bg-primary/20 overflow-x-hidden">
+    <div className={cn(
+      "min-h-screen text-[#1A1A1A] selection:bg-primary/20",
+      isNativeMobile ? "overflow-y-auto" : "overflow-x-hidden"
+    )}>
       <main className="relative z-10">
-        {/* Floating background elements */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
-          <motion.div 
-            animate={{ 
-              y: [0, -20, 0],
-              opacity: [0.3, 0.5, 0.3]
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-[10%] left-[5%] w-64 h-64 bg-primary/20 rounded-full blur-3xl" 
-          />
-          <motion.div 
-            animate={{ 
-              y: [0, 20, 0],
-              opacity: [0.2, 0.4, 0.2]
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute top-[40%] right-[10%] w-96 h-96 bg-accent/20 rounded-full blur-3xl" 
-          />
-        </div>
+        {/* Floating background elements - Hidden on mobile for performance */}
+        {!isNativeMobile && (
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
+            <motion.div 
+              animate={{ 
+                y: [0, -20, 0],
+                opacity: [0.3, 0.5, 0.3]
+              }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-[10%] left-[5%] w-64 h-64 bg-primary/20 rounded-full blur-3xl" 
+            />
+            <motion.div 
+              animate={{ 
+                y: [0, 20, 0],
+                opacity: [0.2, 0.4, 0.2]
+              }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute top-[40%] right-[10%] w-96 h-96 bg-accent/20 rounded-full blur-3xl" 
+            />
+          </div>
+        )}
 
         {/* Hero Section */}
-        <section className="relative pt-32 pb-40 px-6">
+        <section className={cn("relative px-6", isNativeMobile ? "pt-10 pb-20" : "pt-32 pb-40")}>
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
             <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={isNativeMobile ? { opacity: 1, y: 0 } : { opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="space-y-10"
             >
