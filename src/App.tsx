@@ -27,7 +27,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+export function App() {
   const isNativeMobile = typeof window !== 'undefined' && (window as any).isNativeMobile;
 
   return (
@@ -68,6 +68,6 @@ const App = () => {
       </AuthProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
