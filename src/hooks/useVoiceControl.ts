@@ -1,48 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const useVoiceControl = () => {
   const navigate = useNavigate();
-  const [isListening, setIsListening] = useState(false);
-  
   const commands = [
     {
-      command: ['go to *', 'open *', 'show me *'],
+      command: 'go to *',
       callback: (page: string) => {
-        const route = page.toLowerCase().replace(' ', '-');
-        if (['elder', 'caregiver', 'clinician', 'family', 'support'].includes(route)) {
-          navigate(`/${route}`);
-          toast.success(`Navigating to ${page}`);
-        } else {
-          toast.error(`Unknown destination: ${page}`);
-        }
+        const target = page.toLowerCase();
+        if (target.includes('dashboard')) navigate('/clinician');
+        else if (target.includes('records')) navigate('/clinician');
+        else if (target.includes('settings')) navigate('/settings');
+        toast(`Navigating to ${page}`);
       }
     },
     {
-      command: 'help',
-      callback: () => toast.info("You can say: 'Open Elder Portal', 'Go to Caregiver Dashboard', or 'Show me support'")
+      command: 'show cognitive scores',
+      callback: () => {
+        toast("Displaying cognitive analysis...");
+        // Logic to trigger view change could go here
+      }
+    },
+    {
+      command: 'emergency',
+      callback: () => {
+        toast.error("EMERGENCY PROTOCOL ACTIVATED");
+        // Logic for emergency alert
+      }
     }
   ];
 
-  const { transcript, browserSupportsSpeechRecognition } = useSpeechRecognition({ commands });
+  const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition({ commands });
 
-  const toggleListening = () => {
-    if (isListening) {
-      SpeechRecognition.stopListening();
-      setIsListening(false);
-    } else {
-      SpeechRecognition.startListening({ continuous: true });
-      setIsListening(true);
-      toast.info("Listening for commands...");
-    }
-  };
+  const startListening = () => SpeechRecognition.startListening({ continuous: true });
+  const stopListening = SpeechRecognition.stopListening;
 
   return {
-    isListening,
     transcript,
-    toggleListening,
+    listening,
+    resetTranscript,
+    startListening,
+    stopListening,
     browserSupportsSpeechRecognition
   };
 };

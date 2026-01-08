@@ -2,31 +2,30 @@ import { useEffect } from 'react';
 import Hammer from 'hammerjs';
 import { toast } from 'sonner';
 
-export const useGestureControl = (targetRef: React.RefObject<HTMLElement>) => {
+export const useGestureControl = (elementRef: React.RefObject<HTMLElement>) => {
   useEffect(() => {
-    if (!targetRef.current) return;
+    if (!elementRef.current) return;
 
-    const mc = new Hammer(targetRef.current);
+    const mc = new Hammer(elementRef.current);
+    mc.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
 
-    // Swipe up for emergency panic
-    mc.get('swipe').set({ direction: Hammer.DIRECTION_UP });
     mc.on('swipeup', () => {
-      toast.error("EMERGENCY PROTOCOL INITIALIZED", {
-        description: "Alerting all caregivers and emergency services.",
-        duration: 5000,
-      });
+      toast.error("EMERGENCY SIGNAL ACTIVATED (Swipe Up)");
+      // Emergency logic
     });
 
-    // Pinch for zoom/focus mode
-    mc.get('pinch').set({ enable: true });
-    mc.on('pinch', (ev) => {
-      if (ev.scale > 1.5) {
-        toast.info("Entering Focus Mode");
-      }
+    mc.on('swipedown', () => {
+      window.location.reload();
+      toast("Refreshing clinical data...");
+    });
+
+    mc.on('press', () => {
+      toast("Voice Assistant Activated (Long Press)");
+      // Voice activation logic
     });
 
     return () => {
       mc.destroy();
     };
-  }, [targetRef]);
+  }, [elementRef]);
 };
