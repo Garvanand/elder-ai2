@@ -9,6 +9,10 @@ import { GuestModeModal } from '@/components/GuestModeModal';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { CommandCenter } from '@/components/clinician/CommandCenter';
+import { HealthTimeline } from '@/components/clinician/HealthTimeline';
+import { DiagnosticAI } from '@/components/clinician/DiagnosticAI';
+import { ParticleBackground } from '@/components/ui/ParticleBackground';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -63,6 +67,7 @@ const Index = () => {
       "min-h-screen text-[#1A1A1A] selection:bg-primary/20",
       isNativeMobile ? "overflow-y-auto" : "overflow-x-hidden"
     )}>
+      <ParticleBackground />
       <main className="relative z-10">
         {/* Floating background elements - Hidden on mobile for performance */}
         {!isNativeMobile && (
@@ -284,9 +289,59 @@ const Index = () => {
               </div>
             </div>
           </div>
-        </section>
+          </section>
+  
+          {/* Clinician Mission Control Showcase */}
+          <section id="clinician-preview" className="py-40 px-6 bg-[#0a0e27] relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none" />
+            <div className="max-w-7xl mx-auto space-y-24 relative z-10">
+              <div className="text-center space-y-6">
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  className="w-20 h-20 bg-cyan-500/20 rounded-[30px] border border-cyan-500/30 flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(34,211,238,0.2)]"
+                >
+                  <Activity className="w-10 h-10 text-cyan-400" />
+                </motion.div>
+                <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-white uppercase italic">
+                  Mission <span className="text-cyan-400">Control</span> v4.0
+                </h2>
+                <p className="text-2xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
+                  NASA-grade telemetry for healthcare. Monitor entire populations with real-time neural data synchronization and predictive diagnostics.
+                </p>
+              </div>
 
-        {/* Final Integrated CTA */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <CommandCenter />
+                </div>
+                <div className="space-y-8">
+                  <DiagnosticAI />
+                  <HealthTimeline />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                {[
+                  { title: "Real-time Telemetry", desc: "Sub-second latency on vital sign synchronization across global nodes.", icon: Zap },
+                  { title: "Predictive Analytics", desc: "Identify hospitalization risks 30 days before they occur with 85% accuracy.", icon: Brain },
+                  { title: "Quantum Security", desc: "Patient data encrypted with post-quantum algorithms for absolute sanctity.", icon: Shield }
+                ].map((item, i) => (
+                  <motion.div 
+                    key={i}
+                    whileHover={{ y: -10 }}
+                    className="p-10 bg-white/5 border border-white/10 rounded-[48px] backdrop-blur-xl"
+                  >
+                    <item.icon className="w-12 h-12 text-cyan-400 mb-6" />
+                    <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">{item.title}</h4>
+                    <p className="text-slate-400 text-lg leading-relaxed font-medium">{item.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Final Integrated CTA */}
         <section className="py-40 px-6 relative z-10">
           <motion.div 
             style={{ scale }}

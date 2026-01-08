@@ -56,6 +56,17 @@
     --gradient-warm: linear-gradient(135deg, hsl(38 92% 95%) 0%, hsl(38 70% 90%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
 
+    /* Futuristic Tokens */
+    --neon-blue: #00f3ff;
+    --neon-purple: #b000ff;
+    --neon-pink: #ff006e;
+    --cyber-dark: #0a0e27;
+    --holo-gradient: linear-gradient(135deg, 
+      rgba(0,243,255,0.1), 
+      rgba(176,0,255,0.1), 
+      rgba(255,0,110,0.1));
+    --glass-bg: rgba(255, 255, 255, 0.05);
+
     /* Shadows */
     --shadow-soft: 0 4px 20px -4px hsl(199 89% 32% / 0.15);
     --shadow-card: 0 8px 30px -8px hsl(222 47% 11% / 0.1);
