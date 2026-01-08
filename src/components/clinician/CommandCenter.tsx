@@ -1,216 +1,208 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, Activity, AlertCircle, Search, Filter, 
-  ArrowUpRight, MoreVertical, Phone, Calendar,
-  Brain, Heart, Zap, Shield, Eye, Bell
+  Users, AlertTriangle, TrendingUp, Search, 
+  Activity, Bell, Calendar, Video, Filter,
+  Brain, Heart, Smartphone
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { HolographicCard } from '../ui/holographic-card';
+import { ParticleBackground } from '../ui/particle-background';
 import { cn } from '@/lib/utils';
-import { BrainModel3D } from './BrainModel3D';
-import { HealthHeatmap } from './HealthHeatmap';
 
-interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  status: 'critical' | 'stable' | 'monitoring';
-  cognitiveScore: number;
-  lastActive: string;
-  vitals: {
-    heartRate: number;
-    bloodPressure: string;
-    oxygen: number;
-  };
-  riskScore: number;
-}
-
-const patients: Patient[] = [
-  {
-    id: '1',
-    name: 'Robert Wilson',
-    age: 78,
-    status: 'critical',
-    cognitiveScore: 62,
-    lastActive: '2m ago',
-    vitals: { heartRate: 92, bloodPressure: '145/95', oxygen: 94 },
-    riskScore: 85
-  },
-  {
-    id: '2',
-    name: 'Martha Chen',
-    age: 82,
-    status: 'stable',
-    cognitiveScore: 75,
-    lastActive: '15m ago',
-    vitals: { heartRate: 72, bloodPressure: '120/80', oxygen: 98 },
-    riskScore: 32
-  },
-  {
-    id: '3',
-    name: 'James Rodriguez',
-    age: 71,
-    status: 'monitoring',
-    cognitiveScore: 68,
-    lastActive: '5m ago',
-    vitals: { heartRate: 84, bloodPressure: '135/88', oxygen: 96 },
-    riskScore: 54
-  }
+// Mock Alert Data
+const mockAlerts = [
+  { id: 1, type: 'critical', patient: 'Mrs. Chen', event: 'Fall Detected', time: '2m ago' },
+  { id: 2, type: 'warning', patient: 'Mr. Johnson', event: 'Gait Decline (23%)', time: '15m ago' },
+  { id: 3, type: 'info', patient: 'Mr. Davis', event: 'Medication Missed', time: '1h ago' },
 ];
 
 export const CommandCenter = () => {
-  const [search, setSearch] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(patients[0]);
+  const [activeView, setActiveView] = useState('grid');
+  const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <div className="space-y-8 p-6 bg-transparent text-white font-sans relative z-10">
-      {/* NASA Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/10 pb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_#22d3ee]" />
-            <h1 className="text-4xl font-black tracking-tighter uppercase italic">
-              Mission <span className="text-cyan-400">Control</span>
-            </h1>
+    <div className="relative min-h-screen text-white p-8">
+      <ParticleBackground />
+      
+      {/* Header */}
+      <header className="flex justify-between items-center mb-12">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-2xl bg-cyan-500/20 border border-cyan-500/40">
+            <Activity className="h-8 w-8 text-cyan-400" />
           </div>
-          <p className="text-slate-400 font-medium tracking-widest text-xs uppercase">
-            Global Patient Monitoring Matrix • Sector 7G
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight neon-text">Health Mission Control</h1>
+            <p className="text-white/60">NASA-Grade Multi-Patient Monitoring</p>
+          </div>
         </div>
-
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="relative flex-1 md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <Input 
-              placeholder="Query neural database..." 
-              className="bg-white/5 border-white/10 pl-12 h-12 rounded-xl text-white placeholder:text-slate-600 focus:ring-cyan-400/50"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+        
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
+            <input 
+              type="text"
+              placeholder="AI Semantic Search..."
+              className="bg-white/5 border border-white/10 rounded-full py-3 pl-12 pr-6 w-80 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="h-12 border-white/10 bg-white/5 hover:bg-white/10 rounded-xl px-6 group">
-            <Bell className="w-4 h-4 mr-2 group-hover:text-rose-500 transition-colors" />
-            <span className="bg-rose-500 text-[10px] px-1.5 rounded-full mr-2">3</span>
-            Alerts
-          </Button>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="p-3 rounded-full bg-white/5 border border-white/10 relative"
+          >
+            <Bell className="h-6 w-6 text-white/80" />
+            <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-[#0a0e27]" />
+          </motion.button>
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 border-2 border-white/20" />
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Patient List */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500">Active Units</h2>
-            <Badge variant="outline" className="border-cyan-400/30 text-cyan-400">{patients.length} ONLINE</Badge>
+      <div className="grid grid-cols-12 gap-8">
+        {/* Sidebar Controls */}
+        <aside className="col-span-1 flex flex-col gap-6 items-center py-8 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+          <SidebarIcon icon={Users} active={activeView === 'grid'} onClick={() => setActiveView('grid')} label="Patients" />
+          <SidebarIcon icon={AlertTriangle} active={activeView === 'alerts'} onClick={() => setActiveView('alerts')} label="Priority" />
+          <SidebarIcon icon={TrendingUp} active={activeView === 'trends'} onClick={() => setActiveView('trends')} label="Analytics" />
+          <SidebarIcon icon={Video} active={activeView === 'tele'} onClick={() => setActiveView('tele')} label="Rounds" />
+          <div className="mt-auto">
+            <SidebarIcon icon={Filter} active={false} onClick={() => {}} label="Filters" />
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="col-span-8">
+          <div className="grid grid-cols-2 gap-6">
+            <AnimatePresence>
+              {[1, 2, 3, 4].map((i) => (
+                <PatientCard key={i} />
+              ))}
+            </AnimatePresence>
+          </div>
+        </main>
+
+        {/* Priority Alert System */}
+        <aside className="col-span-3 space-y-6">
+          <h3 className="text-xl font-bold flex items-center gap-2 mb-4">
+            <Bell className="h-5 w-5 text-red-400" />
+            Priority Alerts
+          </h3>
+          <div className="space-y-4">
+            {mockAlerts.map((alert) => (
+              <AlertCard key={alert.id} {...alert} />
+            ))}
           </div>
           
-          {patients.map((patient) => (
-            <motion.div
-              key={patient.id}
-              whileHover={{ x: 5 }}
-              onClick={() => setSelectedPatient(patient)}
-              className={cn(
-                "p-4 rounded-2xl border transition-all cursor-pointer group",
-                selectedPatient?.id === patient.id 
-                  ? "bg-cyan-400/10 border-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.1)]" 
-                  : "bg-white/5 border-white/10 hover:border-white/20"
-              )}
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 overflow-hidden">
-                    <img src={`https://i.pravatar.cc/150?u=${patient.id}`} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
-                  </div>
-                  <div className={cn(
-                    "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0a0e27]",
-                    patient.status === 'critical' ? "bg-rose-500 animate-ping" : "bg-emerald-500"
-                  )} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold">{patient.name}</h3>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
-                    <span>PX-{patient.id}00</span>
-                    <span>•</span>
-                    <span className={patient.status === 'critical' ? "text-rose-500" : "text-emerald-500"}>{patient.status}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-black text-white">{patient.vitals.heartRate} <span className="text-[8px] text-slate-500">BPM</span></p>
-                  <p className="text-[10px] font-bold text-cyan-400">{100 - patient.riskScore}% STABLE</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Center/Right Column: Patient Deep Dive */}
-        <div className="lg:col-span-8 space-y-8">
-          {selectedPatient ? (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedPatient.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
-              >
-                {/* 3D Visualizer & Heatmap Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-[32px] overflow-hidden">
-                    <CardContent className="p-0">
-                      <div className="p-6 border-b border-white/5">
-                        <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                          <Brain className="w-4 h-4 text-purple-400" />
-                          Neural Mapping
-                        </h3>
-                      </div>
-                      <BrainModel3D />
-                    </CardContent>
-                  </Card>
-                  
-                  <HealthHeatmap />
-                </div>
-
-                {/* Real-time Telemetry */}
-                <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-[32px] p-8">
-                  <div className="flex justify-between items-center mb-8">
-                    <h3 className="text-xl font-bold">Biometric Telemetry</h3>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="border-white/10 bg-white/5">24H</Button>
-                      <Button size="sm" variant="outline" className="border-white/10 bg-white/5">7D</Button>
-                      <Button size="sm" variant="outline" className="border-cyan-400/30 text-cyan-400 bg-cyan-400/5">LIVE</Button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {[
-                      { label: 'Heart Rate', value: selectedPatient.vitals.heartRate, unit: 'BPM', icon: Heart, color: 'text-rose-500' },
-                      { label: 'Blood Pressure', value: selectedPatient.vitals.bloodPressure, unit: 'SYS/DIA', icon: Activity, color: 'text-cyan-400' },
-                      { label: 'Oxygen Saturation', value: selectedPatient.vitals.oxygen, unit: '%', icon: Zap, color: 'text-amber-400' },
-                      { label: 'Cognitive Score', value: selectedPatient.cognitiveScore, unit: 'MMSE', icon: Brain, color: 'text-purple-400' },
-                    ].map((metric, i) => (
-                      <div key={i} className="p-6 bg-white/5 rounded-3xl border border-white/5 relative group overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-current opacity-20 transition-all group-hover:opacity-100" />
-                        <metric.icon className={cn("w-5 h-5 mb-4", metric.color)} />
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{metric.label}</p>
-                        <p className="text-2xl font-black text-white">{metric.value}</p>
-                        <p className="text-[10px] font-bold text-slate-600 mt-1">{metric.unit}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </motion.div>
-            </AnimatePresence>
-          ) : (
-            <div className="h-full flex items-center justify-center border-2 border-dashed border-white/5 rounded-[32px]">
-              <p className="text-slate-500 font-bold uppercase tracking-widest animate-pulse">Select Unit for Telemetry</p>
-            </div>
-          )}
-        </div>
+          <HolographicCard className="mt-8">
+            <h4 className="font-bold flex items-center gap-2 mb-4">
+              <Brain className="h-5 w-5 text-purple-400" />
+              AI Insight
+            </h4>
+            <p className="text-sm text-white/70">
+              Gait speed patterns across 3 high-risk patients show correlation with recent weather changes. Recommend PT sessions.
+            </p>
+          </HolographicCard>
+        </aside>
       </div>
     </div>
   );
 };
+
+const SidebarIcon = ({ icon: Icon, active, onClick, label }: any) => (
+  <motion.button
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    onClick={onClick}
+    className={cn(
+      "p-4 rounded-full transition-all duration-300 relative group",
+      active ? "bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.5)]" : "text-white/40 hover:text-white hover:bg-white/10"
+    )}
+  >
+    <Icon className="h-6 w-6" />
+    <span className="absolute left-full ml-4 px-3 py-1 rounded bg-cyan-500 text-white text-xs opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+      {label}
+    </span>
+  </motion.button>
+);
+
+const PatientCard = () => (
+  <HolographicCard className="p-0 overflow-hidden">
+    <div className="p-6">
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600" />
+          <div>
+            <h4 className="text-xl font-bold">Mrs. Chen</h4>
+            <div className="flex items-center gap-2 text-white/60 text-sm">
+              <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+              Stable Monitoring
+            </div>
+          </div>
+        </div>
+        <div className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold border border-cyan-500/30">
+          ID: 2849
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <Metric icon={Brain} value="84" label="Cognitive" color="text-purple-400" />
+        <Metric icon={Activity} value="92%" label="Mobility" color="text-cyan-400" />
+        <Metric icon={Smartphone} value="100%" label="Adherence" color="text-green-400" />
+      </div>
+    </div>
+    
+    <div className="bg-white/5 border-t border-white/10 p-4 flex justify-between items-center">
+      <div className="flex -space-x-2">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-8 w-8 rounded-full border-2 border-[#0a0e27] bg-white/20" />
+        ))}
+      </div>
+      <button className="text-cyan-400 text-sm font-bold hover:underline">
+        View Records →
+      </button>
+    </div>
+  </HolographicCard>
+);
+
+const Metric = ({ icon: Icon, value, label, color }: any) => (
+  <div className="text-center p-3 rounded-xl bg-white/5 border border-white/5">
+    <Icon className={cn("h-5 w-5 mx-auto mb-2", color)} />
+    <div className="text-xl font-bold">{value}</div>
+    <div className="text-[10px] text-white/40 uppercase tracking-widest">{label}</div>
+  </div>
+);
+
+const AlertCard = ({ patient, event, time, type }: any) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    className={cn(
+      "p-4 rounded-2xl border backdrop-blur-md transition-all",
+      type === 'critical' ? "bg-red-500/10 border-red-500/30" : "bg-orange-500/10 border-orange-500/30"
+    )}
+  >
+    <div className="flex justify-between items-start mb-2">
+      <span className={cn(
+        "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+        type === 'critical' ? "bg-red-500 text-white" : "bg-orange-500 text-white"
+      )}>
+        {type}
+      </span>
+      <span className="text-[10px] text-white/40">{time}</span>
+    </div>
+    <h5 className="font-bold">{patient}</h5>
+    <p className="text-xs text-white/70">{event}</p>
+    <div className="flex gap-2 mt-4">
+      <button className="flex-1 py-2 rounded-lg bg-white/10 text-[10px] font-bold hover:bg-white/20 transition-all">
+        DISMISS
+      </button>
+      <button className={cn(
+        "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all",
+        type === 'critical' ? "bg-red-500 hover:bg-red-600" : "bg-orange-500 hover:bg-orange-600"
+      )}>
+        ACTION
+      </button>
+    </div>
+  </motion.div>
+);
