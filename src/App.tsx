@@ -8,7 +8,6 @@ import { DemoProvider } from "@/contexts/DemoContext";
 import { TourProvider } from "@/contexts/TourContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { TourOverlay, GuestModeBadge } from "@/components/TourOverlay";
 import { cn } from "@/lib/utils";
 import Index from "./pages/Index";
@@ -38,11 +37,10 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
-                {!isNativeMobile && <FuturisticBackground />}
-                {!isNativeMobile && <Navbar />}
-                <GuestModeBadge />
-                <TourOverlay />
+                <BrowserRouter>
+                  {!isNativeMobile && <Navbar />}
+                  <GuestModeBadge />
+                  <TourOverlay />
                 <main className={cn("min-h-screen", !isNativeMobile && "pt-20")}>
                   <Routes>
                     <Route path="/" element={<Index />} />
