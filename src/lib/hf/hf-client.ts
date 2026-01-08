@@ -1,25 +1,58 @@
 import { HfInference } from '@huggingface/inference';
+import { supabase } from '@/integrations/supabase/client';
 
 export class HFManager {
   private client: HfInference;
-  private cache: Map<string, any>;
+  private memoryCache: Map<string, any>;
   
   constructor(apiKey?: string) {
-    const key = apiKey || process.env.VITE_HUGGINGFACE_API_KEY;
+    const key = apiKey || (import.meta.env?.VITE_HUGGINGFACE_API_KEY as string);
     this.client = new HfInference(key);
-    this.cache = new Map();
+    this.memoryCache = new Map();
   }
   
   async analyzeWithCache(model: string, input: any, cacheKey: string) {
-    if (this.cache.has(cacheKey)) return this.cache.get(cacheKey);
+    // 1. Check Memory Cache
+    if (this.memoryCache.has(cacheKey)) return this.memoryCache.get(cacheKey);
     
+    // 2. Check Database Cache
+    try {
+      const { data: cachedResult, error } = await supabase
+        .from('hf_inference_cache' as any)
+        .select('output')
+        .eq('model_name', model)
+        .eq('input_hash', cacheKey)
+        .maybeSingle();
+
+      if (cachedResult && !error) {
+        this.memoryCache.set(cacheKey, cachedResult.output);
+        return cachedResult.output;
+      }
+    } catch (e) {
+      console.warn('DB Cache miss or error:', e);
+    }
+
+    // 3. Inference
     try {
       const result = await this.client.inference({
         model,
         inputs: input
       });
       
-      this.cache.set(cacheKey, result);
+      // 4. Update Caches
+      this.memoryCache.set(cacheKey, result);
+      
+      try {
+        await supabase.from('hf_inference_cache' as any).insert({
+          model_name: model,
+          input_hash: cacheKey,
+          output: result,
+          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString() // 7 days
+        });
+      } catch (e) {
+        console.warn('Failed to persist cache:', e);
+      }
+
       return result;
     } catch (error) {
       console.error(`HF Error (${model}):`, error);
@@ -57,6 +90,13 @@ export class HFManager {
 
   async tokenClassification(model: string, inputs: string) {
     return this.client.tokenClassification({
+      model,
+      inputs
+    });
+  }
+
+  async textClassification(model: string, inputs: string) {
+    return this.client.textClassification({
       model,
       inputs
     });
