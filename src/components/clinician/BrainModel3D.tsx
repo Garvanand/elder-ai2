@@ -1,59 +1,58 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere, MeshDistortMaterial, Float } from '@react-three/drei';
+import { OrbitControls, Sphere, MeshDistortMaterial, Float } from '@react-three/drei';
 import * as THREE from 'three';
+import { HolographicCard } from '../ui/holographic-card';
 
-const BrainCore = () => {
+const BrainGeometry = () => {
   const mesh = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
-    if (!mesh.current) return;
-    mesh.current.rotation.y = state.clock.getElapsedTime() * 0.2;
+    if (mesh.current) {
+      mesh.current.rotation.y += 0.005;
+    }
   });
 
   return (
     <Float speed={2} rotationIntensity={1} floatIntensity={1}>
       <Sphere ref={mesh} args={[1, 64, 64]}>
         <MeshDistortMaterial
-          color="#a855f7"
+          color="#b000ff"
           speed={3}
           distort={0.4}
           radius={1}
-          emissive="#a855f7"
+          emissive="#b000ff"
           emissiveIntensity={0.5}
+          roughness={0.2}
+          metalness={0.8}
         />
       </Sphere>
-      
-      {/* Neural Network Ring */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.5, 0.02, 16, 100]} />
-        <meshStandardMaterial color="#22d3ee" emissive="#22d3ee" emissiveIntensity={1} />
-      </mesh>
     </Float>
   );
 };
 
 export const BrainModel3D = () => {
   return (
-    <div className="w-full h-full min-h-[300px] relative">
-      <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+    <HolographicCard className="h-[400px] relative overflow-hidden">
+      <div className="absolute top-6 left-6 z-10">
+        <h3 className="text-xl font-bold text-purple-400 uppercase tracking-widest">Neural Topography</h3>
+        <p className="text-xs text-white/40">Real-time Cognitive Mapping</p>
+      </div>
+      
+      <Canvas camera={{ position: [0, 0, 4] }}>
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} color="#22d3ee" />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a855f7" />
-        <BrainCore />
+        <pointLight position={[10, 10, 10]} intensity={1} />
+        <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} />
+        <BrainGeometry />
+        <OrbitControls enableZoom={false} autoRotate />
       </Canvas>
-      <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-4">
-        <div className="flex justify-between items-end">
-          <div>
-            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Neural Synapse Load</p>
-            <p className="text-xl font-black text-cyan-400">82% <span className="text-[10px] text-slate-500 font-medium">OPTIMAL</span></p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Cognitive Reserve</p>
-            <p className="text-xl font-black text-purple-400">Low Risk</p>
-          </div>
+      
+      <div className="absolute bottom-6 right-6 z-10 flex gap-4">
+        <div className="text-right">
+          <div className="text-2xl font-black text-purple-400">84.2</div>
+          <div className="text-[10px] text-white/40 uppercase">Index Score</div>
         </div>
       </div>
-    </div>
+    </HolographicCard>
   );
 };

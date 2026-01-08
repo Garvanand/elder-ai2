@@ -12,7 +12,7 @@ import { twMerge } from 'tailwind-merge';
 import { CommandCenter } from '@/components/clinician/CommandCenter';
 import { HealthTimeline } from '@/components/clinician/HealthTimeline';
 import { DiagnosticAI } from '@/components/clinician/DiagnosticAI';
-import { ParticleBackground } from '@/components/ui/ParticleBackground';
+import { ParticleBackground } from '@/components/ui/particle-background';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
