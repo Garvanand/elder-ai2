@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDemo } from '@/contexts/DemoContext';
 import { useNavigate } from 'react-router-dom';
-import { ClinicianCommandCenter } from '@/components/clinician/CommandCenter';
+import { CommandCenter } from '@/components/clinician/CommandCenter';
 import { Loader2 } from 'lucide-react';
 
 const Clinician = () => {
@@ -30,7 +30,7 @@ const Clinician = () => {
     );
   }
 
-  return <ClinicianDashboard />;
+  return <CommandCenter />;
 };
 
 export default Clinician;

@@ -21,28 +21,28 @@ export const CommandCenter = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <div className="relative min-h-screen text-white p-8">
-      <ParticleBackground />
+    <div className="relative min-h-screen bg-background text-foreground p-8">
+      {/* Background decoration removed for light mode simplicity */}
       
       {/* Header */}
       <header className="flex justify-between items-center mb-12">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-cyan-500/20 border border-cyan-500/40">
-            <Activity className="h-8 w-8 text-cyan-400" />
+          <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20">
+            <Activity className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight neon-text">Health Mission Control</h1>
-            <p className="text-white/60">NASA-Grade Multi-Patient Monitoring</p>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Health Mission Control</h1>
+            <p className="text-muted-foreground">Comprehensive Multi-Patient Monitoring</p>
           </div>
         </div>
         
         <div className="flex items-center gap-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input 
               type="text"
-              placeholder="AI Semantic Search..."
-              className="bg-white/5 border border-white/10 rounded-full py-3 pl-12 pr-6 w-80 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+              placeholder="Search patients..."
+              className="bg-white border border-border rounded-full py-3 pl-12 pr-6 w-80 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -50,18 +50,18 @@ export const CommandCenter = () => {
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="p-3 rounded-full bg-white/5 border border-white/10 relative"
+            className="p-3 rounded-full bg-white border border-border relative shadow-sm"
           >
-            <Bell className="h-6 w-6 text-white/80" />
-            <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-[#0a0e27]" />
+            <Bell className="h-6 w-6 text-muted-foreground" />
+            <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white" />
           </motion.button>
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 border-2 border-white/20" />
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent border-2 border-white shadow-md" />
         </div>
       </header>
 
       <div className="grid grid-cols-12 gap-8">
         {/* Sidebar Controls */}
-        <aside className="col-span-1 flex flex-col gap-6 items-center py-8 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+        <aside className="col-span-1 flex flex-col gap-6 items-center py-8 rounded-3xl bg-white border border-border shadow-sm">
           <SidebarIcon icon={Users} active={activeView === 'grid'} onClick={() => setActiveView('grid')} label="Patients" />
           <SidebarIcon icon={AlertTriangle} active={activeView === 'alerts'} onClick={() => setActiveView('alerts')} label="Priority" />
           <SidebarIcon icon={TrendingUp} active={activeView === 'trends'} onClick={() => setActiveView('trends')} label="Analytics" />
@@ -85,7 +85,7 @@ export const CommandCenter = () => {
         {/* Priority Alert System */}
         <aside className="col-span-3 space-y-6">
           <h3 className="text-xl font-bold flex items-center gap-2 mb-4">
-            <Bell className="h-5 w-5 text-red-400" />
+            <Bell className="h-5 w-5 text-destructive" />
             Priority Alerts
           </h3>
           <div className="space-y-4">
@@ -94,15 +94,15 @@ export const CommandCenter = () => {
             ))}
           </div>
           
-          <HolographicCard className="mt-8">
-            <h4 className="font-bold flex items-center gap-2 mb-4">
-              <Brain className="h-5 w-5 text-purple-400" />
+          <Card className="p-6 border-primary/20 bg-primary/5">
+            <h4 className="font-bold flex items-center gap-2 mb-4 text-primary">
+              <Brain className="h-5 w-5" />
               AI Insight
             </h4>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Gait speed patterns across 3 high-risk patients show correlation with recent weather changes. Recommend PT sessions.
             </p>
-          </HolographicCard>
+          </Card>
         </aside>
       </div>
     </div>
@@ -115,61 +115,63 @@ const SidebarIcon = ({ icon: Icon, active, onClick, label }: any) => (
     whileTap={{ scale: 0.9 }}
     onClick={onClick}
     className={cn(
-      "p-4 rounded-full transition-all duration-300 relative group",
-      active ? "bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.5)]" : "text-white/40 hover:text-white hover:bg-white/10"
+      "p-4 rounded-2xl transition-all duration-300 relative group",
+      active ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-primary hover:bg-primary/5"
     )}
   >
     <Icon className="h-6 w-6" />
-    <span className="absolute left-full ml-4 px-3 py-1 rounded bg-cyan-500 text-white text-xs opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+    <span className="absolute left-full ml-4 px-3 py-1 rounded bg-primary text-white text-xs opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-md">
       {label}
     </span>
   </motion.button>
 );
 
 const PatientCard = () => (
-  <HolographicCard className="p-0 overflow-hidden">
+  <Card className="p-0 overflow-hidden border-border hover:shadow-xl transition-all duration-300 rounded-3xl group">
     <div className="p-6">
       <div className="flex justify-between items-start mb-6">
         <div className="flex gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600" />
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+            <Users className="h-6 w-6 text-primary" />
+          </div>
           <div>
             <h4 className="text-xl font-bold">Mrs. Chen</h4>
-            <div className="flex items-center gap-2 text-white/60 text-sm">
-              <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
               Stable Monitoring
             </div>
           </div>
         </div>
-        <div className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold border border-cyan-500/30">
+        <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
           ID: 2849
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <Metric icon={Brain} value="84" label="Cognitive" color="text-purple-400" />
-        <Metric icon={Activity} value="92%" label="Mobility" color="text-cyan-400" />
-        <Metric icon={Smartphone} value="100%" label="Adherence" color="text-green-400" />
+        <Metric icon={Brain} value="84" label="Cognitive" color="text-amber-500" />
+        <Metric icon={Activity} value="92%" label="Mobility" color="text-primary" />
+        <Metric icon={Smartphone} value="100%" label="Adherence" color="text-success" />
       </div>
     </div>
     
-    <div className="bg-white/5 border-t border-white/10 p-4 flex justify-between items-center">
+    <div className="bg-muted/30 border-t border-border p-4 flex justify-between items-center">
       <div className="flex -space-x-2">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-8 w-8 rounded-full border-2 border-[#0a0e27] bg-white/20" />
+          <div key={i} className="h-8 w-8 rounded-full border-2 border-white bg-slate-200 shadow-sm" />
         ))}
       </div>
-      <button className="text-cyan-400 text-sm font-bold hover:underline">
+      <button className="text-primary text-sm font-bold hover:underline">
         View Records →
       </button>
     </div>
-  </HolographicCard>
+  </Card>
 );
 
 const Metric = ({ icon: Icon, value, label, color }: any) => (
-  <div className="text-center p-3 rounded-xl bg-white/5 border border-white/5">
+  <div className="text-center p-3 rounded-2xl bg-white border border-border shadow-sm">
     <Icon className={cn("h-5 w-5 mx-auto mb-2", color)} />
     <div className="text-xl font-bold">{value}</div>
-    <div className="text-[10px] text-white/40 uppercase tracking-widest">{label}</div>
+    <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{label}</div>
   </div>
 );
 
