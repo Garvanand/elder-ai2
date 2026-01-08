@@ -1,5 +1,5 @@
 import React from 'react';
-import { HolographicCard } from '../ui/holographic-card';
+import { Card } from '@/components/ui/card';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const data = [
@@ -13,23 +13,25 @@ const data = [
 
 export const HealthTimeline = () => {
   return (
-    <HolographicCard className="h-80">
+    <Card className="h-80 p-6 border-border shadow-sm">
       <h3 className="text-lg font-bold mb-4">Longitudinal Health Timeline</h3>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={10} />
-          <YAxis stroke="rgba(255,255,255,0.4)" fontSize={10} />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#0a0e27', border: '1px solid rgba(255,255,255,0.1)' }}
-            itemStyle={{ color: '#fff' }}
-          />
-          <Legend wrapperStyle={{ fontSize: 10 }} />
-          <Line type="monotone" dataKey="cognitive" stroke="#b000ff" strokeWidth={3} dot={{ r: 4 }} />
-          <Line type="monotone" dataKey="mobility" stroke="#00f3ff" strokeWidth={3} dot={{ r: 4 }} />
-          <Line type="monotone" dataKey="sleep" stroke="#ff006e" strokeWidth={3} dot={{ r: 4 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </HolographicCard>
+      <div className="h-[200px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+            <Tooltip 
+              contentStyle={{ backgroundColor: 'white', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+              itemStyle={{ fontSize: '12px' }}
+            />
+            <Legend wrapperStyle={{ fontSize: 10, paddingTop: '10px' }} />
+            <Line type="monotone" dataKey="cognitive" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="mobility" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="sleep" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
   );
 };

@@ -4,6 +4,8 @@ import { Brain, Sparkles, MessageSquare, AlertCircle } from 'lucide-react';
 import { HolographicCard } from '../ui/holographic-card';
 import { Button } from '@/components/ui/button';
 
+import { Card } from '@/components/ui/card';
+
 export const DiagnosticAI = () => {
   const [query, setQuery] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -26,8 +28,8 @@ export const DiagnosticAI = () => {
   };
 
   return (
-    <HolographicCard className="space-y-4">
-      <div className="flex items-center gap-2 text-purple-400">
+    <Card className="p-6 space-y-4 border-border shadow-sm">
+      <div className="flex items-center gap-2 text-primary">
         <Brain className="h-6 w-6" />
         <h3 className="text-lg font-bold">AI Diagnostic Assistant</h3>
       </div>
@@ -35,14 +37,14 @@ export const DiagnosticAI = () => {
       <div className="relative">
         <textarea
           placeholder="Ask about patient health patterns..."
-          className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 min-h-[100px]"
+          className="w-full bg-white border border-border rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[100px]"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <Button 
           onClick={handleAnalyze}
           disabled={!query || isAnalyzing}
-          className="absolute bottom-4 right-4 bg-purple-500 hover:bg-purple-600 h-8 text-xs"
+          className="absolute bottom-4 right-4 bg-primary hover:bg-primary/90 h-8 text-xs text-white"
         >
           {isAnalyzing ? "Analyzing..." : "Analyze"}
         </Button>
@@ -52,23 +54,23 @@ export const DiagnosticAI = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20"
+          className="p-4 rounded-xl bg-primary/5 border border-primary/20"
         >
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-purple-400" />
+            <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm font-bold">Primary Insight</span>
           </div>
-          <p className="text-sm font-medium mb-4">{diagnosis.cause}</p>
+          <p className="text-sm font-medium mb-4 text-foreground">{diagnosis.cause}</p>
           <div className="space-y-2">
             {diagnosis.recommendations.map((rec: string, i: number) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-white/60">
-                <AlertCircle className="h-3 w-3 mt-0.5 text-purple-400" />
+              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                <AlertCircle className="h-3 w-3 mt-0.5 text-primary" />
                 {rec}
               </div>
             ))}
           </div>
         </motion.div>
       )}
-    </HolographicCard>
+    </Card>
   );
 };
