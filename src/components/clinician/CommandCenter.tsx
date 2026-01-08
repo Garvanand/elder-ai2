@@ -5,8 +5,7 @@ import {
   Activity, Bell, Calendar, Video, Filter,
   Brain, Heart, Smartphone
 } from 'lucide-react';
-import { HolographicCard } from '../ui/holographic-card';
-import { ParticleBackground } from '../ui/particle-background';
+import { Card } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
 
 // Mock Alert Data

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, MessageSquare, AlertCircle } from 'lucide-react';
-import { HolographicCard } from '../ui/holographic-card';
 import { Button } from '@/components/ui/button';
-
 import { Card } from '@/components/ui/card';
 
 export const DiagnosticAI = () => {
