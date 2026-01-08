@@ -1,143 +1,102 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Sparkles, MessageSquare, Shield, Activity, Search, Send } from 'lucide-react';
+import { 
+  Brain, Zap, Activity, AlertCircle, ChevronRight, 
+  MessageSquare, Sparkles, Terminal, FileText
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export const DiagnosticAI = () => {
-  const [query, setQuery] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [query, setQuery] = useState('');
 
-  const handleAnalyze = () => {
-    if (!query) return;
-    setIsAnalyzing(true);
-    // Simulate AI analysis
-    setTimeout(() => {
-      setResults({
-        diagnosis: "Progressive gait asymmetry detected.",
-        confidence: 0.82,
-        observations: [
-          "12% reduction in stride length over 14 days",
-          "Increased vocal tremor during morning check-ins",
-          "Sleep latency increased by 45 minutes"
-        ],
-        recommendations: [
-          "Schedule neurological screening",
-          "Adjust physical therapy intensity",
-          "Review medication adherence"
-        ]
-      });
-      setIsAnalyzing(false);
-    }, 2000);
-  };
+  const insights = [
+    {
+      title: "Gait Asymmetry Detected",
+      description: "Left stride length decreased 12% in last 48 hours. Correlation with increased pain markers.",
+      confidence: 0.92,
+      type: "mobility"
+    },
+    {
+      title: "Vocal Tremor Signature",
+      description: "Early frequency variations detected in pitch stability. Recommended PD screening.",
+      confidence: 0.78,
+      type: "neurological"
+    }
+  ];
 
   return (
-    <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-[32px] overflow-hidden text-white h-full border-dashed">
-      <CardHeader className="p-8 border-b border-white/5">
+    <div className="bg-white/5 border border-white/10 rounded-[32px] overflow-hidden backdrop-blur-xl h-full flex flex-col">
+      <div className="p-6 border-b border-white/5 flex justify-between items-center bg-cyan-400/5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-            <Sparkles className="w-5 h-5 text-purple-400" />
-          </div>
-          <div>
-            <CardTitle className="text-xl font-black uppercase tracking-tighter italic">
-              Diagnostic <span className="text-purple-400">Assistant</span>
-            </CardTitle>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Neural Pattern Recognition v4.2</p>
-          </div>
+          <Terminal className="w-4 h-4 text-cyan-400" />
+          <h3 className="text-sm font-black uppercase tracking-widest">Neural Diagnostic Engine</h3>
         </div>
-      </CardHeader>
-      <CardContent className="p-8 space-y-6">
+        <Badge className="bg-cyan-400 text-black font-black">v2.4.0-CORE</Badge>
+      </div>
+
+      <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+        {insights.map((insight, i) => (
+          <motion.div
+            key={i}
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: i * 0.1 }}
+            className="p-5 bg-white/5 border border-white/5 rounded-2xl group hover:border-cyan-400/30 transition-all cursor-pointer relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+            </div>
+            
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <h4 className="font-bold text-white text-sm">{insight.title}</h4>
+            </div>
+            
+            <p className="text-xs text-slate-400 leading-relaxed mb-4">{insight.description}</p>
+            
+            <div className="flex justify-between items-center">
+              <div className="flex gap-2">
+                <Badge variant="outline" className="text-[9px] border-white/10 text-slate-500 uppercase font-bold">{insight.type}</Badge>
+                <Badge variant="outline" className="text-[9px] border-cyan-400/20 text-cyan-400 uppercase font-bold">Conf: {Math.round(insight.confidence * 100)}%</Badge>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 transition-colors" />
+            </div>
+          </motion.div>
+        ))}
+
+        {isAnalyzing && (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className="w-12 h-12 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+            <p className="text-[10px] text-cyan-400 font-black uppercase tracking-widest animate-pulse">Processing Multi-Modal Data...</p>
+          </div>
+        )}
+      </div>
+
+      <div className="p-6 bg-white/5 border-t border-white/5">
         <div className="relative">
           <Input 
-            placeholder="Ask about patient PX-100..." 
-            className="bg-white/5 border-white/10 h-14 pl-6 pr-16 rounded-2xl text-white placeholder:text-slate-600 focus:ring-purple-400/50"
+            placeholder="Ask Diagnostic AI..." 
+            className="bg-white/5 border-white/10 pl-4 pr-12 h-12 rounded-xl text-white placeholder:text-slate-600"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
           />
           <Button 
-            onClick={handleAnalyze}
-            disabled={isAnalyzing}
-            className="absolute right-2 top-2 h-10 w-10 rounded-xl bg-purple-500 hover:bg-purple-400 text-white"
+            size="icon" 
+            className="absolute right-1 top-1 h-10 w-10 bg-cyan-500 hover:bg-cyan-400 text-black rounded-lg"
+            onClick={() => setIsAnalyzing(true)}
           >
-            {isAnalyzing ? <Activity className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            <Zap className="w-4 h-4 fill-current" />
           </Button>
         </div>
-
-        <div className="min-h-[200px] flex flex-col justify-center border border-white/5 rounded-3xl p-6 bg-black/20">
-          <AnimatePresence mode="wait">
-            {!results && !isAnalyzing && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center space-y-4"
-              >
-                <MessageSquare className="w-12 h-12 text-slate-700 mx-auto" />
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Awaiting telemetry input...</p>
-              </motion.div>
-            )}
-
-            {isAnalyzing && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-4"
-              >
-                <div className="flex gap-2 justify-center">
-                  {[0, 1, 2].map((i) => (
-                    <motion.div 
-                      key={i}
-                      animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                      className="w-2 h-2 bg-purple-400 rounded-full shadow-[0_0_10px_#a855f7]"
-                    />
-                  ))}
-                </div>
-                <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-purple-400 animate-pulse">Synthesizing Neural Data...</p>
-              </motion.div>
-            )}
-
-            {results && !isAnalyzing && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex justify-between items-start">
-                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 font-black uppercase tracking-widest text-[9px]">DIAGNOSIS FOUND</Badge>
-                  <span className="text-[10px] font-black text-slate-500">CONFIDENCE: {(results.confidence * 100).toFixed(0)}%</span>
-                </div>
-                
-                <h4 className="text-xl font-bold tracking-tight text-purple-100">{results.diagnosis}</h4>
-                
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Observations</p>
-                  <ul className="space-y-2">
-                    {results.observations.map((obs: string, i: number) => (
-                      <li key={i} className="text-xs text-slate-300 flex items-center gap-2">
-                        <div className="w-1 h-1 bg-purple-500 rounded-full" />
-                        {obs}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pt-4 border-t border-white/5">
-                  <Button className="w-full bg-purple-500 hover:bg-purple-400 text-white font-black uppercase tracking-widest rounded-xl h-12">
-                    Initialize Protocol
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </CardContent>
-    </Card>
+        <p className="text-[8px] text-slate-600 mt-3 text-center uppercase font-bold tracking-widest">Powered by Gemini 1.5 Pro • Clinical Inference Mode</p>
+      </div>
+    </div>
   );
 };
+
+const Input = ({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <input className={cn("flex w-full px-3 py-2 text-sm outline-none transition-all disabled:cursor-not-allowed disabled:opacity-50", className)} {...props} />
+);
