@@ -7,6 +7,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDemo } from '@/contexts/DemoContext';
 import { GuestModeModal } from '@/components/GuestModeModal';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
