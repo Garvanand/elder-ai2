@@ -23,6 +23,15 @@ const Index = () => {
   
   const scale = useTransform(scrollYProgress, [0, 1], [1, isNativeMobile ? 1 : 0.8]);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useEffect(() => {
     if (!loading && user && profile) {
@@ -63,32 +72,55 @@ const Index = () => {
       "min-h-screen bg-[#FDFCFB] text-[#1A1A1A] selection:bg-primary/20 relative overflow-hidden",
       isNativeMobile ? "overflow-y-auto" : "overflow-x-hidden"
     )}>
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        {/* Main Gradient */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,245,235,0.5),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(240,249,255,0.5),transparent_50%)]" />
+      {/* Dynamic Innovative Background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        {/* Main Gradient Surface */}
+        <div className="absolute inset-0 bg-[#FDFCFB]" />
         
-        {/* Animated Blobs */}
+        {/* Mouse Following Glow */}
         {!isNativeMobile && (
-          <>
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-blob" />
-            <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-accent/10 rounded-full blur-[100px] animate-blob animation-delay-2000" />
-            <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-rose-200/20 rounded-full blur-[120px] animate-blob animation-delay-4000" />
-            <div className="absolute top-[40%] left-[50%] w-[25%] h-[25%] bg-amber-200/20 rounded-full blur-[80px] animate-blob animation-delay-3000" />
-          </>
+          <motion.div 
+            className="absolute w-[800px] h-[800px] rounded-full opacity-30 mix-blend-soft-light blur-[120px] pointer-events-none"
+            animate={{
+              x: mousePosition.x - 400,
+              y: mousePosition.y - 400,
+            }}
+            transition={{ type: 'spring', damping: 50, stiffness: 200 }}
+            style={{
+              background: 'radial-gradient(circle, rgba(var(--primary-rgb), 0.4) 0%, transparent 70%)',
+            }}
+          />
         )}
 
-        {/* Grid Pattern */}
+        {/* Floating Abstract Shapes */}
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div 
+            animate={{ 
+              y: [0, -20, 0],
+              rotate: [0, 5, 0]
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-[10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-[100px]"
+          />
+          <motion.div 
+            animate={{ 
+              y: [0, 30, 0],
+              rotate: [0, -10, 0]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-tl from-amber-200/20 to-transparent blur-[120px]"
+          />
+        </div>
+
+        {/* Grid & Noise Pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.03]" 
+          className="absolute inset-0 opacity-[0.05]" 
           style={{ 
-            backgroundImage: `radial-gradient(#1A1A1A 1px, transparent 1px)`,
-            backgroundSize: '40px 40px' 
+            backgroundImage: `radial-gradient(circle at 2px 2px, #1A1A1A 1px, transparent 0)`,
+            backgroundSize: '48px 48px' 
           }} 
         />
-        
-        {/* Soft Noise Overlay */}
-        <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Y%3Cfilter id='noiseFilter'%3Y%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3Y%3C/filter%3Y%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3Y%3C/svg%3Y")` }}></div>
+        <div className="absolute inset-0 opacity-[0.02] mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Y%3Cfilter id='noiseFilter'%3Y%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3Y%3C/filter%3Y%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3Y%3C/svg%3Y")` }}></div>
       </div>
 
       <main className="relative z-10">
