@@ -4,7 +4,8 @@ import {
   Clock, User, Heart, Pill, Star, HelpCircle, 
   TrendingUp, Search, PlusCircle, ArrowUpRight, AlertTriangle,
   BookOpen, UserCircle, CalendarDays, Settings, Activity, Sparkles, 
-  Phone, Bell, CheckCircle, Send, Camera, Mic, Volume2, Video, Stethoscope, X
+  Phone, Bell, CheckCircle, Send, Camera, Mic, Volume2, Video, Stethoscope, X,
+  LayoutDashboard, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,6 +18,8 @@ import { format } from 'date-fns';
 import CaregiverInsights from './CaregiverInsights';
 import CaregiverSignals from './CaregiverSignals';
 import { CognitiveJournal } from './CognitiveJournal';
+import WellnessScore from './WellnessScore';
+import FamilyWall from './FamilyWall';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { generateCaregiverDailySummary } from '@/lib/ai';
@@ -62,7 +65,7 @@ const friendlyTypeNames: Record<MemoryType, string> = {
 
 export default function CaregiverDashboard({ memories, questions, signals, onRefresh }: CaregiverDashboardProps) {
   const { profile, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'memories' | 'questions' | 'journal' | 'communicate'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'memories' | 'questions' | 'journal' | 'communicate' | 'wellness' | 'family-wall'>('overview');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -308,14 +311,17 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
 
       <div className="bg-white rounded-3xl shadow-lg border-0 p-6">
         <div className="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2">
-          {[
-            { id: 'overview', label: 'Overview', icon: Activity },
-            { id: 'communicate', label: 'Send Message', icon: Send },
-            { id: 'journal', label: 'Health Journal', icon: BookOpen },
-            { id: 'signals', label: 'Alerts', icon: Bell, count: signals.length },
-            { id: 'memories', label: 'All Memories', icon: Star },
-            { id: 'questions', label: 'Questions Asked', icon: HelpCircle }
-          ].map((tab) => (
+            {[
+              { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+              { id: 'wellness', label: 'Wellness', icon: Activity },
+              { id: 'family-wall', label: 'Family Wall', icon: Heart },
+              { id: 'communicate', label: 'Send Message', icon: Send },
+              { id: 'journal', label: 'Health Journal', icon: BookOpen },
+              { id: 'signals', label: 'Alerts', icon: Bell, count: signals.length },
+              { id: 'memories', label: 'All Memories', icon: Star },
+              { id: 'questions', label: 'Questions Asked', icon: HelpCircle }
+            ].map((tab) => (
+
             <Button
               key={tab.id}
               variant={activeTab === tab.id ? 'default' : 'ghost'}
@@ -338,11 +344,14 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
           ))}
         </div>
 
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-              
-              <Card className="bg-gradient-to-br from-primary/5 to-violet-50 border-0 shadow-md rounded-2xl overflow-hidden">
+          <AnimatePresence mode="wait">
+            {activeTab === 'overview' && (
+              <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                
+                <WellnessScore memories={memories} signals={signals} />
+
+                <Card className="bg-gradient-to-br from-primary/5 to-violet-50 border-0 shadow-md rounded-2xl overflow-hidden">
+
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2 text-primary mb-1">
                     <Sparkles className="w-5 h-5" />
@@ -549,7 +558,24 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
             </motion.div>
           )}
 
-          {activeTab === 'journal' && (
+            {activeTab === 'wellness' && (
+              <motion.div key="wellness" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <WellnessScore memories={memories} signals={signals} />
+              </motion.div>
+            )}
+
+            {activeTab === 'family-wall' && (
+              <motion.div key="family-wall" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <FamilyWall 
+                  elderId={memories[0]?.elder_id || null} 
+                  memories={memories} 
+                  onRefresh={() => onRefresh(true)} 
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'journal' && (
+
             <motion.div key="journal" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <CognitiveJournal memories={memories} signals={signals} />
             </motion.div>
