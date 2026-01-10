@@ -1,4 +1,4 @@
-import { Activity, Globe, Server, Cpu, Database, Cloud, Wifi, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Activity, Globe, Server, Cpu, Database, Cloud, Wifi, CheckCircle2, AlertCircle, RefreshCw, Heart, Sparkles, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";

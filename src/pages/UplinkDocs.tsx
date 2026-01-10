@@ -138,8 +138,8 @@ const { data: memories } = await supabase
                       { method: 'POST', path: '/api/memories', desc: 'Create a new memory entry' },
                       { method: 'POST', path: '/api/questions/answer', desc: 'AI-powered question answering' },
                       { method: 'GET', path: '/api/summaries/daily', desc: 'Generate daily memory summary' },
-                    ].map((endpoint) => (
-                      <div key={endpoint.path} className="flex items-center gap-4 p-4 bg-slate-100 rounded-xl border border-slate-200">
+                      ].map((endpoint) => (
+                        <div key={`${endpoint.method}-${endpoint.path}`} className="flex items-center gap-4 p-4 bg-slate-100 rounded-xl border border-slate-200">
                         <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
                           endpoint.method === 'GET' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-blue-500/20 text-blue-600'
                         }`}>
