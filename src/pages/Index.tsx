@@ -17,10 +17,20 @@ function cn(...inputs: ClassValue[]) {
 const InteractiveHero = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [heartRate, setHeartRate] = useState(72);
+  const [residentIndex, setResidentIndex] = useState(0);
+
+  const residents = [
+    { name: "Margaret Wilson", img: "https://images.unsplash.com/photo-1581579186913-45ac3e6efe93?auto=format&fit=crop&q=80&w=400", memory: "1965 Summer Trip" },
+    { name: "Arthur Chen", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400", memory: "First Piano Recital" },
+  ];
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setHeartRate(prev => prev + (Math.random() > 0.5 ? 1 : -1));
+      setHeartRate(prev => {
+        const change = Math.random() > 0.5 ? 1 : -1;
+        const newVal = prev + change;
+        return newVal > 80 ? 79 : newVal < 65 ? 66 : newVal;
+      });
     }, 2000);
     return () => clearInterval(interval);
   }, []);
@@ -46,9 +56,20 @@ const InteractiveHero = () => {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-tighter">Live Monitoring</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-emerald-600 uppercase">System Online</span>
+              <div className="flex items-center gap-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setResidentIndex((prev) => (prev + 1) % residents.length)}
+                  className="h-8 rounded-xl text-[10px] font-bold bg-white/50 hover:bg-white"
+                >
+                  <Users className="w-3 h-3 mr-1" />
+                  Switch
+                </Button>
+                <div className="flex gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-emerald-600 uppercase">System Online</span>
+                </div>
               </div>
             </div>
 
@@ -81,42 +102,47 @@ const InteractiveHero = () => {
                 
                 <motion.div 
                   whileHover={{ y: -5 }}
-                  className="p-4 rounded-3xl bg-amber-50 border border-amber-100 shadow-sm"
+                  className="p-4 rounded-3xl bg-amber-50 border border-amber-100 shadow-sm cursor-pointer"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <Sparkles className="w-4 h-4 text-amber-500" />
                     <span className="text-[10px] font-bold text-amber-600 uppercase">Memory</span>
                   </div>
-                  <p className="text-sm font-bold leading-tight">Last shared: "1965 Summer Trip"</p>
+                  <p className="text-sm font-bold leading-tight truncate">Last shared: "{residents[residentIndex].memory}"</p>
                 </motion.div>
               </div>
 
-              <div className="relative rounded-3xl overflow-hidden bg-slate-100 group/img">
+              <motion.div 
+                key={residentIndex}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="relative rounded-3xl overflow-hidden bg-slate-100 group/img shadow-inner"
+              >
                 <img 
-                  src="https://images.unsplash.com/photo-1581579186913-45ac3e6efe93?auto=format&fit=crop&q=80&w=400" 
+                  src={residents[residentIndex].img} 
                   alt="Elder" 
                   className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4 text-white">
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Resident</p>
-                  <p className="font-bold">Margaret Wilson</p>
+                  <p className="font-bold">{residents[residentIndex].name}</p>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             <div className="mt-6 flex items-center justify-between p-4 rounded-2xl bg-primary/5 border border-primary/10">
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2">
                   {[1,2].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden">
-                      <img src={`https://i.pravatar.cc/150?u=${i+10}`} alt="caregiver" />
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm">
+                      <img src={`https://i.pravatar.cc/150?u=${i+10 + residentIndex}`} alt="caregiver" />
                     </div>
                   ))}
                 </div>
                 <p className="text-xs font-bold">2 Caregivers Active</p>
               </div>
-              <Button size="sm" className="h-8 rounded-xl text-[10px] font-bold px-3">Connect</Button>
+              <Button size="sm" className="h-8 rounded-xl text-[10px] font-bold px-3 bg-primary hover:bg-primary/90 shadow-md">Connect</Button>
             </div>
           </div>
         </div>
