@@ -137,9 +137,23 @@ export default {
           "pulse-soft": "pulse-soft 2s ease-in-out infinite",
           "float": "float 3s ease-in-out infinite",
           "glow": "glow 2s ease-in-out infinite",
-          "blob": "blob 7s infinite",
-        },
+            "blob": "blob 7s infinite",
+          },
+          animationDelay: {
+            "2000": "2s",
+            "3000": "3s",
+            "4000": "4s",
+          },
+      },
     },
-  },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+    plugins: [
+      require("tailwindcss-animate"),
+      function({ addUtilities, theme }) {
+        const delays = theme('animationDelay');
+        const utilities = Object.entries(delays).map(([key, value]) => ({
+          [`.animation-delay-${key}`]: { animationDelay: value as string },
+        }));
+        addUtilities(utilities);
+      }
+    ],
+  } satisfies Config;

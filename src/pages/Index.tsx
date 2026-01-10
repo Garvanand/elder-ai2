@@ -60,31 +60,39 @@ const Index = () => {
 
   return (
     <div className={cn(
-      "min-h-screen bg-[#FDFCFB] text-[#1A1A1A] selection:bg-primary/20",
+      "min-h-screen bg-[#FDFCFB] text-[#1A1A1A] selection:bg-primary/20 relative overflow-hidden",
       isNativeMobile ? "overflow-y-auto" : "overflow-x-hidden"
     )}>
-      <main className="relative z-10">
-        {/* Floating background elements */}
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        {/* Main Gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,245,235,0.5),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(240,249,255,0.5),transparent_50%)]" />
+        
+        {/* Animated Blobs */}
         {!isNativeMobile && (
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
-            <motion.div 
-              animate={{ 
-                y: [0, -20, 0],
-                opacity: [0.3, 0.5, 0.3]
-              }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-[10%] left-[5%] w-64 h-64 bg-primary/20 rounded-full blur-3xl" 
-            />
-            <motion.div 
-              animate={{ 
-                y: [0, 20, 0],
-                opacity: [0.2, 0.4, 0.2]
-              }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute top-[40%] right-[10%] w-96 h-96 bg-accent/20 rounded-full blur-3xl" 
-            />
-          </div>
+          <>
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-blob" />
+            <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-accent/10 rounded-full blur-[100px] animate-blob animation-delay-2000" />
+            <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-rose-200/20 rounded-full blur-[120px] animate-blob animation-delay-4000" />
+            <div className="absolute top-[40%] left-[50%] w-[25%] h-[25%] bg-amber-200/20 rounded-full blur-[80px] animate-blob animation-delay-3000" />
+          </>
         )}
+
+        {/* Grid Pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]" 
+          style={{ 
+            backgroundImage: `radial-gradient(#1A1A1A 1px, transparent 1px)`,
+            backgroundSize: '40px 40px' 
+          }} 
+        />
+        
+        {/* Soft Noise Overlay */}
+        <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Y%3Cfilter id='noiseFilter'%3Y%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3Y%3C/filter%3Y%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3Y%3C/svg%3Y")` }}></div>
+      </div>
+
+      <main className="relative z-10">
+        {/* Removed old floating elements as they are integrated into Dynamic Background above */}
 
         {/* Hero Section */}
         <section className={cn("relative px-6", isNativeMobile ? "pt-10 pb-20" : "pt-32 pb-40")}>
