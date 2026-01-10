@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import CaregiverInsights from './CaregiverInsights';
 import CaregiverSignals from './CaregiverSignals';
 import { CognitiveJournal } from './CognitiveJournal';
+import InnovationHub from './InnovationHub';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { generateCaregiverDailySummary } from '@/lib/ai';
@@ -62,7 +63,8 @@ const friendlyTypeNames: Record<MemoryType, string> = {
 
 export default function CaregiverDashboard({ memories, questions, signals, onRefresh }: CaregiverDashboardProps) {
   const { profile, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'memories' | 'questions' | 'journal' | 'communicate'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'innovation' | 'signals' | 'memories' | 'questions' | 'journal' | 'communicate'>('overview');
+
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -308,14 +310,16 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
 
       <div className="bg-white rounded-3xl shadow-lg border-0 p-6">
         <div className="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2">
-          {[
-            { id: 'overview', label: 'Overview', icon: Activity },
-            { id: 'communicate', label: 'Send Message', icon: Send },
-            { id: 'journal', label: 'Health Journal', icon: BookOpen },
-            { id: 'signals', label: 'Alerts', icon: Bell, count: signals.length },
-            { id: 'memories', label: 'All Memories', icon: Star },
-            { id: 'questions', label: 'Questions Asked', icon: HelpCircle }
-          ].map((tab) => (
+            {[
+              { id: 'overview', label: 'Overview', icon: Activity },
+              { id: 'innovation', label: 'Innovation Lab', icon: Sparkles },
+              { id: 'communicate', label: 'Send Message', icon: Send },
+              { id: 'journal', label: 'Health Journal', icon: BookOpen },
+              { id: 'signals', label: 'Alerts', icon: Bell, count: signals.length },
+              { id: 'memories', label: 'All Memories', icon: Star },
+              { id: 'questions', label: 'Questions Asked', icon: HelpCircle }
+            ].map((tab) => (
+
             <Button
               key={tab.id}
               variant={activeTab === tab.id ? 'default' : 'ghost'}
@@ -338,8 +342,18 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
           ))}
         </div>
 
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && (
+          <AnimatePresence mode="wait">
+            {activeTab === 'innovation' && (
+              <motion.div key="innovation" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <InnovationHub 
+                  elderId={memories[0]?.elder_id} 
+                  memories={memories} 
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'overview' && (
+
             <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
               
               <Card className="bg-gradient-to-br from-primary/5 to-violet-50 border-0 shadow-md rounded-2xl overflow-hidden">
