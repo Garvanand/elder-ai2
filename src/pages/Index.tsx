@@ -14,6 +14,154 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const InteractiveHero = () => {
+  const [activeTab, setActiveTab] = useState(0);
+  const [heartRate, setHeartRate] = useState(72);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeartRate(prev => prev + (Math.random() > 0.5 ? 1 : -1));
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative w-full aspect-[4/3] group perspective-1000">
+      <motion.div 
+        className="relative z-10 w-full h-full preserve-3d"
+        initial={{ rotateY: -10, rotateX: 5 }}
+        whileHover={{ rotateY: 0, rotateX: 0 }}
+        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+      >
+        {/* Main Dashboard Card */}
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-2xl border border-white/50 rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden">
+          <div className="p-8 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
+                  <Brain className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg">Care OS</h4>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-tighter">Live Monitoring</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-600 uppercase">System Online</span>
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <motion.div 
+                  whileHover={{ y: -5 }}
+                  className="p-4 rounded-3xl bg-white border border-slate-100 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Activity className="w-4 h-4 text-rose-500" />
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Vitals</span>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-bold tracking-tighter">{heartRate}</span>
+                    <span className="text-xs font-medium text-muted-foreground pb-1">BPM</span>
+                  </div>
+                  <div className="mt-2 h-8 flex items-end gap-[2px]">
+                    {[...Array(20)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        animate={{ height: [10, 20 + Math.random() * 20, 10] }}
+                        transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.05 }}
+                        className="w-full bg-rose-400/20 rounded-full"
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  whileHover={{ y: -5 }}
+                  className="p-4 rounded-3xl bg-amber-50 border border-amber-100 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span className="text-[10px] font-bold text-amber-600 uppercase">Memory</span>
+                  </div>
+                  <p className="text-sm font-bold leading-tight">Last shared: "1965 Summer Trip"</p>
+                </motion.div>
+              </div>
+
+              <div className="relative rounded-3xl overflow-hidden bg-slate-100 group/img">
+                <img 
+                  src="https://images.unsplash.com/photo-1581579186913-45ac3e6efe93?auto=format&fit=crop&q=80&w=400" 
+                  alt="Elder" 
+                  className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Resident</p>
+                  <p className="font-bold">Margaret Wilson</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between p-4 rounded-2xl bg-primary/5 border border-primary/10">
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {[1,2].map(i => (
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden">
+                      <img src={`https://i.pravatar.cc/150?u=${i+10}`} alt="caregiver" />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-bold">2 Caregivers Active</p>
+              </div>
+              <Button size="sm" className="h-8 rounded-xl text-[10px] font-bold px-3">Connect</Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating Decoration Cards */}
+        <motion.div 
+          animate={{ y: [0, 15, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -top-12 -right-12 z-20 p-4 rounded-3xl bg-white shadow-2xl border border-slate-100 hidden lg:block"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase">Status</p>
+              <p className="text-sm font-bold">Encrypted</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          animate={{ y: [0, -20, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -bottom-8 -left-12 z-20 p-4 rounded-3xl bg-white shadow-2xl border border-slate-100 hidden lg:block"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase">AI Assist</p>
+              <p className="text-sm font-bold">Ready to chat</p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Background Glows */}
+      <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -z-10" />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-accent/20 rounded-full blur-[100px] -z-10" />
+    </div>
+  );
+};
+
 const Index = () => {
   const { user, profile, loading } = useAuth();
   const { isGuestMode } = useDemo();
@@ -187,27 +335,7 @@ const Index = () => {
               transition={{ duration: 1, ease: "easeOut" }}
               className="relative"
             >
-              <div className="relative z-10 rounded-[40px] border-[8px] border-white shadow-2xl overflow-hidden aspect-[4/3] bg-white">
-                <img 
-                  src="https://images.unsplash.com/photo-1581579186913-45ac3e6efe93?auto=format&fit=crop&q=80&w=800" 
-                  alt="Elder using technology" 
-                  className="object-cover w-full h-full hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                <div className="absolute bottom-8 left-8 right-8">
-                  <div className="bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-xl flex items-center gap-4 border border-white/50">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <Activity className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-primary uppercase tracking-wider">Health Alert</p>
-                      <p className="font-bold">Heart rate stable at 72 BPM</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent/10 rounded-full blur-2xl -z-10" />
-              <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl -z-10" />
+              <InteractiveHero />
             </motion.div>
           </div>
         </section>
