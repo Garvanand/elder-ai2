@@ -527,52 +527,59 @@ const Index = () => {
         <section className="py-40 px-6 relative">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-20 items-center">
-                <div className="relative order-2 lg:order-1">
-                  <div className="aspect-square relative flex items-center justify-center w-[450px] h-[450px] md:w-[600px] md:h-[600px] mx-auto">
-                    <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-                    
-                    {/* Central Node */}
-                    <motion.div 
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 4, repeat: Infinity }}
-                      className="relative z-30 w-32 h-32 rounded-[40px] bg-slate-900 shadow-2xl flex items-center justify-center border border-white/20"
-                    >
-                      <Brain className="w-16 h-16 text-primary" />
-                    </motion.div>
-  
-                    {/* Satellite Nodes */}
-                    {[
-                      { icon: <Heart className="w-6 h-6"/>, label: "Family", angle: 0 },
-                      { icon: <Activity className="w-6 h-6"/>, label: "Biometrics", angle: 72 },
-                      { icon: <Shield className="w-6 h-6"/>, label: "Privacy", angle: 144 },
-                      { icon: <Globe className="w-6 h-6"/>, label: "Clinician", angle: 216 },
-                      { icon: <MessageSquare className="w-6 h-6"/>, label: "AI Hub", angle: 288 },
-                    ].map((node, i) => (
-                      <motion.div
-                        key={i}
-                        animate={{ 
-                          rotate: [node.angle, node.angle + 360],
-                        }}
-                        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-0 pointer-events-none"
+                  <div className="relative order-2 lg:order-1">
+                    <div className="aspect-square relative flex items-center justify-center w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] md:w-[750px] md:h-[750px] mx-auto">
+                      <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+                      
+                      {/* Central Node */}
+                      <motion.div 
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                        className="relative z-30 w-32 h-32 rounded-[40px] bg-slate-900 shadow-2xl flex items-center justify-center border border-white/20"
                       >
-                        <motion.div 
-                          animate={{ rotate: [node.angle, node.angle - 360] }}
-                          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[260px] w-24 h-24 rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col items-center justify-center gap-1.5 pointer-events-auto cursor-pointer hover:scale-110 transition-transform z-20"
-                        >
-                          <div className="text-primary">{node.icon}</div>
-                          <span className="text-[10px] font-black uppercase tracking-tighter">{node.label}</span>
-                        </motion.div>
+                        <Brain className="w-16 h-16 text-primary" />
                       </motion.div>
-                    ))}
-  
-                    {/* Connecting Lines (SVG) */}
-                    <svg className="absolute inset-0 w-full h-full opacity-20 z-10">
-                      <circle cx="50%" cy="50%" r="260" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="8 8" className="text-primary" />
-                    </svg>
+    
+                      {/* Satellite Nodes */}
+                      {[
+                        { icon: <Heart className="w-6 h-6"/>, label: "Family", angle: 0 },
+                        { icon: <Activity className="w-6 h-6"/>, label: "Biometrics", angle: 72 },
+                        { icon: <Shield className="w-6 h-6"/>, label: "Privacy", angle: 144 },
+                        { icon: <Globe className="w-6 h-6"/>, label: "Clinician", angle: 216 },
+                        { icon: <MessageSquare className="w-6 h-6"/>, label: "AI Hub", angle: 288 },
+                      ].map((node, i) => (
+                        <motion.div
+                          key={i}
+                          animate={{ 
+                            rotate: [node.angle, node.angle + 360],
+                          }}
+                          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                          className="absolute inset-0 pointer-events-none"
+                        >
+                          <motion.div 
+                            animate={{ rotate: [node.angle, node.angle - 360] }}
+                            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                            style={{ 
+                              y: typeof window !== 'undefined' && window.innerWidth < 768 ? -160 : -280,
+                              x: '-50%',
+                              top: '50%',
+                              left: '50%'
+                            }}
+                            className="absolute w-24 h-24 rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col items-center justify-center gap-1.5 pointer-events-auto cursor-pointer hover:scale-110 transition-transform z-20"
+                          >
+                            <div className="text-primary">{node.icon}</div>
+                            <span className="text-[10px] font-black uppercase tracking-tighter">{node.label}</span>
+                          </motion.div>
+                        </motion.div>
+                      ))}
+    
+                        {/* Connecting Lines (SVG) */}
+                        <svg className="absolute inset-0 w-full h-full opacity-20 z-10 overflow-visible">
+                          <circle cx="50%" cy="50%" r="160" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="8 8" className="text-primary md:hidden" />
+                          <circle cx="50%" cy="50%" r="280" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="8 8" className="text-primary hidden md:block" />
+                        </svg>
+                    </div>
                   </div>
-                </div>
 
               <div className="space-y-10 order-1 lg:order-2">
                 <div className="space-y-4">
