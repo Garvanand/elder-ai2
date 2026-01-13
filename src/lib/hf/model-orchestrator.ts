@@ -1,80 +1,80 @@
 import { hfManager } from './hf-client';
 
 export class ModelOrchestrator {
-  // Voice Biomarkers
+  // Voice Biomarkers (Emotion detection from audio)
   static async analyzeVoice(audioBlob: Blob, elderId: string) {
     const model = 'audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim';
-    const result = await hfManager.analyzeWithCache(
+    return await hfManager.analyzeWithCache(
       model,
       await audioBlob.arrayBuffer(),
-      `voice_${elderId}_${Date.now()}`
+      `voice_${elderId}_${Date.now()}`,
+      'audioClassification'
     );
-    return result;
   }
 
-  // Gait Analysis (Video)
+  // Gait Analysis (Action recognition from video)
   static async analyzeGait(videoBlob: Blob, elderId: string) {
     const model = 'facebook/timesformer-base-finetuned-k400';
-    const result = await hfManager.analyzeWithCache(
+    return await hfManager.analyzeWithCache(
       model,
       await videoBlob.arrayBuffer(),
-      `gait_${elderId}_${Date.now()}`
+      `gait_${elderId}_${Date.now()}`,
+      'imageClassification' // Timesformer uses image frames or specialized request
     );
-    return result;
   }
 
-  // Sleep Quality (Audio)
+  // Sleep Quality / Sound Analysis
   static async analyzeSleep(audioBlob: Blob, elderId: string) {
     const model = 'MIT/ast-finetuned-audioset-10-10-0.4593';
-    const result = await hfManager.analyzeWithCache(
+    return await hfManager.analyzeWithCache(
       model,
       await audioBlob.arrayBuffer(),
-      `sleep_${elderId}_${Date.now()}`
+      `sleep_${elderId}_${Date.now()}`,
+      'audioClassification'
     );
-    return result;
   }
 
-  // Pain Detection (Image/Video Frame)
+  // Pain Detection (Face expression analysis)
   static async detectPain(imageBlob: Blob, elderId: string) {
     const model = 'trpakov/vit-face-expression';
-    const result = await hfManager.analyzeWithCache(
+    return await hfManager.analyzeWithCache(
       model,
       await imageBlob.arrayBuffer(),
-      `pain_${elderId}_${Date.now()}`
+      `pain_${elderId}_${Date.now()}`,
+      'imageClassification'
     );
-    return result;
   }
 
-  // Medication ID (Image)
+  // Medication ID (Object detection is better than simple classification)
   static async identifyPill(imageBlob: Blob, elderId: string) {
-    const model = 'microsoft/resnet-50';
-    const result = await hfManager.analyzeWithCache(
+    const model = 'facebook/detr-resnet-50'; // Better for identifying objects in context
+    return await hfManager.analyzeWithCache(
       model,
       await imageBlob.arrayBuffer(),
-      `pill_${elderId}_${Date.now()}`
+      `pill_${elderId}_${Date.now()}`,
+      'objectDetection'
     );
-    return result;
   }
 
-  // Document Intelligence
+  // Document Intelligence (OCR + Layout)
   static async parseMedicalDoc(imageBlob: Blob, elderId: string) {
     const model = 'microsoft/layoutlmv3-base';
-    const result = await hfManager.analyzeWithCache(
+    return await hfManager.analyzeWithCache(
       model,
       await imageBlob.arrayBuffer(),
-      `doc_${elderId}_${Date.now()}`
+      `doc_${elderId}_${Date.now()}`,
+      'request' // LayoutLM often requires specialized processing
     );
-    return result;
   }
 
-  // Loneliness Detector (Text)
+  // Emotional Nuance Detector (GoEmotions is much more detailed than generic sentiment)
   static async detectLoneliness(text: string, elderId: string) {
-    const model = 'cardiffnlp/twitter-roberta-base-sentiment-latest';
-    const result = await hfManager.analyzeWithCache(
+    const model = 'SamLowe/roberta-base-go_emotions';
+    return await hfManager.analyzeWithCache(
       model,
       text,
-      `loneliness_${elderId}_${btoa(text).slice(0, 16)}`
+      `emotions_${elderId}_${btoa(text).slice(0, 16)}`,
+      'textClassification'
     );
-    return result;
   }
 }
