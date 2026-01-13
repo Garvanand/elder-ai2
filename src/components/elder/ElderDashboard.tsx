@@ -159,7 +159,15 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
       setActiveConsultation(consult);
       setShowVideoRoom(true);
     } else {
-      sonnerToast.error('No scheduled consultation found');
+      // Create a quick instant sync consultation
+      const instantConsult = {
+        id: `instant-${Date.now()}`,
+        room_name: `elder-care-${user?.id?.slice(0, 8)}`,
+        metadata: { clinician_name: 'Support Hub' }
+      };
+      setActiveConsultation(instantConsult);
+      setShowVideoRoom(true);
+      sonnerToast.success('Initiating Instant Sync...');
     }
   };
 

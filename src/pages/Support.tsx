@@ -480,14 +480,46 @@ const Support = () => {
           </TabsList>
 
           <div className="mt-12">
-            <TabsContent value="faq" className="space-y-6">
+            <TabsContent value="faq" className="space-y-8">
+              <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="relative w-full md:max-w-md">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <Input 
+                    value={faqFilter}
+                    onChange={(e) => setFaqFilter(e.target.value)}
+                    placeholder="Search FAQ archives..."
+                    className="pl-12 h-14 bg-white/60 border-white rounded-2xl shadow-sm focus:ring-primary/20"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  {['General', 'Security', 'Entity'].map(tag => (
+                    <Button 
+                      key={tag} 
+                      variant="ghost" 
+                      onClick={() => setFaqFilter(tag)}
+                      className={cn(
+                        "rounded-full text-[10px] font-black uppercase tracking-widest h-8 px-4",
+                        faqFilter === tag ? "bg-primary text-white" : "bg-white/40 text-slate-500 hover:bg-white"
+                      )}
+                    >
+                      {tag}
+                    </Button>
+                  ))}
+                  {faqFilter && <Button variant="ghost" size="icon" onClick={() => setFaqFilter('')} className="rounded-full h-8 w-8 text-slate-400"><X size={14} /></Button>}
+                </div>
+              </div>
+
               <Accordion type="single" collapsible className="space-y-6">
                 {[
-                  { q: "How do I reset my credentials?", a: "Go to the authentication portal, initiate 'Credential Recovery', and follow the neural-link instructions sent to your registered node." },
-                  { q: "Can I manage multiple elder entities?", a: "Yes, caregiver nodes can synchronize with multiple elders from their primary dashboard. Protocol: 'Settings' > 'Link Entity'." },
-                  { q: "Is my biological data encrypted?", a: "Every byte of medical data is protected by quantum-resistant encryption (QRE) and adheres to global Bio-Ethics standards." },
-                  { q: "How does the AI memory synthesis operate?", a: "Our engine processes natural language and emotional frequency to automatically archive events, entities, and sentiments into a persistent legacy timeline." }
-                ].map((faq, i) => (
+                  { q: "How do I reset my credentials?", a: "Go to the authentication portal, initiate 'Credential Recovery', and follow the neural-link instructions sent to your registered node.", tags: ['Security'] },
+                  { q: "Can I manage multiple elder entities?", a: "Yes, caregiver nodes can synchronize with multiple elders from their primary dashboard. Protocol: 'Settings' > 'Link Entity'.", tags: ['Entity', 'General'] },
+                  { q: "Is my biological data encrypted?", a: "Every byte of medical data is protected by quantum-resistant encryption (QRE) and adheres to global Bio-Ethics standards.", tags: ['Security'] },
+                  { q: "How does the AI memory synthesis operate?", a: "Our engine processes natural language and emotional frequency to automatically archive events, entities, and sentiments into a persistent legacy timeline.", tags: ['General'] }
+                ].filter(item => 
+                  !faqFilter || 
+                  item.q.toLowerCase().includes(faqFilter.toLowerCase()) || 
+                  item.tags.some(t => t.toLowerCase().includes(faqFilter.toLowerCase()))
+                ).map((faq, i) => (
                   <AccordionItem key={i} value={`item-${i}`} className="bg-white/60 backdrop-blur-md border border-white rounded-[32px] px-8 border-none overflow-hidden shadow-xl shadow-black/5 hover:bg-white transition-all duration-500">
                     <AccordionTrigger className="text-xl font-black text-slate-900 hover:no-underline hover:text-primary uppercase tracking-tighter py-8">
                       {faq.q}
