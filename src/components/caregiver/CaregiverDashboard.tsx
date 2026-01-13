@@ -123,9 +123,16 @@ export default function CaregiverDashboard({ memories, questions, signals, onRef
       toast.error('No elder connected');
       return;
     }
-    const roomName = `quick-call-${elderId.slice(0, 8)}-${Date.now()}`;
-    setActiveConsultation({ room_name: roomName, elder_id: elderId });
+    // Consistent deterministic room name so both can join
+    const roomName = `elder-care-${elderId.slice(0, 8)}`;
+    setActiveConsultation({ 
+      id: `instant-${Date.now()}`,
+      room_name: roomName, 
+      elder_id: elderId,
+      metadata: { clinician_name: 'Caregiver' }
+    });
     setShowVideoRoom(true);
+    toast.success('Starting Instant Sync room...');
   };
 
   const handleJoinScheduledCall = (consultation: any) => {
