@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { generateImage, uploadGeneratedArt } from '@/lib/hf';
 import type { Memory } from '@/types';
 import { format } from 'date-fns';
 
@@ -24,6 +25,8 @@ export default function InnovationHub({ elderId, memories }: InnovationHubProps)
   const [activeFeature, setActiveFeature] = useState<'art' | 'voice' | 'trivia' | 'pulse'>('art');
   const [generatingArt, setGeneratingArt] = useState(false);
   const [artHistory, setArtHistory] = useState<any[]>([]);
+  const [healthEngagement, setHealthEngagement] = useState<number>(85);
+  const [recentMetrics, setRecentMetrics] = useState<any[]>([]);
   
   // Voice Preview State
   const [voiceText, setVoiceText] = useState('');
@@ -70,28 +73,29 @@ export default function InnovationHub({ elderId, memories }: InnovationHubProps)
     if (!story) return;
     setGeneratingArt(true);
     try {
-      // Simulate AI generation with a beautiful UI transition
-      // In a real app, we'd call a DALL-E or Stable Diffusion API here
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const blobUrl = await generateImage(story);
+      const publicUrl = await uploadGeneratedArt(blobUrl, elderId);
       
-      const mockImages = [
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1000&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1000&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop'
-      ];
-      const randomImg = mockImages[Math.floor(Math.random() * mockImages.length)];
+      const { data: updatedMemory, error } = await supabase
+        .from('memories')
+        .insert({
+          elder_id: elderId,
+          raw_text: `AI Artistic Visualization of: ${story.substring(0, 100)}...`,
+          image_url: publicUrl,
+          type: 'experience',
+          emotional_tone: 'joyful',
+          tags: ['ai-art', 'visualization']
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
       
-      toast.success('AI Memory Visualization Created!');
-      // In real app, we'd update the memory in DB
-      setArtHistory(prev => [{ 
-        id: Math.random().toString(), 
-        raw_text: story, 
-        image_url: randomImg, 
-        created_at: new Date().toISOString() 
-      }, ...prev]);
-    } catch (err) {
-      toast.error('Could not generate art');
+      toast.success('AI Memory Visualization Created & Saved!');
+      setArtHistory(prev => [updatedMemory, ...prev]);
+    } catch (err: any) {
+      console.error('Art generation error:', err);
+      toast.error('Could not generate art: ' + (err.message || 'Unknown error'));
     } finally {
       setGeneratingArt(false);
     }
