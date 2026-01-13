@@ -56,6 +56,7 @@ const CATEGORIES = [
 const Support = () => {
   const [activeCategory, setActiveCategory] = useState('elder');
   const [searchQuery, setSearchQuery] = useState('');
+  const [faqFilter, setFaqFilter] = useState('');
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [ticketStatus, setTicketStatus] = useState<'idle' | 'sending' | 'success'>('idle');

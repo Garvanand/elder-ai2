@@ -45,7 +45,7 @@ export default function InnovationHub({ elderId, memories }: InnovationHubProps)
 
   const fetchInnovationData = async () => {
     try {
-      // Fetch Art History (stored in memories metadata or separate table if exists)
+      // Fetch Art History
       const { data: artData } = await supabase
         .from('memories')
         .select('*')
@@ -64,6 +64,20 @@ export default function InnovationHub({ elderId, memories }: InnovationHubProps)
         .order('created_at', { ascending: false });
       
       if (triviaData) setTriviaList(triviaData.map(d => d.metadata));
+
+      // Fetch real wellbeing pulse data
+      const { data: metrics } = await supabase
+        .from('health_metrics')
+        .select('*')
+        .eq('elder_id', elderId)
+        .order('recorded_at', { ascending: false })
+        .limit(20);
+      
+      if (metrics && metrics.length > 0) {
+        setRecentMetrics(metrics);
+        const avg = metrics.reduce((acc, m) => acc + (m.value || 0), 0) / metrics.length;
+        setHealthEngagement(Math.min(Math.round(avg), 100));
+      }
     } catch (err) {
       console.error('Error fetching innovation data:', err);
     }
@@ -489,33 +503,42 @@ export default function InnovationHub({ elderId, memories }: InnovationHubProps)
                     <Activity className="w-6 h-6" />
                     <span className="text-xs font-bold uppercase tracking-widest">Live Bio-Feed</span>
                   </div>
-                  <CardTitle className="text-2xl font-bold">Wellbeing Pulse</CardTitle>
-                  <CardDescription className="text-slate-400">Real-time status of activity and engagement</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-8 pb-12">
-                   <div className="flex items-end gap-1 h-32 px-4">
-                     {[...Array(20)].map((_, i) => (
-                       <motion.div
-                        key={i}
-                        animate={{ height: [20, 40, 80, 30, 60][i % 5] + Math.random() * 20 }}
-                        transition={{ repeat: Infinity, duration: 1, delay: i * 0.1 }}
-                        className="flex-1 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-full opacity-80"
-                       />
-                     ))}
-                   </div>
-                   
-                   <div className="grid grid-cols-2 gap-4">
-                     <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Engagement</p>
-                        <p className="text-2xl font-bold text-emerald-400">High</p>
-                        <p className="text-xs text-slate-400">Very active today</p>
+                    <CardTitle className="text-2xl font-bold">Wellbeing Pulse</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      {recentMetrics.length > 0 ? `Based on last ${recentMetrics.length} health data points` : "Real-time status of activity and engagement"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-8 pb-12">
+                     <div className="flex items-end gap-1 h-32 px-4">
+                       {(recentMetrics.length > 0 ? recentMetrics : [...Array(20)]).map((m, i) => (
+                         <motion.div
+                          key={i}
+                          initial={{ height: 0 }}
+                          animate={{ height: recentMetrics.length > 0 ? `${(m.value / 150) * 100}%` : [20, 40, 80, 30, 60][i % 5] + Math.random() * 20 }}
+                          transition={{ repeat: recentMetrics.length > 0 ? 0 : Infinity, duration: 1, delay: i * 0.05 }}
+                          className={cn(
+                            "flex-1 rounded-full opacity-80",
+                            recentMetrics.length > 0 ? "bg-primary" : "bg-gradient-to-t from-emerald-600 to-emerald-400"
+                          )}
+                         />
+                       ))}
                      </div>
-                     <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Stress Level</p>
-                        <p className="text-2xl font-bold text-blue-400">Stable</p>
-                        <p className="text-xs text-slate-400">Heart rate 72 bpm</p>
+                     
+                     <div className="grid grid-cols-2 gap-4">
+                       <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Engagement Score</p>
+                          <p className="text-2xl font-bold text-emerald-400">{healthEngagement}%</p>
+                          <p className="text-xs text-slate-400">{healthEngagement > 70 ? 'Optimal Activity' : 'Low Interaction'}</p>
+                       </div>
+                       <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Last Sync</p>
+                          <p className="text-2xl font-bold text-blue-400">
+                            {recentMetrics.length > 0 ? format(new Date(recentMetrics[0].recorded_at), 'HH:mm') : 'Stable'}
+                          </p>
+                          <p className="text-xs text-slate-400">Protocol v2.4.0 active</p>
+                       </div>
                      </div>
-                   </div>
+
                 </CardContent>
              </Card>
 
