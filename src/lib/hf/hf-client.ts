@@ -6,7 +6,12 @@ export class HFManager {
   private cache: Map<string, any> = new Map();
   
   constructor() {
-    const apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
+    const nextEnv = typeof process !== 'undefined' && process.env ? process.env : {};
+    const apiKey = 
+      (nextEnv as any).NEXT_PUBLIC_HUGGINGFACE_API_KEY || 
+      (nextEnv as any).VITE_HUGGINGFACE_API_KEY ||
+      (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_HUGGINGFACE_API_KEY : '');
+      
     if (!apiKey) {
       console.warn('HUGGINGFACE_API_KEY is missing');
     }
