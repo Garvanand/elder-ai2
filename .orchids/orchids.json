@@ -5,5 +5,5 @@
     "bun install; bun run dev"
   ],
   "vercelProjectId": "prj_5OR4mcTyxYp5HV05jKf6EZx4aMzI",
-  "deployedWithUserToken": false
+  "deployedWithUserToken": true
 }
