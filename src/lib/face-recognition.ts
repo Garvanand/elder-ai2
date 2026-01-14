@@ -1,20 +1,30 @@
-import * as faceapi from '@vladmandic/face-api';
-
 const MODEL_URL = '/models';
 let modelsLoaded = false;
 let loadingPromise: Promise<void> | null = null;
+let faceapi: any = null;
+
+async function getFaceApi() {
+  if (faceapi) return faceapi;
+  if (typeof window === 'undefined') {
+    throw new Error('Face API is only available in browser');
+  }
+  faceapi = await import('@vladmandic/face-api');
+  return faceapi;
+}
 
 export async function loadModels() {
+  if (typeof window === 'undefined') return;
   if (modelsLoaded) return;
   if (loadingPromise) return loadingPromise;
 
   loadingPromise = (async () => {
     try {
+      const api = await getFaceApi();
       await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+        api.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        api.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        api.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        api.nets.faceExpressionNet.loadFromUri(MODEL_URL),
       ]);
       modelsLoaded = true;
     } catch (error) {
@@ -28,15 +38,19 @@ export async function loadModels() {
 }
 
 export async function getFaceDescriptor(videoElement: HTMLVideoElement) {
-  const detection = await faceapi
-    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 }))
+  if (typeof window === 'undefined') return null;
+  const api = await getFaceApi();
+  const detection = await api
+    .detectSingleFace(videoElement, new api.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 }))
     .withFaceLandmarks()
     .withFaceDescriptor();
 
   return detection ? Array.from(detection.descriptor) : null;
 }
 
-export function compareFaceDescriptors(descriptor1: number[], descriptor2: number[]) {
-  const distance = faceapi.euclideanDistance(descriptor1, descriptor2);
-  return distance < 0.6; // Threshold for recognition
+export async function compareFaceDescriptors(descriptor1: number[], descriptor2: number[]) {
+  if (typeof window === 'undefined') return false;
+  const api = await getFaceApi();
+  const distance = api.euclideanDistance(descriptor1, descriptor2);
+  return distance < 0.6;
 }
