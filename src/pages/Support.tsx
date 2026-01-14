@@ -45,6 +45,7 @@ import { getSupportAIResponse } from "@/lib/ai";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
   { id: 'elder', label: 'Elders', icon: Heart, color: 'text-rose-400', bg: 'bg-rose-400/10' },
