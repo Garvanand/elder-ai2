@@ -1,6 +1,6 @@
 "use client"
 
-import SecurityLab from "@/pages/SecurityLab"
+import SecurityLab from "@/views/SecurityLab"
 
 export default function Page() {
   return <SecurityLab />

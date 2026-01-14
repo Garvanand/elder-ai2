@@ -1,6 +1,6 @@
 "use client"
 
-import SupportPage from "@/pages/Support"
+import SupportPage from "@/views/Support"
 
 export default function Page() {
   return <SupportPage />

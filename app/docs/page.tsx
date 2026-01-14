@@ -1,6 +1,6 @@
 "use client"
 
-import UplinkDocs from "@/pages/UplinkDocs"
+import UplinkDocs from "@/views/UplinkDocs"
 
 export default function Page() {
   return <UplinkDocs />

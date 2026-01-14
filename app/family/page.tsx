@@ -1,6 +1,6 @@
 "use client"
 
-import FamilyPage from "@/pages/Family"
+import FamilyPage from "@/views/Family"
 
 export default function Page() {
   return <FamilyPage />
