@@ -1,227 +1,126 @@
-# ElderAI - Memory Companion App
+# ElderAI - Intelligent Memory Companion 🧠✨
 
-A compassionate, AI-powered memory support application designed to help elderly users record memories, ask questions, and stay connected with caregivers. Built with TypeScript, Next.js 14, React 19, and Supabase.
+ElderAI is a production-grade, compassionate AI-powered ecosystem designed to bridge the gap between elderly users, their families, caregivers, and clinicians. By leveraging state-of-the-art AI and real-time communication, ElderAI helps preserve precious memories, provide instant support, and ensure a higher quality of care.
 
-**Architectural Demo:** [https://prj-4tof01oj-frontend.vercel.app/](https://prj-4tof01oj-frontend.vercel.app/)
-
-## 🌟 Features
-
-### For Elderly Users
-- **Memory Recording**
-  - Text-based memory entry with voice input support (Speech Recognition API)
-  - Image uploads for visual memories
-  - Memory categorization (story, person, event, medication, routine, preference, other)
-  - Automatic tag extraction using AI
-
-- **Question Answering**
-  - Natural language questions about recorded memories
-  - AI-powered answers using Gemini API or keyword matching fallback
-  - Text-to-speech playback of answers (Speech Synthesis API)
-  - Repeat answer functionality
-
-- **Daily Summaries**
-  - AI-generated daily summaries of memories and activities
-  - Simple, easy-to-read format optimized for elderly users
-  - Automatic generation or on-demand creation
-
-- **Accessibility Features**
-  - Large, clear buttons and text
-  - Voice input for hands-free memory recording
-  - Text-to-speech for answers
-  - Simple, intuitive interface
-
-### For Caregivers
-- **Caregiver Dashboard**
-  - View all memories in a timeline
-  - Filter by type, tags, or date
-  - View recent questions and answers
-  - Generate daily summaries
-  - Monitor elder's activity and wellbeing
-
-## 🏗️ Architecture
-
-### Tech Stack
-- **Frontend:** React 19, TypeScript, Vite, Next.js 14 (App Router)
-- **UI Components:** Radix UI, Tailwind CSS, shadcn/ui
-- **Backend:** Next.js API Routes, Supabase (PostgreSQL)
-- **AI/ML:** Google Gemini API (with fallback to naive implementations)
-- **Storage:** Supabase Storage for images
-- **State Management:** React Query (TanStack Query)
-- **Routing:** React Router (Vite app) + Next.js App Router
-
-### Project Structure
-```
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   │   ├── memories/      # Memory CRUD operations
-│   │   ├── questions/     # Question answering
-│   │   ├── summaries/    # Daily summary generation
-│   │   └── memory-images/ # Image upload handling
-│   ├── caregiver/         # Caregiver dashboard page
-│   └── page.tsx           # Main demo page
-├── src/                   # Vite React app
-│   ├── components/        # React components
-│   ├── pages/            # Page components
-│   ├── contexts/         # React contexts (Auth)
-│   ├── integrations/     # Supabase client
-│   └── lib/              # Utilities and helpers
-├── components/           # Shared components (memory-friend)
-├── lib/                  # Shared utilities
-│   ├── ai.ts            # AI functions (Gemini integration)
-│   ├── api.ts           # API helper functions
-│   └── db.ts            # Database client
-└── supabase/            # Supabase configuration
-    ├── functions/       # Edge functions
-    └── migrations/      # Database migrations
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm, yarn, or pnpm
-- Supabase account and project
-- Google Gemini API key (optional, for enhanced AI features)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd "Elder AI"
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   
-   Create a `.env` file in the root directory:
-   ```env
-   # Supabase Configuration
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   
-   # AI Configuration (Optional)
-   GEMINI_API_KEY=your_gemini_api_key
-   ```
-
-4. **Set up Supabase**
-   
-   - Create a new Supabase project
-   - Run the migration in `supabase/migrations/20251208032611_5169f29e-edce-4631-876a-570d35be312c.sql`
-   - Create a storage bucket named `memory-images` with public access
-   - Configure Row Level Security (RLS) policies as needed
-
-5. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-   
-   The app will be available at `http://localhost:8080`
-
-### Building for Production
-
-```bash
-npm run build
-npm run preview
-```
-
-## 📡 API Endpoints
-
-### Memories
-- `POST /api/memories` - Create a new memory
-- `GET /api/memories?elderId=xxx&type=xxx&tag=xxx` - Get memories with filters
-
-### Questions
-- `POST /api/questions/answer` - Answer a question using AI
-- `GET /api/questions?elderId=xxx&limit=5` - Get recent questions
-
-### Summaries
-- `POST /api/summaries/daily` - Generate daily summary
-- `GET /api/summaries?elderId=xxx&date=yyyy-mm-dd&limit=7` - Get summaries
-
-### Images
-- `POST /api/memory-images` - Upload memory image to Supabase Storage
-
-## 🧠 AI Features
-
-### Memory Extraction
-- Extracts structured data (objects, locations, people) from memory text
-- Automatic tag generation
-- Falls back to keyword matching if Gemini API is unavailable
-
-### Question Answering
-- Uses Gemini API to find top 3 most relevant memories
-- Generates warm, friendly answers in simple language
-- Falls back to keyword matching for basic functionality
-
-### Daily Summaries
-- Generates 3-5 sentence summaries in simple language
-- Highlights important moments from the day
-- Optimized for elderly users' comprehension
-
-## 🗄️ Database Schema
-
-### Tables
-- `profiles` - User profiles with role (elder/caregiver)
-- `memories` - Memory entries with text, type, tags, and image_url
-- `questions` - Questions asked and AI-generated answers
-- `daily_summaries` - Daily summary entries
-
-See `supabase/migrations/` for full schema details.
-
-## 🎨 Design Principles
-
-- **Accessibility First:** Large buttons, clear text, voice support
-- **Clean Architecture:** Small, well-named functions, type-safe APIs
-- **Error Handling:** Graceful fallbacks, clear error messages
-- **Testability:** Isolated AI functions, mockable dependencies
-
-## 🔧 Development
-
-### Code Style
-- TypeScript strict mode
-- ESLint for code quality
-- Small, focused functions
-- Clear error handling
-- Type-safe API responses
-
-### Key Files
-- `lib/ai.ts` - AI functions (isolated for easy mocking)
-- `lib/api.ts` - Type-safe API helpers
-- `lib/db.ts` - Server-side Supabase client
-- `components/memory-friend/` - Main feature components
-
-## 🚢 Deployment
-
-The app is configured for deployment on Vercel:
-- Frontend: Vite build output
-- API Routes: Next.js App Router
-- Environment variables: Set in Vercel dashboard
-
-> **Security note:** Never commit real secrets (Supabase keys, Gemini API keys, etc.) to the repository.  
-> Keep them only in `.env` / environment configuration for your local machine and hosting provider.
-
-## 📝 License
-
-Private project - All rights reserved
-
-## 🤝 Contributing
-
-This is a private project. For questions or issues, please contact the project maintainer.
-
-## 🙏 Acknowledgments
-
-- Built with [Lovable](https://lovable.dev)
-- UI components from [shadcn/ui](https://ui.shadcn.com)
-- AI powered by [Google Gemini](https://ai.google.dev)
+[![Status](https://img.shields.io/badge/Status-Production--Ready-success.svg)](#)
+[![Stack](https://img.shields.io/badge/Stack-Next.js%2015%20|%20React%2019%20|%20Supabase-blue.svg)](#)
+[![AI](https://img.shields.io/badge/AI-Gemini%20|%20Groq%20|%20HuggingFace-orange.svg)](#)
+[![Mobile](https://img.shields.io/badge/Mobile-Expo%20|%20React%20Native-brightgreen.svg)](#)
 
 ---
 
-**Made with ❤️ for elderly users and their caregivers by GARV ANAND**
+## 🚀 Key Platforms
 
+### 🌐 Web Ecosystem (Next.js 15)
+A multi-portal web application with specialized interfaces for:
+*   **Elder Portal:** Simplified UI with voice-first interactions.
+*   **Caregiver Dashboard:** Real-time monitoring and memory management.
+*   **Clinician Suite:** Advanced analytics and health status monitoring.
+*   **Family Space:** Stay connected and view daily summaries.
+
+### 📱 Mobile App (ElderAI-Mobile)
+A companion mobile application built for on-the-go access, featuring:
+*   Push notifications for reminders.
+*   Simplified memory recording via mobile camera and microphone.
+*   Direct family-to-elder messaging.
+
+---
+
+## ✨ Core Features
+
+### 📖 Intelligent Memory Management
+*   **Multimodal Entry:** Record memories via text, voice, or photos.
+*   **Automated Extraction:** AI automatically extracts people, locations, and events to build a structured "Life Story" graph.
+*   **Contextual Retrieval:** Ask "Where did I go last summer?" and get instant, warm, and friendly answers based on recorded memories.
+
+### 🩺 Health & Support
+*   **Teleconsultation:** Integrated high-quality video calling via **Jitsi SDK** for remote clinician visits.
+*   **Status Monitoring:** Real-time tracking of wellbeing and activity.
+*   **AI Summaries:** Daily and weekly AI-generated summaries for caregivers and families to stay informed without manual check-ins.
+
+### 🎙️ Accessibility First
+*   **Voice Interface:** Native Speech-to-Text and Text-to-Speech integration.
+*   **High-Contrast UI:** Optimized for users with visual impairments.
+*   **Cognitive Load Reduction:** Simplified navigation and large interactive elements.
+
+---
+
+## 🛠️ Technical Architecture
+
+### Tech Stack
+*   **Frontend:** [Next.js 15](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
+*   **Backend:** [Supabase](https://supabase.com/) (PostgreSQL, Auth, Edge Functions, Real-time)
+*   **AI Engine:** [Google Gemini Pro](https://ai.google.dev/), [Groq LPU](https://groq.com/), [Hugging Face](https://huggingface.co/)
+*   **Communication:** [Jitsi Meet SDK](https://jitsi.org/), [Resend](https://resend.com/) (Email Notifications)
+*   **State & Data:** [TanStack Query v5](https://tanstack.com/query), [Zod](https://zod.dev/)
+
+### Project Structure
+```bash
+├── app/                  # Next.js 15 App Router (Primary Routes)
+│   ├── api/              # Secure Backend API Routes
+│   ├── (portals)/        # Role-based portals (Elder, Caregiver, etc.)
+│   └── auth/             # Supabase Authentication Flow
+├── ElderAI-Mobile/       # Companion React Native/Expo Application
+├── src/
+│   ├── components/       # Reusable UI & Feature components
+│   ├── views/            # Legacy view migrations (Hybrid Router Support)
+│   ├── integrations/     # Supabase & External Service Clients
+│   └── lib/              # Core Logic (AI, Utils, Types)
+├── supabase/
+│   ├── functions/        # Deno-based AI Edge Functions
+│   └── migrations/       # Version-controlled Database Schema
+└── public/               # Static assets and 3D Models
+```
+
+---
+
+## 🚦 Getting Started
+
+### 1. Prerequisites
+*   Node.js 18.x or 20.x
+*   pnpm (recommended) or npm
+*   A Supabase Project
+
+### 2. Environment Setup
+Create a `.env.local` file with the following:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+GEMINI_API_KEY=your_gemini_key
+GROQ_API_KEY=your_groq_key
+RESEND_API_KEY=your_resend_key
+```
+
+### 3. Installation & Development
+```bash
+# Install dependencies
+pnpm install
+
+# Run the development server
+pnpm dev
+```
+
+The application will be live at `http://localhost:3000`.
+
+---
+
+## 🛡️ Security & Reliability
+*   **RLS (Row Level Security):** Strict data isolation between different elders and families.
+*   **AI Fallbacks:** Naive keyword-matching fallbacks ensure basic functionality if AI APIs hit rate limits.
+*   **Hybrid Routing:** Seamlessly handles both App Router performance and Pages Router flexibility.
+
+---
+
+## 📈 Development Status
+- [x] Next.js 15 Migration
+- [x] React 19 Upgrade
+- [x] Supabase Auth & DB Integration
+- [x] Multi-Portal Dashboard (Elder, Caregiver, Clinician)
+- [x] Real-time Teleconsultation (Jitsi)
+- [x] AI Memory Extraction & QA
+- [ ] Advanced Health Predictive Analytics
+- [ ] Wearable Device Integration
+
+---
+
+**Developed with ❤️ for the Elderly Community by [GARV ANAND](https://github.com/Garvanand)**
