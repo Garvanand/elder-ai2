@@ -65,6 +65,7 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
   const [showTimeCapsule, setShowTimeCapsule] = useState(false);
 
   const [answer, setAnswer] = useState('');
+  const [matchedMemories, setMatchedMemories] = useState<Memory[]>([]);
   const [recap, setRecap] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -330,37 +331,48 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
     }
   };
 
-  const handleAskQuestion = async () => {
-    if (!questionText.trim()) return;
-    
-    setLoading(true);
-    setAnswer('');
-    
-    if (isGuestMode) {
-      setTimeout(() => {
-        addDemoQuestion(questionText);
-        setAnswer("That sounds like a wonderful memory. From what I recall, it was a very special moment for you and your family.");
-        setLoading(false);
-      }, 1000);
-      return;
-    }
+const handleAskQuestion = async () => {
+      if (!questionText.trim()) return;
+      
+      setLoading(true);
+      setAnswer('');
+      setMatchedMemories([]);
+      
+      if (isGuestMode) {
+        setTimeout(() => {
+          addDemoQuestion(questionText);
+          setAnswer("That sounds like a wonderful memory. From what I recall, it was a very special moment for you and your family.");
+          setLoading(false);
+        }, 1000);
+        return;
+      }
 
-    if (!user) return;
-    try {
+      if (!user) return;
+      try {
         const response = await answerQuestion(questionText, user.id);
         setAnswer(response.answer);
+        setMatchedMemories(response.matchedMemories || []);
+        
+        await supabase.from('questions').insert({
+          elder_id: user.id,
+          question_text: questionText,
+          answer_text: response.answer,
+          matched_memory_ids: response.matchedMemories?.map(m => m.id) || [],
+        });
+        
+        setQuestionText('');
         onRefresh(true);
       } catch (error) {
-      console.error('Error getting answer:', error);
-      toast({
-        title: 'Search Failed',
-        description: 'Could not find that information. Please try asking in a different way.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        console.error('Error getting answer:', error);
+        toast({
+          title: 'Search Failed',
+          description: 'Could not find that information. Please try asking in a different way.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const handlePromptSelected = (prompt: string) => {
     setMemoryText(prompt);
@@ -535,37 +547,69 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setView('addMemory')}
-                className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-amber-200 hover:border-amber-400 shadow-lg transition-all"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg">
-                  <Plus className="w-8 h-8" />
-                </div>
-                <div className="text-left">
-                  <p className="text-2xl font-bold">Save a Memory</p>
-                  <p className="text-gray-500">Record your story</p>
-                </div>
-              </motion.button>
+<div className="grid md:grid-cols-2 gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setView('addMemory')}
+                  className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-amber-200 hover:border-amber-400 shadow-lg transition-all"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg">
+                    <Plus className="w-8 h-8" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-2xl font-bold">Save a Memory</p>
+                    <p className="text-gray-500">Record your story</p>
+                  </div>
+                </motion.button>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setView('memoryWall')}
-                className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-rose-200 hover:border-rose-400 shadow-lg transition-all"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white shadow-lg">
-                  <ImageIcon className="w-8 h-8" />
-                </div>
-                <div className="text-left">
-                  <p className="text-2xl font-bold">Photo Album</p>
-                  <p className="text-gray-500">View your memories</p>
-                </div>
-              </motion.button>
-            </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setView('askQuestion')}
+                  className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-blue-200 hover:border-blue-400 shadow-lg transition-all"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white shadow-lg">
+                    <MessageCircleQuestion className="w-8 h-8" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-2xl font-bold">Ask About Memories</p>
+                    <p className="text-gray-500">Search your stories</p>
+                  </div>
+                </motion.button>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setView('memoryWall')}
+                  className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-rose-200 hover:border-rose-400 shadow-lg transition-all"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                    <ImageIcon className="w-8 h-8" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-2xl font-bold">Photo Album</p>
+                    <p className="text-gray-500">View your memories</p>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleShowRecap}
+                  className="flex items-center gap-5 p-6 rounded-[24px] bg-white/80 backdrop-blur-xl border-2 border-violet-200 hover:border-violet-400 shadow-lg transition-all"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white shadow-lg">
+                    <Brain className="w-8 h-8" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-2xl font-bold">Weekly Recap</p>
+                    <p className="text-gray-500">Your week review</p>
+                  </div>
+                </motion.button>
+              </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
@@ -732,26 +776,63 @@ export default function ElderDashboard({ recentQuestions, onRefresh }: ElderDash
                   {loading ? 'Processing...' : view === 'addMemory' ? 'Save Memory' : 'Search'}
                 </Button>
 
-                {answer && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 relative"
-                  >
-                    <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-3">Memory Friend says:</p>
-                    <p className="text-xl text-gray-800 leading-relaxed">"{answer}"</p>
-                    {supported.tts && (
+{answer && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4"
+                    >
+                      <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 relative">
+                        <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-3">Memory Friend says:</p>
+                        <p className="text-xl text-gray-800 leading-relaxed">"{answer}"</p>
+                        {supported.tts && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-md"
+                            onClick={() => isSpeaking ? stopSpeaking() : speak(answer)}
+                          >
+                            {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {matchedMemories.length > 0 && (
+                        <div className="space-y-3">
+                          <p className="text-sm font-bold text-blue-600 uppercase tracking-wider">Related Memories:</p>
+                          {matchedMemories.map((memory) => (
+                            <motion.div
+                              key={memory.id}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className="p-4 bg-white/80 rounded-2xl border border-blue-100 hover:border-blue-300 cursor-pointer transition-all"
+                              onClick={() => handleTriggerConversation(memory)}
+                            >
+                              <div className="flex items-start gap-3">
+                                {memory.image_url && (
+                                  <img src={memory.image_url} alt="" className="w-16 h-16 rounded-xl object-cover" />
+                                )}
+                                <div className="flex-1">
+                                  <p className="text-gray-800 line-clamp-2">{memory.raw_text}</p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {format(new Date(memory.created_at), 'MMM d, yyyy')}
+                                  </p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                      
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-md"
-                        onClick={() => isSpeaking ? stopSpeaking() : speak(answer)}
+                        variant="outline"
+                        onClick={() => { setAnswer(''); setMatchedMemories([]); }}
+                        className="w-full h-14 rounded-2xl border-2 border-gray-200 font-bold"
                       >
-                        {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        Ask Another Question
                       </Button>
-                    )}
-                  </motion.div>
-                )}
+                    </motion.div>
+                  )}
               </div>
             </Card>
           </motion.div>
