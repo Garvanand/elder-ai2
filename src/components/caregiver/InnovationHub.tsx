@@ -86,10 +86,8 @@ export default function InnovationHub({ elderId, memories }: InnovationHubProps)
   const generateArtFromStory = async (story: string) => {
     if (!story) return;
     setGeneratingArt(true);
-    const statusToast = toast.loading('AI is dreaming up the scene...');
     try {
       const blobUrl = await generateImage(story);
-      toast.loading('Capturing artistic vision...', { id: statusToast });
       const publicUrl = await uploadGeneratedArt(blobUrl, elderId);
       
       const { data: updatedMemory, error } = await supabase
@@ -107,11 +105,11 @@ export default function InnovationHub({ elderId, memories }: InnovationHubProps)
 
       if (error) throw error;
       
-      toast.success('AI Memory Visualization Created & Saved!', { id: statusToast });
+      toast.success('AI Memory Visualization Created & Saved!');
       setArtHistory(prev => [updatedMemory, ...prev]);
     } catch (err: any) {
       console.error('Art generation error:', err);
-      toast.error(err.message || 'Could not generate art', { id: statusToast });
+      toast.error('Could not generate art: ' + (err.message || 'Unknown error'));
     } finally {
       setGeneratingArt(false);
     }

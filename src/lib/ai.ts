@@ -419,33 +419,3 @@ export function matchMemoriesByKeyword(question: string, memories: Memory[]): Me
     return bScore - aScore;
   });
 }
-
-export async function generateDailySummary(memories: Memory[]): Promise<string> {
-  if (!memories || memories.length === 0) {
-    return "No memories recorded for this day.";
-  }
-
-  const apiKey = getGroqApiKey();
-  if (!apiKey) {
-    return `Today included ${memories.length} recorded ${memories.length === 1 ? 'memory' : 'memories'}.`;
-  }
-
-  try {
-    const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-    const context = memories.map(m => `[${m.type}] ${m.raw_text}`).join('\n').slice(0, 1500);
-    
-    const prompt = `Summarize these elder's daily memories for caregivers in 2-3 warm sentences. Focus on activities, mood, and notable events.\n\nMemories:\n${context}`;
-
-    const completion = await withRetry(() => groq.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: GROQ_MODEL,
-      temperature: 0.5,
-      max_tokens: 200,
-    }));
-
-    return completion.choices[0].message.content?.trim() || `${memories.length} memories recorded today.`;
-  } catch (error) {
-    console.warn('Daily summary generation failed:', error);
-    return `${memories.length} memories recorded today.`;
-  }
-}
