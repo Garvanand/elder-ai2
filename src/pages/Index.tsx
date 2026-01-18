@@ -331,33 +331,6 @@ const Index = () => {
     }
   }, [user, profile, loading, navigate]);
 
-  const features = [
-    {
-      icon: <Brain className="w-8 h-8 text-primary" />,
-      title: 'Cognitive Sync',
-      description: 'AI-powered memory companion that adapts to individual cognitive patterns.',
-      color: 'bg-primary/10'
-    },
-    {
-      icon: <Heart className="w-8 h-8 text-rose-500" />,
-      title: 'Vitals Stream',
-      description: 'Real-time biometric monitoring shared instantly with designated family.',
-      color: 'bg-rose-500/10'
-    },
-    {
-      icon: <Smartphone className="w-8 h-8 text-amber-500" />,
-      title: 'Unified Hub',
-      description: 'A single dashboard for caregivers to manage medication, mood, and safety.',
-      color: 'bg-amber-500/10'
-    },
-    {
-      icon: <Shield className="w-8 h-8 text-emerald-500" />,
-      title: 'Bio-Privacy',
-      description: 'Medical-grade encryption ensuring sensitive family data stays within the family.',
-      color: 'bg-emerald-500/10'
-    },
-  ];
-
   return (
     <div className={cn(
       "min-h-screen bg-[#FDFCFB] text-[#1A1A1A] selection:bg-primary/20 relative overflow-hidden",
@@ -615,41 +588,262 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Feature Highlights */}
+        {/* System Architecture Section */}
         <section className="py-40 px-6 bg-slate-900 text-white relative overflow-hidden rounded-[80px] mx-4 md:mx-10 mb-20">
-          <div className="absolute inset-0 opacity-20 pointer-events-none">
-             <div className="absolute top-0 left-0 w-full h-full" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #3B82F6 0%, transparent 50%)' }} />
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 opacity-20" style={{ 
+              backgroundImage: `
+                linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+              `,
+              backgroundSize: '60px 60px'
+            }} />
+            <motion.div 
+              animate={{ opacity: [0.05, 0.15, 0.05] }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="absolute top-0 left-0 w-full h-full" 
+              style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #3B82F6 0%, transparent 50%), radial-gradient(circle at 80% 50%, #F59E0B 0%, transparent 50%)' }} 
+            />
           </div>
           
-          <div className="max-w-7xl mx-auto space-y-24 relative z-10">
+          <div className="max-w-7xl mx-auto space-y-20 relative z-10">
             <div className="text-center space-y-4 max-w-3xl mx-auto">
-              <h2 className="text-5xl md:text-6xl font-black tracking-tighter">Engineered for Humanity.</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 text-primary text-xs font-black uppercase tracking-widest mb-4"
+              >
+                <Database className="w-4 h-4" />
+                System Architecture
+              </motion.div>
+              <h2 className="text-5xl md:text-6xl font-black tracking-tighter">The Neural <span className="text-primary">Blueprint.</span></h2>
               <p className="text-xl text-slate-400 font-medium">
-                Advanced technology that fades into the background, letting life take center stage.
+                A real-time ecosystem where every component works in perfect harmony.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+            <div className="relative">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column - Input Layer */}
+                <motion.div 
+                  initial={{ opacity: 0, x: -40 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  className="space-y-6"
                 >
-                  <Card className="border-slate-800 bg-slate-800/50 hover:bg-slate-800 transition-all duration-500 p-10 h-full rounded-[40px] group border">
-                    <div className={`w-18 h-18 rounded-3xl ${feature.color} flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500`}>
-                      {feature.icon}
-                    </div>
-                    <h3 className="text-2xl font-black mb-4 tracking-tight">{feature.title}</h3>
-                    <p className="text-slate-400 leading-relaxed font-medium">
-                      {feature.description}
-                    </p>
-                  </Card>
+                  <div className="text-center lg:text-left mb-8">
+                    <span className="text-xs font-black text-primary uppercase tracking-[0.3em]">Input Layer</span>
+                    <h3 className="text-2xl font-black mt-2">Data Sources</h3>
+                  </div>
+                  
+                  {[
+                    { icon: <MessageSquare className="w-5 h-5" />, label: "Voice & Chat", desc: "Natural conversations", color: "from-blue-500 to-cyan-500" },
+                    { icon: <Activity className="w-5 h-5" />, label: "Biometrics", desc: "Health monitoring", color: "from-rose-500 to-pink-500" },
+                    { icon: <Smartphone className="w-5 h-5" />, label: "IoT Devices", desc: "Smart home integration", color: "from-violet-500 to-purple-500" },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      whileHover={{ x: 10, scale: 1.02 }}
+                      className="relative group"
+                    >
+                      <div className="p-5 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-primary/50 transition-all duration-500">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}>
+                            {item.icon}
+                          </div>
+                          <div>
+                            <h4 className="font-black text-white">{item.label}</h4>
+                            <p className="text-xs text-slate-400">{item.desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <motion.div 
+                        className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-white/30 to-transparent"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+                      />
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
+
+                {/* Center - Core Processing */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  className="relative"
+                >
+                  <div className="text-center mb-8">
+                    <span className="text-xs font-black text-amber-500 uppercase tracking-[0.3em]">Core Engine</span>
+                    <h3 className="text-2xl font-black mt-2">AI Processing</h3>
+                  </div>
+                  
+                  <div className="relative aspect-square max-w-[350px] mx-auto">
+                    <motion.div 
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 rounded-full border border-dashed border-white/20"
+                    />
+                    <motion.div 
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-8 rounded-full border border-dashed border-primary/30"
+                    />
+                    <motion.div 
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-16 rounded-full border border-dashed border-amber-500/30"
+                    />
+                    
+                    <motion.div 
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <div className="w-32 h-32 rounded-[40px] bg-gradient-to-br from-slate-800 to-slate-900 border border-white/20 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                        <motion.div 
+                          className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent"
+                          animate={{ opacity: [0.3, 0.6, 0.3] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
+                        <Brain className="w-16 h-16 text-primary relative z-10" />
+                      </div>
+                    </motion.div>
+
+                    {[
+                      { label: "NLP", angle: 0 },
+                      { label: "LLM", angle: 90 },
+                      { label: "ML", angle: 180 },
+                      { label: "CV", angle: 270 },
+                    ].map((tech, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute"
+                        style={{
+                          top: '50%',
+                          left: '50%',
+                          transform: `rotate(${tech.angle}deg) translateY(-140px) rotate(-${tech.angle}deg)`,
+                        }}
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.5 }}
+                      >
+                        <div className="w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+                          <span className="text-[10px] font-black text-white">{tech.label}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <div className="mt-8 grid grid-cols-3 gap-3 text-center">
+                    {[
+                      { value: "50ms", label: "Latency" },
+                      { value: "99.9%", label: "Uptime" },
+                      { value: "Real-time", label: "Processing" },
+                    ].map((stat, i) => (
+                      <motion.div 
+                        key={i}
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ delay: 0.5 + i * 0.1 }}
+                        className="p-3 rounded-2xl bg-white/5 border border-white/10"
+                      >
+                        <p className="text-lg font-black text-primary">{stat.value}</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Right Column - Output Layer */}
+                <motion.div 
+                  initial={{ opacity: 0, x: 40 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="space-y-6"
+                >
+                  <div className="text-center lg:text-right mb-8">
+                    <span className="text-xs font-black text-emerald-500 uppercase tracking-[0.3em]">Output Layer</span>
+                    <h3 className="text-2xl font-black mt-2">Delivery</h3>
+                  </div>
+                  
+                  {[
+                    { icon: <Users className="w-5 h-5" />, label: "Family Dashboard", desc: "Real-time insights", color: "from-emerald-500 to-teal-500" },
+                    { icon: <Bell className="w-5 h-5" />, label: "Smart Alerts", desc: "Proactive notifications", color: "from-amber-500 to-orange-500" },
+                    { icon: <Share2 className="w-5 h-5" />, label: "Memory Archive", desc: "Preserved forever", color: "from-indigo-500 to-blue-500" },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      whileHover={{ x: -10, scale: 1.02 }}
+                      className="relative group"
+                    >
+                      <motion.div 
+                        className="hidden lg:block absolute top-1/2 -left-4 w-8 h-0.5 bg-gradient-to-l from-white/30 to-transparent"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+                      />
+                      <div className="p-5 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-emerald-500/50 transition-all duration-500">
+                        <div className="flex items-center gap-4 lg:flex-row-reverse">
+                          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}>
+                            {item.icon}
+                          </div>
+                          <div className="lg:text-right">
+                            <h4 className="font-black text-white">{item.label}</h4>
+                            <p className="text-xs text-slate-400">{item.desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+
+              {/* Data Flow Indicators */}
+              <div className="hidden lg:flex absolute top-1/2 left-[30%] right-[30%] -translate-y-1/2 justify-between pointer-events-none">
+                <motion.div 
+                  animate={{ x: [0, 20, 0], opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-primary"
+                >
+                  <ArrowRight className="w-8 h-8" />
+                </motion.div>
+                <motion.div 
+                  animate={{ x: [0, 20, 0], opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  className="text-emerald-500"
+                >
+                  <ArrowRight className="w-8 h-8" />
+                </motion.div>
+              </div>
             </div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex flex-col sm:flex-row justify-center items-center gap-6 pt-8"
+            >
+              <Link to="/auth">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button size="lg" className="h-16 px-10 text-lg font-black rounded-full bg-white text-slate-900 hover:bg-primary hover:text-white shadow-2xl transition-all duration-500">
+                    Explore the System
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </motion.div>
+              </Link>
+              <div className="flex items-center gap-3 text-slate-400">
+                <Shield className="w-5 h-5" />
+                <span className="text-sm font-bold">End-to-end encrypted</span>
+              </div>
+            </motion.div>
           </div>
         </section>
 
